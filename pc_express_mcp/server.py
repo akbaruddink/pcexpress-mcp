@@ -382,7 +382,10 @@ def _simplify_cart(cart: dict) -> dict:
     `comparisonPrices`/`ehfTotal`/deposit fields not surfaced here. Order
     totals live at `order.totals.totalPrice`/`subTotal`, not on the cart
     object itself; summed across orders in the (rare) multi-order case
-    rather than assuming exactly one.
+    rather than assuming exactly one. Each entry's `photo_markdown` is
+    built from `product.primaryImage` -- a single URL, unlike search
+    results' multi-angle `image_urls` (the raw cart entry shape only ever
+    carries one photo per product, confirmed against a real cart).
     """
     orders = cart.get("orders") or []
     entries: list[dict] = []
@@ -404,6 +407,7 @@ def _simplify_cart(cart: dict) -> dict:
                     "name": product.get("name"),
                     "quantity": entry.get("quantity"),
                     "total_price": total_sale_price if total_sale_price is not None else prices.get("totalRegularPrice"),
+                    "photo_markdown": _markdown_image(product.get("name"), product.get("primaryImage")),
                 }
             )
     return {
@@ -1243,7 +1247,11 @@ def get_nutrition_info(barcode: str) -> dict:
     )
 )
 def get_cart() -> dict:
-    """View the current cart contents and total."""
+    """View the current cart contents and total.
+
+    Each item carries `photo_markdown` -- paste it directly into your
+    reply (not just the item name) so the cart actually looks like a cart.
+    """
     session = _load_session()
     api = _get_api(session.banner)
     try:
@@ -1276,6 +1284,9 @@ def add_to_cart(items: list[dict[str, Any]]) -> dict:
     excessive round-trips when adding several items at once. If the same
     product_code appears more than once, the last entry for it wins.
     Requires an active store.
+
+    The returned cart's items carry `photo_markdown` -- include it in your
+    reply when confirming what was added.
     """
     if not items:
         return {"error": "invalid_items", "message": "items must be a non-empty list."}
@@ -1315,7 +1326,11 @@ def add_to_cart(items: list[dict[str, Any]]) -> dict:
     )
 )
 def remove_from_cart(product_codes: list[str]) -> dict:
-    """Remove one or more products from the cart entirely, in a single call."""
+    """Remove one or more products from the cart entirely, in a single call.
+
+    The returned cart's remaining items carry `photo_markdown` -- include
+    it when confirming the cart's new contents.
+    """
     if not product_codes:
         return {"error": "invalid_items", "message": "product_codes must be a non-empty list."}
     session = _load_session()
@@ -1351,6 +1366,9 @@ def update_quantity(items: list[dict[str, Any]]) -> dict:
     call (quantity=0 removes that item).
 
     items: a list of {"product_code": str, "quantity": int}.
+
+    The returned cart's items carry `photo_markdown` -- include it when
+    confirming the cart's new contents.
     """
     if not items:
         return {"error": "invalid_items", "message": "items must be a non-empty list."}

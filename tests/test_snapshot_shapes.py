@@ -74,6 +74,8 @@ def test_simplify_cart_against_real_snapshot():
         assert item["name"] is not None
         assert item["total_price"] is not None
         assert item["quantity"] is not None
+        assert item["photo_markdown"] is not None
+        assert item["photo_markdown"].startswith("![")
 
 
 def test_simplify_product_against_real_snapshot():
@@ -98,6 +100,9 @@ def test_simplify_product_against_real_snapshot():
         raw_image_count = len(raw.get("imageAssets") or [])
         if raw_image_count > 1:
             assert len(product["image_urls"]) > 1
+        if raw_image_count > 0:
+            assert product["photo_markdown"] is not None
+            assert product["photo_markdown"].startswith("![")
 
 
 def test_simplify_store_against_real_snapshot():

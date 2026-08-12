@@ -177,7 +177,15 @@ def test_simplify_cart_flattens_orders_and_entries():
                 "entries": [
                     {
                         "quantity": 2.0,
-                        "offer": {"id": "111_EA", "product": {"id": "111_EA", "name": "Eggs", "brand": "No Name"}},
+                        "offer": {
+                            "id": "111_EA",
+                            "product": {
+                                "id": "111_EA",
+                                "name": "Eggs",
+                                "brand": "No Name",
+                                "primaryImage": "https://x/eggs.png",
+                            },
+                        },
                         "prices": {"totalSalePrice": 3.98, "totalRegularPrice": 4.5},
                     },
                     {
@@ -196,9 +204,16 @@ def test_simplify_cart_flattens_orders_and_entries():
     assert result["item_count"] == 2
     assert result["raw_total"] == 18.19
     assert result["items"] == [
-        {"code": "111_EA", "name": "Eggs", "quantity": 2.0, "total_price": 3.98},
-        # totalSalePrice absent -> falls back to totalRegularPrice
-        {"code": "222_EA", "name": "Cheese", "quantity": 1.0, "total_price": 5.99},
+        {
+            "code": "111_EA",
+            "name": "Eggs",
+            "quantity": 2.0,
+            "total_price": 3.98,
+            "photo_markdown": "![Eggs](https://x/eggs.png)",
+        },
+        # totalSalePrice absent -> falls back to totalRegularPrice; no
+        # primaryImage on this one -> photo_markdown is None, not omitted.
+        {"code": "222_EA", "name": "Cheese", "quantity": 1.0, "total_price": 5.99, "photo_markdown": None},
     ]
 
 
