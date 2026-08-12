@@ -15,6 +15,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pc_express_mcp.server import (  # noqa: E402
     _allergen_status,
     _dietary_flags,
+    _markdown_image,
     _simplify_cart,
     _simplify_loyalty,
     _simplify_nutrition,
@@ -24,6 +25,22 @@ from pc_express_mcp.server import (  # noqa: E402
     _simplify_store,
     _strip_html,
 )
+
+
+def test_markdown_image_builds_ready_to_paste_tag():
+    assert _markdown_image("2% Milk", "https://x/milk.png") == "![2% Milk](https://x/milk.png)"
+
+
+def test_markdown_image_none_when_no_url():
+    assert _markdown_image("2% Milk", None) is None
+
+
+def test_markdown_image_escapes_brackets_in_name_to_avoid_breaking_markdown():
+    assert _markdown_image("Weird [Name]", "https://x/a.png") == "![Weird (Name)](https://x/a.png)"
+
+
+def test_markdown_image_falls_back_to_generic_alt_text_when_name_missing():
+    assert _markdown_image(None, "https://x/a.png") == "![product](https://x/a.png)"
 
 
 def test_simplify_product_full_shape_matches_real_search_result():
@@ -73,6 +90,7 @@ def test_simplify_product_full_shape_matches_real_search_result():
         # angle -- each photo's other 4-7 same-image size variants are
         # dropped, but every genuinely different angle is kept.
         "image_urls": ["https://x/front-medium.png", "https://x/side-medium.png"],
+        "photo_markdown": "![Light Cocktail Bocconcini Cheese](https://x/front-medium.png)",
         "aisle": "12A",
         "stock_status": "OK",
         "price": 5.5,
@@ -131,6 +149,7 @@ def test_simplify_product_handles_missing_prices_and_images():
     assert result["unit_price"] is None
     assert result["image_urls"] == []
     assert result["barcode"] is None
+    assert result["photo_markdown"] is None
 
 
 def test_strip_html_removes_tags_and_collapses_whitespace():

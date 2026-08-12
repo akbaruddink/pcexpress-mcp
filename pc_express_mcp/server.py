@@ -269,6 +269,26 @@ def _strip_html(text: Optional[str]) -> Optional[str]:
     return re.sub(r"\s+", " ", text).strip()
 
 
+def _markdown_image(name: Optional[str], url: Optional[str]) -> Optional[str]:
+    """A ready-to-paste markdown image tag for a product photo, e.g.
+    `![2% Milk](https://digital.loblaws.ca/...)`.
+
+    This is deliberately plain chat-message markdown, not MCP's own
+    `ImageContent` tool-result type -- confirmed that claude.ai/Desktop
+    currently render `ImageContent` from a tool result collapsed inside a
+    "tool use" accordion most people never open, so returning one there
+    would not actually make photos visible. A markdown image *in a chat
+    message Claude itself writes* renders inline on every real Claude
+    surface (including mobile), so the fix is handing back copy-paste-
+    ready markdown for tools to include directly in their own reply, not
+    a new content type. See docs/RESEARCH.md "Product photos in chat".
+    """
+    if not url:
+        return None
+    alt = (name or "product").replace("[", "(").replace("]", ")")
+    return f"![{alt}]({url})"
+
+
 def _simplify_product(p: dict) -> dict:
     """Verified live against real search results (queries against a real
     store, real inventory). Two things worth knowing before relying on this
@@ -337,6 +357,7 @@ def _simplify_product(p: dict) -> dict:
         "description": description,
         "package_size": p.get("packageSize"),
         "image_urls": image_urls,
+        "photo_markdown": _markdown_image(p.get("name"), image_urls[0] if image_urls else None),
         "aisle": p.get("aisle"),
         "stock_status": p.get("stockStatus"),
         "price": price.get("value"),
@@ -898,6 +919,12 @@ def search_products(query: str, size: int = 20, offset: int = 0, include_nutriti
     add_to_cart/remove_from_cart; `sku` (bare article number) and
     `barcode` (UPC) are what you'd use to cross-reference this product
     elsewhere.
+
+    Each result also carries `photo_markdown` -- a ready-to-paste
+    `![name](url)` tag for its main photo. Include it directly in your own
+    reply text (not just the raw `image_urls`) when showing products to
+    the user, so the photo actually renders inline in the chat instead of
+    staying invisible in tool output.
 
     This endpoint is genuinely paginated -- `offset` is a real, working
     item offset (verified live: `offset=5` returns different products than
