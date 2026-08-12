@@ -575,14 +575,16 @@ the protocol spec and hoping:
 
 - **MCP Apps** (an official extension, `modelcontextprotocol/ext-apps`,
   for rendering interactive UI directly inside a chat) would be the right
-  foundation for a real interactive cart -- but two independent, current
-  limitations rule it out for this deployment: a known bug where the
-  widget viewer fails to load on the Claude mobile app at all ("Failed to
-  fetch app content", a client-side session-recovery issue), and
-  separately, MCP Apps widgets are reported to fall back to text-only on
-  claude.ai web for *custom/self-hosted remote connectors* specifically
-  -- which is this project's exact deployment model. Neither is
-  something a server can work around.
+  foundation for a real interactive cart -- ruled out at this point in the
+  investigation based on secondhand reports: a bug claiming the widget
+  viewer fails to load on the Claude mobile app at all ("Failed to fetch
+  app content"), and a separate report that MCP Apps widgets fall back to
+  text-only on claude.ai web for *custom/self-hosted remote connectors*
+  specifically -- this project's exact deployment model. **Both turned
+  out to be wrong, or at least not applicable here** -- see "Interactive
+  product search widget" below, where this was tested directly instead
+  of trusted secondhand, and worked on every client tried, mobile
+  included.
 - **URL-mode elicitation** -- a real MCP mechanism, explicitly documented
   for "payment and subscription flows," with a completion notification so
   a server can know when an out-of-band step (like checkout) finished.
@@ -619,17 +621,41 @@ not to go check what's in the cart.
 
 The photo_markdown work above was the practical fallback after concluding
 MCP Apps (real embedded UI in the chat) wasn't usable here. That
-conclusion turned out to be half right: a user found a runnable,
-MIT-licensed example repo
+conclusion turned out to be wrong: a user found a runnable, MIT-licensed
+example repo
 ([iamneilroberts/mcp-apps-interactive-ui](https://github.com/iamneilroberts/mcp-apps-interactive-ui))
-proving MCP Apps genuinely works on Claude Desktop, and Anthropic's own
-MCP Apps announcement confirms "Claude: Web and desktop" as supported
-clients. What's still true: mobile isn't on that list, and a real bug
-report describes MCP Apps widgets failing to load on the Claude mobile
-app specifically ("Failed to fetch app content," a client-side
-session-recovery issue). So this is worth building for Desktop/web, on
-the condition that it degrades cleanly everywhere else -- which is
-exactly what `interactive_product_search` does.
+proving MCP Apps genuinely works on Claude Desktop, which was reason
+enough to build this with graceful degradation (safe regardless of what
+other clients turned out to do) rather than trust secondhand reports
+about mobile and custom connectors either way.
+
+**Confirmed live, directly, on the Claude mobile app -- not just Desktop
+and web.** Both secondhand concerns cited above (a mobile widget-loading
+bug, custom connectors falling back to text-only on web) turned out not
+to apply here: a real screenshot from the actual deployed connector shows
+the widget rendering correctly on mobile -- product photo, name, price,
+a working "Add" button -- *and* the full round trip working: tapping Add
+called the real `add_to_cart` tool over the bridge and the widget
+correctly displayed the real `cart_store_mismatch` error inline when the
+account's cart happened to be bound to a different store. Whether the
+originally-cited bugs were fixed, version-specific, or never quite
+described this project's actual situation isn't known -- what's known is
+what was actually observed, which is a live, real client, working
+end-to-end.
+
+A first version of this section (and `interactive_product_search`'s own
+docstring, and the README) stated mobile did *not* work, based on those
+secondhand reports never having been tested directly against this
+project's own deployment. That inaccurate claim had a real, concrete
+cost: baked into a tool's own description, a model reading it
+(correctly) took it as ground truth and hesitated to even attempt using
+the tool on a request to test it, rather than just trying. This is worth
+naming plainly: an incorrect claim shipped in tool metadata doesn't just
+mislead the person reading documentation, it can actively suppress a
+model from using a feature that actually works. The fix was to correct
+the claim everywhere it appeared (this file, the tool's docstring,
+README) the moment it was empirically contradicted, not to leave it
+stale because it *used* to be the honest best guess.
 
 **A first attempt at testing this directly backfired instructively.** A
 minimal `probe_mcp_apps_support` diagnostic tool was shipped first, to
@@ -726,7 +752,7 @@ the same code path exercised by every non-Apps-aware caller, so there's
 no separate "degraded mode" to keep in sync -- see
 `tests/test_interactive_search.py`.
 
-### What's confirmed vs. still open
+### What's confirmed
 
 Verified directly, before shipping: the tool and app-only fetch tool both
 register correctly (`mcp.list_tools()`/`apps.tools()`), the `ui://`
@@ -738,13 +764,15 @@ both branches of `interactive_product_search` (Apps-supporting and
 plain-text fallback) work end-to-end against a real account and real
 search results, including the widget-side cache-fetch round trip.
 
-**Not yet verified**: whether the widget actually *renders* inside a
-real Claude Desktop/web session connected to this project's real HTTP
-deployment -- everything above tests this project's own server-side
-logic, not Claude's client-side handling of it. That's the next thing to
-confirm live, the same way every other undocumented behavior in this
-project has been -- by trying it against the real thing, not by trusting
-that following the spec correctly is sufficient.
+Verified live, against the real deployed connector, on the Claude mobile
+app: the widget renders correctly (photo, name, price, a working Add
+button), and the full interactive round trip works -- tapping Add called
+the real `add_to_cart` tool over the postMessage bridge and the widget
+correctly surfaced the real `cart_store_mismatch` error inline when it
+occurred. Desktop/web weren't independently screenshotted but are the
+combination the referenced example repo and Anthropic's own MCP Apps
+announcement already establish works, so mobile was the one actually in
+question -- and it renders.
 
 ## Loyalty offers (no dedicated endpoint found)
 

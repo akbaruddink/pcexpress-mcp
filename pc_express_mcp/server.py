@@ -124,11 +124,11 @@ def interactive_product_search(query: str, size: int = 20, ctx: Optional[Context
     as an interactive widget (photos, prices, per-item Add-to-Cart buttons)
     instead of plain text.
 
-    Requires an active store (see set_active_store). Confirmed live: MCP
-    Apps widgets render on Claude Desktop and claude.ai web, but not on
-    the Claude mobile app (a client-side bug, not something this project
-    can fix) -- see docs/RESEARCH.md "Interactive product search widget".
-    On a client that doesn't support MCP Apps, this degrades automatically
+    Requires an active store (see set_active_store). Confirmed live,
+    including the full Add-to-Cart round trip: MCP Apps widgets render on
+    Claude Desktop, claude.ai web, and the Claude mobile app -- see
+    docs/RESEARCH.md "Interactive product search widget". On a client
+    that doesn't support MCP Apps, this degrades automatically
     to the same full text/photo_markdown results as search_products, so
     it's always safe to call regardless of client -- use this instead of
     search_products whenever the user is meant to browse and pick items,
