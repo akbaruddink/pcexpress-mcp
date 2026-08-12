@@ -774,6 +774,33 @@ combination the referenced example repo and Anthropic's own MCP Apps
 announcement already establish works, so mobile was the one actually in
 question -- and it renders.
 
+### The model can't see its own widget render -- and shouldn't guess
+
+A real, separate mistake, caught from a screenshot: asked to test
+rendering again, a Claude session called the tool, got back
+`{result_ref, query, count: 0}` (0 results for an overly-literal search
+query -- a minor, unrelated issue), and told the user "it's just falling
+back to a plain result reference here on mobile, no interactive widget."
+The screenshot showed otherwise -- the widget *had* rendered correctly
+(styled header, empty-state text, the footer button, all real widget
+markup, not generic text). The model's reasoning was backwards: getting
+a small `result_ref`-shaped response back is what happens *specifically
+because* the client negotiated Apps support and the full-text fallback
+path (a verbose `results: [...]` list) was skipped -- it's evidence the
+widget path fired, not evidence it didn't. More fundamentally, the model
+has no way to confirm either way from inside the conversation: the
+widget renders client-side, in the user's own app, and its visual output
+is never sent back to the model -- only this project's own JSON response
+is. A model stating "it did/didn't render" is stating something outside
+what it can actually observe, the same category of mistake as the
+`switch_cart_store` probe's tool-description issue earlier, just in the
+other direction (understating a real success instead of overstating
+trust in an unverified tool). Fixed by adding an explicit `note` to the
+Apps-branch response explaining exactly this, and updating
+`interactive_product_search`'s own docstring to say the same thing
+before the tool is even called -- see `tests/test_interactive_search.py`
+for the regression test pinning the note's presence.
+
 ## Loyalty offers (no dedicated endpoint found)
 
 Two real, working, account-level loyalty endpoints exist and are wired to

@@ -133,6 +133,16 @@ def interactive_product_search(query: str, size: int = 20, ctx: Optional[Context
     it's always safe to call regardless of client -- use this instead of
     search_products whenever the user is meant to browse and pick items,
     not just get information about them.
+
+    On a client that DOES support MCP Apps, this returns only a small
+    {result_ref, query, count} reference, not the actual results -- by
+    design, to keep the widget's data out of your context. That small
+    response is the *correct* outcome for a supporting client, not a
+    sign the widget failed to render. Whether it actually rendered is not
+    something you can see from here: the widget renders client-side, in
+    the user's own app, and you never receive its visual output, only
+    this JSON. Do not tell the user it did or didn't render -- if that's
+    in question, ask them what's on their screen.
     """
     session = _load_session()
     if not session.store_id:
@@ -146,7 +156,19 @@ def interactive_product_search(query: str, size: int = 20, ctx: Optional[Context
 
     if ctx is not None and client_supports_apps(ctx):
         result_ref = _cache_interactive_search_results(results)
-        return {"result_ref": result_ref, "query": query, "count": len(results)}
+        return {
+            "result_ref": result_ref,
+            "query": query,
+            "count": len(results),
+            "note": (
+                "This client negotiated MCP Apps support, so the widget was requested for these "
+                f"{len(results)} result(s) -- getting back this small reference instead of the full "
+                "results list is the expected, correct behavior for a supporting client, not a sign "
+                "the widget failed. Whether it actually rendered isn't visible from here: the model "
+                "never sees the client's UI, only this JSON. Don't claim it did or didn't render -- "
+                "if that matters, ask the user what they see."
+            ),
+        }
 
     return {"query": query, "count": len(results), "results": results}
 

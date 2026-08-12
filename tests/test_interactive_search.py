@@ -56,6 +56,13 @@ def test_launcher_returns_only_a_reference_when_client_supports_apps(monkeypatch
     assert result["query"] == "cheese"
     assert result["count"] == 1
     assert result["result_ref"]
+    # The small reference is the *correct* outcome, not a rendering
+    # failure -- a real user report showed a model misreading this
+    # terse shape as "the widget didn't render" and stating that as
+    # fact, which it can't actually observe. The note exists so the
+    # model doesn't have to guess.
+    assert "not a sign" in result["note"] or "correct behavior" in result["note"]
+    assert "widget" in result["note"].lower()
 
     # The widget fetches the real data itself via the app-only tool.
     fetched = server._interactive_search_results(result_ref=result["result_ref"])
