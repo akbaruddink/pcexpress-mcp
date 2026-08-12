@@ -564,6 +564,57 @@ real current binding (`_cart_bound_store`) rather than the locally cached
 the cart's own live value is guaranteed to pass validation. See
 `_seller_id_for_removal` in `server.py`.
 
+## Product photos in chat (why plain markdown, not MCP image/UI features)
+
+Requested directly: a more visual, interactive shopping experience inside
+Claude itself, ideally including checkout, instead of having to switch to
+the PC Express app to review a cart and then come back to keep talking.
+Checked what Claude's clients (specifically: the iOS/Android app, the
+one actually used for this) support today, rather than building against
+the protocol spec and hoping:
+
+- **MCP Apps** (an official extension, `modelcontextprotocol/ext-apps`,
+  for rendering interactive UI directly inside a chat) would be the right
+  foundation for a real interactive cart -- but two independent, current
+  limitations rule it out for this deployment: a known bug where the
+  widget viewer fails to load on the Claude mobile app at all ("Failed to
+  fetch app content", a client-side session-recovery issue), and
+  separately, MCP Apps widgets are reported to fall back to text-only on
+  claude.ai web for *custom/self-hosted remote connectors* specifically
+  -- which is this project's exact deployment model. Neither is
+  something a server can work around.
+- **URL-mode elicitation** -- a real MCP mechanism, explicitly documented
+  for "payment and subscription flows," with a completion notification so
+  a server can know when an out-of-band step (like checkout) finished.
+  This project's SDK (`mcp.server.elicitation.elicit_url`) already
+  supports it server-side. Client support, though, is currently Claude
+  Code CLI only (since March 2026) -- not claude.ai, not the mobile app.
+  Not usable here yet.
+- **MCP's own `ImageContent` tool-result type** -- real, standard, but
+  confirmed to render collapsed inside a "tool use" accordion on
+  claude.ai/Desktop that most people never expand, so returning images
+  this way doesn't actually make anything visible to the user.
+
+**What actually works today, on every real Claude surface including
+mobile, with nothing to wait on**: a plain markdown image
+(`![alt](url)`) *inside a chat message Claude itself writes* renders
+inline -- this has nothing to do with any of the MCP-specific mechanisms
+above, it's just how chat markdown works. The data was already there
+(`image_urls` on search results since an earlier fix); what was missing
+was actually embedding it. `_markdown_image` now builds a ready-to-paste
+`photo_markdown` tag per product/cart item, and `search_products`/
+`get_cart`/`add_to_cart`/`remove_from_cart`/`update_quantity`/
+`place_order`'s docstrings all explicitly instruct including it in the
+reply rather than just describing items in prose.
+
+This doesn't solve checkout itself -- there is still no PC Express
+payment API, and this project still deliberately doesn't automate
+spending money (see `place_order`'s docstring). What it does do:
+`place_order` now demands a full visual receipt (photos, quantities,
+prices, total) before ever mentioning the checkout link, so the only
+remaining reason to open the PC Express app is the actual payment tap --
+not to go check what's in the cart.
+
 ## Loyalty offers (no dedicated endpoint found)
 
 Two real, working, account-level loyalty endpoints exist and are wired to

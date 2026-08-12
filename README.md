@@ -128,6 +128,13 @@ subprocess? See [Remote/mobile access](#remotemobile-access-optional-for-the-cla
 
 ## Usage
 
+Search results and cart items carry a ready-to-paste `photo_markdown`
+field, so products actually show up as photos in the chat instead of
+plain text — see [docs/RESEARCH.md](docs/RESEARCH.md#product-photos-in-chat-why-plain-markdown-not-mcp-imageui-features)
+for why that's plain markdown rather than an MCP-specific image/UI
+mechanism (short version: the fancier options don't currently work on
+Claude's mobile app or for custom connectors like this one).
+
 | Tool | Spends money? | Notes |
 |---|---|---|
 | `list_stores` | No | Returns known/validated stores; no search API exists |
