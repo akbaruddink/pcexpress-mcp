@@ -1470,6 +1470,14 @@ def place_order(confirm: bool = False) -> dict:
     checkout URL/summary for you to finish yourself in the PC Express app
     or a browser (where you're already logged in). Requires confirm=True so
     it can never fire as a side effect of a model just "trying things."
+
+    Before presenting `checkout_url`, show a full visual receipt in your
+    reply: every item's `photo_markdown` from `cart_summary.items`,
+    quantity, and price, plus `cart_summary.raw_total`. The goal is that
+    the only reason left to open the PC Express app is the actual payment
+    tap -- everything worth reviewing (what's in the cart, what it costs)
+    should already be visible right here, not require switching apps to
+    go check.
     """
     if not confirm:
         return {
@@ -1492,9 +1500,10 @@ def place_order(confirm: bool = False) -> dict:
     return {
         "status": "ready_for_manual_checkout",
         "message": (
-            "Cart is ready. This tool does not submit payment. Open the PC "
-            "Express app or the checkout URL below on your phone/browser "
-            "(same account) to pick a slot, confirm substitutions, and pay."
+            "Cart is ready. This tool does not submit payment -- show the user a full visual receipt "
+            "(each item's photo_markdown, quantity, price, and the total) right here before mentioning "
+            "the checkout link, so the only thing left to do in the PC Express app is pick a slot, "
+            "confirm substitutions, and pay."
         ),
         "checkout_url": f"https://{domain}/checkout",
         "cart_summary": cart,
