@@ -1,0 +1,10 @@
+{
+  "stampCards": {
+    "balance": null,
+    "burnExpiryDate": "2025-07-17T23:59:00",
+    "earnExpiryDate": "2025-07-03T23:59:00",
+    "isActive": false,
+    "rewardInterval": 20,
+    "rewards": null
+  }
+}

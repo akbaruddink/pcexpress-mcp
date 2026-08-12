@@ -1,0 +1,37 @@
+name: tests
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.12", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v3
+
+      - name: Set up Python ${{ matrix.python-version }}
+        run: uv python install ${{ matrix.python-version }}
+
+      - name: Install exact locked dependencies
+        # `uv sync` (not `uv pip install`) installs precisely what's in
+        # uv.lock, committed to this repo -- the same versions this project
+        # was actually tested against, not whatever the resolver happens to
+        # pick on a given day. See README "Dependency policy".
+        run: uv sync --python ${{ matrix.python-version }} --extra dev --extra http --locked
+
+      - name: Run tests with coverage
+        run: uv run pytest -v --cov=pc_express_mcp --cov-report=term-missing --cov-report=xml
+
+      - name: Upload coverage report
+        if: matrix.python-version == '3.12'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml

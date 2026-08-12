@@ -1,0 +1,3 @@
+{$PCEXPRESS_DOMAIN} {
+	reverse_proxy pc-express-mcp:8090
+}

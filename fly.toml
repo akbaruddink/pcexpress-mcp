@@ -1,0 +1,46 @@
+# Fly.io app config for pc-express-mcp's HTTP mode (remote/mobile access).
+# See README "One-click deploy (Fly.io)" for the full walkthrough.
+#
+# After `fly launch` (which assigns/renames `app` below), set the two
+# required secrets -- Fly injects both as env vars at runtime, same as a
+# VPS's http.env:
+#   fly secrets set PCEXPRESS_PUBLIC_URL=https://<your-app-name>.fly.dev
+#   fly secrets set PCEXPRESS_TOKEN_SECRET=$(python scripts/generate_secret.py)
+#
+# No [mounts]/persistent volume -- HTTP mode keeps zero state on disk (see
+# pc_express_mcp/token_crypto.py), so there's nothing for a Fly volume to
+# hold. This also means a plain `fly deploy` (which replaces the running
+# machine) never loses anyone's session the way it would with file-backed
+# per-tenant storage.
+
+app = "pc-express-mcp"
+primary_region = "yyz"  # Toronto -- change freely, has no bearing on correctness
+
+[build]
+
+[env]
+  PCEXPRESS_HTTP = "1"
+  PCEXPRESS_HTTP_HOST = "0.0.0.0"
+  PCEXPRESS_HTTP_PORT = "8090"
+
+[http_service]
+  internal_port = 8090
+  force_https = true
+  # Kept always-on (not scale-to-zero) on purpose: an MCP client's
+  # Streamable HTTP session (the Mcp-Session-Id issued at `initialize`) is
+  # held in-process by the SDK's session manager, not anywhere durable --
+  # a machine that suspends mid-session would force that client to
+  # reconnect. Scale-to-zero is a reasonable trade for a low-traffic
+  # personal deployment if you don't mind that; flip both flags below to
+  # `true` and set `min_machines_running = 0` if you want it.
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+
+  [[http_service.checks]]
+    interval = "30s"
+    timeout = "5s"
+    grace_period = "10s"
+    method = "GET"
+    path = "/health"

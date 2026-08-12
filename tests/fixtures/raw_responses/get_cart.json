@@ -1,0 +1,458 @@
+{
+  "bannerId": "superstore",
+  "customer": {
+    "email": "REDACTED",
+    "name": "REDACTED",
+    "pcid": "REDACTED"
+  },
+  "hasLiquor": false,
+  "id": "REDACTED",
+  "minCartValue": 30.0,
+  "minPCXPassCartValue": 30.0,
+  "modifiedTime": "2026-08-09T13:23:39.109Z",
+  "orderAggregations": {
+    "live": null,
+    "open": {
+      "taxBreakdown": [],
+      "totals": {
+        "additionalFees": 0.0,
+        "estimatedTotal": 27.21,
+        "subTotal": 27.21,
+        "totalCourierFee": 0.0,
+        "totalDeliveryFee": 0.0,
+        "totalDeliveryTip": null,
+        "totalDeposit": null,
+        "totalDiscounts": 0.0,
+        "totalEnvironmentalHandlingFee": null,
+        "totalGiftCardAmount": 0,
+        "totalLoyaltyDiscount": 0.0,
+        "totalLoyaltyPoints": null,
+        "totalMemberOnlySavings": 0.0,
+        "totalPickupFee": null,
+        "totalPointsToRedeem": null,
+        "totalPreauth": null,
+        "totalPrice": 28.06,
+        "totalProductDiscounts": 0.0,
+        "totalRedeemablePrice": 0,
+        "totalServiceFee": null,
+        "totalShippingFee": null,
+        "totalTax": 0.85,
+        "totalVoucherDiscounts": 0.0
+      }
+    }
+  },
+  "orders": [
+    {
+      "baggingInfo": null,
+      "customizedPromotions": {
+        "marvel": {
+          "eligibleToRedeem": true,
+          "isRedeemed": null
+        },
+        "stampCards": {
+          "balanceAvailable": null,
+          "balanceRequestedToRedeem": null,
+          "eligibleItems": 0,
+          "isRedeemed": null,
+          "rewardsAvailable": null
+        }
+      },
+      "entries": [
+        {
+          "creationTime": "2026-08-09T13:23:39.109Z",
+          "modifiedTime": "2026-08-09T13:23:39.109Z",
+          "numberOfItems": 1.0,
+          "offer": {
+            "availabilityStatus": "OK",
+            "badges": {
+              "dealBadge": null,
+              "hotmBadge": null,
+              "loyaltyBadge": null,
+              "madeInCanadaBadge": null,
+              "mustTryBadge": null,
+              "newItemBadge": null,
+              "preparedInCanadaBadge": null,
+              "preparedInQuebecBadge": null,
+              "productOfCanadaBadge": null,
+              "promotionalBadge": null,
+              "recyclingFeeBadge": null,
+              "tariffAppliedBadge": null,
+              "textBadge": null
+            },
+            "fulfillmentMethods": [
+              "pickup"
+            ],
+            "id": "REDACTED",
+            "itemType": "REGULAR",
+            "liam": "20539203_EA",
+            "maxOrderQuantity": 24.0,
+            "minOrderQuantity": 1.0,
+            "product": {
+              "aisleCategoryCode": "28011",
+              "aisleName": "Household Supplies",
+              "baseUnit": "each",
+              "brand": "No Name",
+              "description": null,
+              "id": "REDACTED",
+              "isVariant": false,
+              "memberOnlyPrice": null,
+              "mop": false,
+              "name": "Lemon Scent Dishwasher Detergent ",
+              "offerType": "OG",
+              "price": 6.5,
+              "primaryImage": "https://digital.loblaws.ca/PCX/20539203_EA/en/1/6038309883_en_front_centre_marketing_GS1_Ecommerce_120.png",
+              "sizeLabel": "KG",
+              "subBrand": null,
+              "variantGroupId": null,
+              "variantTheme": null,
+              "weighted": false
+            },
+            "promotionLabel": "Subscribe & Earn",
+            "promotions": [],
+            "regularPrice": 6.5,
+            "sellingIncrement": 1,
+            "sellingType": "SOLD_BY_EACH",
+            "sellingUnit": "EA",
+            "status": "Active",
+            "vendor": {
+              "id": "REDACTED"
+            },
+            "wasPrice": 6.5,
+            "webLink": "/lemon-scent-dishwasher-detergent/p/20539203_EA"
+          },
+          "prices": {
+            "comparisonPrices": [
+              {
+                "price": 0.36,
+                "quantity": 100,
+                "unit": "g"
+              }
+            ],
+            "deposit": null,
+            "ehfTotal": null,
+            "environmentalHandlingFee": null,
+            "memberOnlyPrice": 0.0,
+            "salePrice": 6.5,
+            "taxInfo": "",
+            "totalRegularPrice": 6.5,
+            "totalSalePrice": 6.5
+          },
+          "quantity": 1.0,
+          "selectedSubstitution": null,
+          "selectedSubstitutionDetails": null,
+          "shippingTracking": null,
+          "subscriptionAvailableCadences": [
+            {
+              "text": "Weeks",
+              "type": "WEEKS",
+              "value": 2
+            },
+            {
+              "text": "Weeks",
+              "type": "WEEKS",
+              "value": 3
+            },
+            {
+              "text": "Weeks",
+              "type": "WEEKS",
+              "value": 4
+            },
+            {
+              "text": "Weeks",
+              "type": "WEEKS",
+              "value": 8
+            }
+          ],
+          "subscriptionCadence": null,
+          "subscriptionCadenceInterval": null,
+          "subscriptionQuantity": null,
+          "substitutionPreference": {
+            "comment": "REDACTED",
+            "substitutionAllowed": true
+          }
+        },
+        {
+          "creationTime": "2026-08-09T13:23:39.109Z",
+          "modifiedTime": "2026-08-09T13:23:39.109Z",
+          "numberOfItems": 1.0,
+          "offer": {
+            "availabilityStatus": "LOW_STOCK",
+            "badges": {
+              "dealBadge": null,
+              "hotmBadge": null,
+              "loyaltyBadge": null,
+              "madeInCanadaBadge": null,
+              "mustTryBadge": null,
+              "newItemBadge": null,
+              "preparedInCanadaBadge": null,
+              "preparedInQuebecBadge": null,
+              "productOfCanadaBadge": null,
+              "promotionalBadge": null,
+              "recyclingFeeBadge": null,
+              "tariffAppliedBadge": null,
+              "textBadge": null
+            },
+            "fulfillmentMethods": [
+              "pickup"
+            ],
+            "id": "REDACTED",
+            "itemType": "REGULAR",
+            "liam": "20054844_EA",
+            "maxOrderQuantity": 24.0,
+            "minOrderQuantity": 1.0,
+            "product": {
+              "aisleCategoryCode": "27985",
+              "aisleName": "Food",
+              "baseUnit": "each",
+              "brand": "PC Organics",
+              "description": "Homgenized Milk has undergone a 'homogenization' process that breaks up and mixes the fat particles in milk, suspending them within the milk so that the cream no longer floats to the top as it does in unprocessed milk. Homogenized milk has more consistent, creamier taste and texture.",
+              "id": "REDACTED",
+              "isVariant": false,
+              "memberOnlyPrice": null,
+              "mop": false,
+              "name": "Organic Homogenized Milk 3.25% M.F.",
+              "offerType": "OG",
+              "price": 11.19,
+              "primaryImage": "https://digital.loblaws.ca/PCX/20054844_EA/en/1/20054844_en_front_120.png",
+              "sizeLabel": "L",
+              "subBrand": null,
+              "variantGroupId": null,
+              "variantTheme": null,
+              "weighted": false
+            },
+            "promotionLabel": "LOW STOCK",
+            "promotions": [],
+            "regularPrice": 11.19,
+            "sellingIncrement": 1,
+            "sellingType": "SOLD_BY_EACH",
+            "sellingUnit": "EA",
+            "status": "Active",
+            "vendor": {
+              "id": "REDACTED"
+            },
+            "wasPrice": 11.19,
+            "webLink": "/organic-homogenized-milk-3-25-m-f/p/20054844_EA"
+          },
+          "prices": {
+            "comparisonPrices": [
+              {
+                "price": 0.28,
+                "quantity": 100,
+                "unit": "ml"
+              }
+            ],
+            "deposit": null,
+            "ehfTotal": null,
+            "environmentalHandlingFee": null,
+            "memberOnlyPrice": 0.0,
+            "salePrice": 11.19,
+            "taxInfo": "",
+            "totalRegularPrice": 11.19,
+            "totalSalePrice": 11.19
+          },
+          "quantity": 1.0,
+          "selectedSubstitution": null,
+          "selectedSubstitutionDetails": null,
+          "shippingTracking": null,
+          "subscriptionAvailableCadences": [
+            {
+              "text": "Weeks",
+              "type": "WEEKS",
+              "value": 2
+            },
+            {
+              "text": "Weeks",
+              "type": "WEEKS",
+              "value": 3
+            },
+            {
+              "text": "Weeks",
+              "type": "WEEKS",
+              "value": 4
+            },
+            {
+              "text": "Weeks",
+              "type": "WEEKS",
+              "value": 8
+            }
+          ],
+          "subscriptionCadence": null,
+          "subscriptionCadenceInterval": null,
+          "subscriptionQuantity": null,
+          "substitutionPreference": {
+            "comment": "REDACTED",
+            "substitutionAllowed": false
+          }
+        },
+        {
+          "creationTime": "2026-08-09T13:23:39.109Z",
+          "modifiedTime": "2026-08-09T13:23:39.109Z",
+          "numberOfItems": 1.0,
+          "offer": {
+            "availabilityStatus": "OK",
+            "badges": {
+              "dealBadge": null,
+              "hotmBadge": null,
+              "loyaltyBadge": null,
+              "madeInCanadaBadge": null,
+              "mustTryBadge": null,
+              "newItemBadge": null,
+              "preparedInCanadaBadge": null,
+              "preparedInQuebecBadge": null,
+              "productOfCanadaBadge": null,
+              "promotionalBadge": null,
+              "recyclingFeeBadge": null,
+              "tariffAppliedBadge": null,
+              "textBadge": null
+            },
+            "fulfillmentMethods": [
+              "pickup"
+            ],
+            "id": "REDACTED",
+            "itemType": "REGULAR",
+            "liam": "21685186001_EA",
+            "maxOrderQuantity": 25.0,
+            "minOrderQuantity": 1.0,
+            "product": {
+              "aisleCategoryCode": "27985",
+              "aisleName": "Food",
+              "baseUnit": "each",
+              "brand": "No Name",
+              "description": "<p>Medium Size Eggs 30 Pack keeps your fridge stocked for the week. Whether you’re scrambling, baking, or meal-prepping, this pack comes in handy. This 30 pack is also great for when you're hosting family or friends for the week or weekend.</p>",
+              "id": "REDACTED",
+              "isVariant": false,
+              "memberOnlyPrice": null,
+              "mop": false,
+              "name": "Eggs, Medium",
+              "offerType": "OG",
+              "price": 9.52,
+              "primaryImage": "https://digital.loblaws.ca/PCX/21685186001_EA/en/1/21685186001_en_front_v1_120.png",
+              "sizeLabel": "EA",
+              "subBrand": null,
+              "variantGroupId": null,
+              "variantTheme": null,
+              "weighted": false
+            },
+            "promotionLabel": null,
+            "promotions": [],
+            "regularPrice": 9.52,
+            "sellingIncrement": 1,
+            "sellingType": "SOLD_BY_EACH",
+            "sellingUnit": "EA",
+            "status": "Active",
+            "vendor": {
+              "id": "REDACTED"
+            },
+            "wasPrice": 9.52,
+            "webLink": "/eggs-medium/p/21685186001_EA"
+          },
+          "prices": {
+            "comparisonPrices": [
+              {
+                "price": 0.32,
+                "quantity": 1,
+                "unit": "ea"
+              }
+            ],
+            "deposit": null,
+            "ehfTotal": null,
+            "environmentalHandlingFee": null,
+            "memberOnlyPrice": 0.0,
+            "salePrice": 9.52,
+            "taxInfo": "",
+            "totalRegularPrice": 9.52,
+            "totalSalePrice": 9.52
+          },
+          "quantity": 1.0,
+          "selectedSubstitution": null,
+          "selectedSubstitutionDetails": null,
+          "shippingTracking": null,
+          "subscriptionAvailableCadences": [],
+          "subscriptionCadence": null,
+          "subscriptionCadenceInterval": null,
+          "subscriptionQuantity": null,
+          "substitutionPreference": {
+            "comment": "REDACTED",
+            "substitutionAllowed": false
+          }
+        }
+      ],
+      "exchangedBins": [],
+      "fulfillment": {
+        "courier": {
+          "comment": "REDACTED",
+          "courierFee": 0.0,
+          "deliveryAddress": {
+            "city": "REDACTED",
+            "country": "REDACTED",
+            "deliveryInstructions": "REDACTED",
+            "email": "REDACTED",
+            "firstName": "REDACTED",
+            "lastName": "REDACTED",
+            "phoneNumber": "REDACTED",
+            "postalCode": "REDACTED",
+            "region": "REDACTED",
+            "streetAddress": "REDACTED",
+            "unit": "REDACTED"
+          },
+          "deliveryTip": null,
+          "fulfillmentLocationId": "1024PCXD",
+          "fulfillmentRegion": "Ontario",
+          "maxItemsAllowed": 130,
+          "mode": null,
+          "storeId": "1024",
+          "timeWindow": {
+            "bufferTimeInHours": 4,
+            "cutOffDate": "2026-08-08T23:59:59",
+            "endTime": "2026-08-09T14:30:00",
+            "slotExpiryDateTime": "2026-08-09T10:22:11-04:00",
+            "startTime": "2026-08-09T13:30:00",
+            "timeZone": "EST5EDT"
+          }
+        },
+        "delivery": null,
+        "pickupBooking": null,
+        "pickupInstructions": null,
+        "type": "courier"
+      },
+      "giftCardPayment": null,
+      "internalOrderId": "REDACTED",
+      "maxAllowedGiftCard": 2,
+      "modifiedTime": null,
+      "orderId": "REDACTED",
+      "payment": null,
+      "redeemableOptions": [],
+      "status": "OPEN",
+      "taxEntries": [],
+      "totals": {
+        "additionalFees": 0.0,
+        "estimatedTotal": 27.21,
+        "subTotal": 27.21,
+        "totalCourierFee": 0.0,
+        "totalDeliveryFee": 0.0,
+        "totalDeliveryTip": null,
+        "totalDeposit": null,
+        "totalDiscounts": 0.0,
+        "totalEnvironmentalHandlingFee": null,
+        "totalGiftCardAmount": 0,
+        "totalLoyaltyDiscount": 0.0,
+        "totalLoyaltyPoints": null,
+        "totalMemberOnlySavings": 0.0,
+        "totalPickupFee": null,
+        "totalPointsToRedeem": null,
+        "totalPreauth": null,
+        "totalPrice": 28.06,
+        "totalProductDiscounts": 0.0,
+        "totalRedeemablePrice": 0,
+        "totalServiceFee": null,
+        "totalShippingFee": null,
+        "totalTax": 0.85,
+        "totalVoucherDiscounts": 0.0
+      },
+      "vendorId": "superstore",
+      "vouchers": [],
+      "wscMembershipPayment": false
+    }
+  ],
+  "status": "OPEN"
+}

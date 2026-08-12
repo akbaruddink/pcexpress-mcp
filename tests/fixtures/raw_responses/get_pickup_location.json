@@ -1,0 +1,781 @@
+{
+  "address": {
+    "country": "Canada",
+    "formattedAddress": "201 Oak Walk Blvd., Oakville, ON, L6H 6M3",
+    "line1": "201 Oak Walk Blvd.",
+    "line2": "",
+    "postalCode": "REDACTED",
+    "region": "Ontario",
+    "town": "Oakville"
+  },
+  "baggingOptions": null,
+  "bufferTimeInHours": 4,
+  "canonicalZoneId": "America/Toronto",
+  "departments": [
+    {
+      "name": "PC Financial® Pavilion",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Pharmacy",
+      "optical": null,
+      "pharmacy": {
+        "accreditationNumber": "33196",
+        "collegeCity": null,
+        "collegeFaxNumber": null,
+        "collegeName": null,
+        "collegePhoneNumber": null,
+        "collegePostalCode": null,
+        "collegeProvince": null,
+        "collegeStreet": null,
+        "collegeUrl": null,
+        "description": null,
+        "email": null,
+        "faxNumber": null,
+        "managerName": null,
+        "phoneNumber": null
+      }
+    },
+    {
+      "name": "Renewing your prescription",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Pneumococcal Vaccination",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Naloxone",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Dietitian",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Lottery",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Wine",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Rapid COVID-19 Screening",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Tim Hortons",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Goodlife Fitness",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "COVID Vaccination Walk-in (based on vaccine availability)",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "PC Optimum",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Joe Fresh®",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "The Mobile Shop",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Hepatitis Vaccination",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Travel Consult",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "PC Financial® ATMs",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "HPV Vaccination",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "PCM Prepaid SIM Cards",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "A1C Test",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Specsavers",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Passport Photos",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Meals to Go",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Immunization Assessment (For Adults)",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Medication Review",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Gift cards",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Meningococcal Vaccination",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Click & Collect",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Floral / Floral Arrangements",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Dry Cleaners",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Garden centre",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Shingles Vaccination",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Medical clinic",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Diabetes Consultation",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Online Prescription Submission Tool",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "PC Financial",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Pharmacy delivery",
+      "optical": null,
+      "pharmacy": null
+    },
+    {
+      "name": "Smartform Med Review",
+      "optical": null,
+      "pharmacy": null
+    }
+  ],
+  "features": null,
+  "geoFenceRadius": 0,
+  "geoPoint": {
+    "latitude": 43.483851,
+    "longitude": -79.722327
+  },
+  "isShoppable": true,
+  "locationDescription": "",
+  "locationSpecifics": null,
+  "locationType": "STORE",
+  "maxItemsPerStorageUnit": null,
+  "minCartValue": 30.0,
+  "minPCXPassCartValue": 30.0,
+  "name": "Real Canadian Superstore Oak Park Drive",
+  "openNowResponseData": {
+    "date": "2026-08-09",
+    "hours": "07:00 AM - 11:00 PM",
+    "openNow": true
+  },
+  "orderContactNumber": "(905) 257-9099",
+  "orderNotificationTimeRestriction": null,
+  "ownerName": "REDACTED",
+  "partner": null,
+  "pickupInstructions": "Park your car in one of the reserved Express parking spots and tap the link below.",
+  "pickupLocationId": "1024",
+  "pickupType": "STORE",
+  "storeBannerId": "superstore",
+  "storeBannerName": "Real Canadian Superstore",
+  "storeDetails": {
+    "beerPurchaseHours": [],
+    "casHours": [],
+    "curbPhoneNumber": "REDACTED",
+    "departments": [
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "PC Financial® Pavilion",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "PCFIN"
+      },
+      {
+        "description": "Our Pharmacists offer patient education programs and work closely with in-store Dietitians (Where available in select stores) to help patients achieve their health goals. Our pharmacy team is committed to providing personalized care and quality service. With convenient hours of operation, we're always available and strive to provide you with the highest level of service.",
+        "faxNumber": "905 257 6377",
+        "managerName": "REDACTED",
+        "name": "Pharmacy",
+        "pharmacy": {
+          "accreditationNumber": "33196",
+          "licensingPharmacyCollege": {
+            "city": "Toronto",
+            "faxNumber": "4167033100",
+            "logo": "wk",
+            "name": "Ontario College of Pharmacists",
+            "phoneNumber": "REDACTED",
+            "postalCode": "REDACTED",
+            "province": "ON",
+            "street": "483 Huron Street",
+            "url": ""
+          }
+        },
+        "phoneNumber": "REDACTED",
+        "thirdPartyId": "PHARM"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Renewing your prescription",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "RENEW"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Pneumococcal Vaccination",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "VACP"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Naloxone",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "NALO"
+      },
+      {
+        "description": "Our in-store dietitians are your trusted source for food and nutrition information. Registered Dietitians have a university degree who specialize in building tailored nutrition programs to help meet specific health needs. Located right in our stores, where food choices are made, our dietitians can personally help you plan and shop for meals that are right for you and your family.",
+        "faxNumber": null,
+        "managerName": "REDACTED",
+        "name": "Dietitian",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "default"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Lottery",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "LOTT"
+      },
+      {
+        "description": "",
+        "faxNumber": null,
+        "managerName": "REDACTED",
+        "name": "Wine",
+        "pharmacy": null,
+        "phoneNumber": "REDACTED",
+        "thirdPartyId": "default"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Rapid COVID-19 Screening",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "CVDSCRNRPD"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Tim Hortons",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "TMHT"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Goodlife Fitness",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "GLFT"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "COVID Vaccination Walk-in (based on vaccine availability)",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "VACCOVIDWALK"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "PC Optimum",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "PCOP"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Joe Fresh®",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "JOFH"
+      },
+      {
+        "description": "",
+        "faxNumber": null,
+        "managerName": "REDACTED",
+        "name": "The Mobile Shop",
+        "pharmacy": null,
+        "phoneNumber": "REDACTED",
+        "thirdPartyId": "MOBSH"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Hepatitis Vaccination",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "VACH"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Travel Consult",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "TRVC"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "PC Financial® ATMs",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "PCATM"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "HPV Vaccination",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "VACV"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "PCM Prepaid SIM Cards",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "PCMSIMS"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "A1C Test",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "A1CT"
+      },
+      {
+        "description": "Our optical team is committed to providing personalized care and quality service. There are many reasons to buy from our optical department: licensed opticians; over 700 frames to choose from; prescription safety, sport and sunglasses available.",
+        "faxNumber": "9052576603",
+        "managerName": "REDACTED",
+        "name": "Specsavers",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "OPTL"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Passport Photos",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "PPHT"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Meals to Go",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "MLTG"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Immunization Assessment (For Adults)",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "IMAS"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Medication Review",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "MDREV"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Gift cards",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "GCRD"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Meningococcal Vaccination",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "VACM"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Click & Collect",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "CNC"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Floral / Floral Arrangements",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "FLRL"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Dry Cleaners",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "DCLNR"
+      },
+      {
+        "description": "null",
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Garden centre",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "GARCEN"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Shingles Vaccination",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "VACS"
+      },
+      {
+        "description": "Need to see a doctor? With convenient hours of operation, we're always available and strive to provide you with the highest level of service. Hours are subject to change without prior notice. Please call the clinic before your visit in order to determine the best method to address your healthcare concerns or www.primacyclinics.ca for more information.",
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Medical clinic",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "MEDC"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Diabetes Consultation",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "DICO"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Online Prescription Submission Tool",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "RXPHOTO"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "PC Financial",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "PCF"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Pharmacy delivery",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "PHADL"
+      },
+      {
+        "description": null,
+        "faxNumber": null,
+        "managerName": null,
+        "name": "Smartform Med Review",
+        "pharmacy": null,
+        "phoneNumber": null,
+        "thirdPartyId": "MDSCHK"
+      }
+    ],
+    "holidayHours": [],
+    "manager": "REDACTED",
+    "medicalClinicHours": [
+      {
+        "date": null,
+        "day": "Monday",
+        "hours": "09:00 AM - 08:00 PM"
+      },
+      {
+        "date": null,
+        "day": "Tuesday",
+        "hours": "09:00 AM - 08:00 PM"
+      },
+      {
+        "date": null,
+        "day": "Wednesday",
+        "hours": "09:00 AM - 06:00 PM"
+      },
+      {
+        "date": null,
+        "day": "Thursday",
+        "hours": "09:00 AM - 08:00 PM"
+      },
+      {
+        "date": null,
+        "day": "Friday",
+        "hours": "09:00 AM - 06:00 PM"
+      },
+      {
+        "date": null,
+        "day": "Saturday",
+        "hours": "09:00 AM - 01:00 PM"
+      },
+      {
+        "date": null,
+        "day": "Sunday",
+        "hours": "CLOSED - CLOSED"
+      }
+    ],
+    "opticalHours": [
+      {
+        "date": "2026-08-10",
+        "day": "Monday",
+        "hours": "10:00 AM - 06:00 PM"
+      },
+      {
+        "date": "2026-08-11",
+        "day": "Tuesday",
+        "hours": "10:00 AM - 06:00 PM"
+      },
+      {
+        "date": "2026-08-13",
+        "day": "Thursday",
+        "hours": "10:00 AM - 06:00 PM"
+      },
+      {
+        "date": "2026-08-09",
+        "day": "Sunday",
+        "hours": "CLOSED - CLOSED"
+      },
+      {
+        "date": "2026-08-12",
+        "day": "Wednesday",
+        "hours": "10:00 AM - 06:00 PM"
+      },
+      {
+        "date": "2026-08-14",
+        "day": "Friday",
+        "hours": "10:00 AM - 06:00 PM"
+      },
+      {
+        "date": "2026-08-15",
+        "day": "Saturday",
+        "hours": "09:00 AM - 05:00 PM"
+      }
+    ],
+    "orderPhoneNumber": "REDACTED",
+    "pharmacyHours": [
+      {
+        "date": "2026-08-14",
+        "day": "Friday",
+        "hours": "09:00 AM - 09:00 PM"
+      },
+      {
+        "date": "2026-08-10",
+        "day": "Monday",
+        "hours": "09:00 AM - 09:00 PM"
+      },
+      {
+        "date": "2026-08-11",
+        "day": "Tuesday",
+        "hours": "09:00 AM - 09:00 PM"
+      },
+      {
+        "date": "2026-08-12",
+        "day": "Wednesday",
+        "hours": "09:00 AM - 09:00 PM"
+      },
+      {
+        "date": "2026-08-13",
+        "day": "Thursday",
+        "hours": "09:00 AM - 09:00 PM"
+      },
+      {
+        "date": "2026-08-15",
+        "day": "Saturday",
+        "hours": "10:00 AM - 05:00 PM"
+      },
+      {
+        "date": "2026-08-09",
+        "day": "Sunday",
+        "hours": "10:00 AM - 05:00 PM"
+      }
+    ],
+    "phoneNumber": "REDACTED",
+    "storeHours": [
+      {
+        "date": "2026-08-11",
+        "day": "Tuesday",
+        "hours": "07:00 AM - 11:00 PM"
+      },
+      {
+        "date": "2026-08-12",
+        "day": "Wednesday",
+        "hours": "07:00 AM - 11:00 PM"
+      },
+      {
+        "date": "2026-08-13",
+        "day": "Thursday",
+        "hours": "07:00 AM - 11:00 PM"
+      },
+      {
+        "date": "2026-08-14",
+        "day": "Friday",
+        "hours": "07:00 AM - 11:00 PM"
+      },
+      {
+        "date": "2026-08-09",
+        "day": "Sunday",
+        "hours": "07:00 AM - 11:00 PM"
+      },
+      {
+        "date": "2026-08-10",
+        "day": "Monday",
+        "hours": "07:00 AM - 11:00 PM"
+      },
+      {
+        "date": "2026-08-15",
+        "day": "Saturday",
+        "hours": "07:00 AM - 11:00 PM"
+      }
+    ]
+  },
+  "storeId": "1024",
+  "timeZone": "EST_EDT",
+  "totalStorageUnit": null,
+  "visible": true
+}

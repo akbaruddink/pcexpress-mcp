@@ -1,0 +1,54 @@
+{
+  "cartId": "REDACTED",
+  "customerId": "REDACTED",
+  "firstName": "REDACTED",
+  "homeStore": null,
+  "id": "REDACTED",
+  "inPCOptimum": true,
+  "is2SVEnabled": false,
+  "isB2BCustomer": false,
+  "isColleague": false,
+  "isHeliosAccount": true,
+  "language": "English",
+  "lastName": "REDACTED",
+  "lastShoppedBanners": null,
+  "lastStoreId": "1024",
+  "paymentServiceEnabled": false,
+  "pcInsiderMembership": null,
+  "pcOptimum": {
+    "errorMessage": null,
+    "householdId": "REDACTED",
+    "memberId": "REDACTED",
+    "points": {
+      "balance": "REDACTED",
+      "dollarsRedeemable": "REDACTED",
+      "dollarsRedeemedLifetime": "REDACTED"
+    },
+    "walletId": "REDACTED"
+  },
+  "pcPlus": {
+    "cardNumber": null,
+    "email": null,
+    "memberName": null,
+    "membershipId": null,
+    "pointBalance": null
+  },
+  "phoneExtension": "REDACTED",
+  "phoneNumber": "REDACTED",
+  "postalCode": "REDACTED",
+  "preAuthExtraPercent": 0.0,
+  "sameDayOrderPreAuthEnabledForBanner": false,
+  "sameDayOrderPreAuthEnabledForStore": false,
+  "shopScanTermsAccepted": false,
+  "userGroup": null,
+  "wasInPCPlus": false,
+  "wholesaleClubMembership": {
+    "businessName": null,
+    "liquorVerified": null,
+    "memberSegmentCode": null,
+    "memberSegmentName": null,
+    "membershipCardNumber": null,
+    "taxExempted": null,
+    "tobaccoVerified": null
+  }
+}

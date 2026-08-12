@@ -1,0 +1,76 @@
+name: Bug report
+description: Something isn't working -- a tool errors, an API response looks wrong, HTTP mode misbehaves, etc.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Before filing: this wraps an **undocumented, reverse-engineered API**
+        (see docs/RESEARCH.md). A lot of what looks like a bug here is
+        actually Loblaw changing something upstream -- check
+        docs/DEPLOYMENT.md's "Verification status, precisely" section for
+        what's already known to be shaky.
+
+        **Never paste a raw access/refresh token, PCEXPRESS_TOKEN_SECRET, or
+        `.env` contents below.** Structured `{"error": ...}` tool responses
+        are safe to paste -- they're never a raw token.
+
+  - type: dropdown
+    id: mode
+    attributes:
+      label: Mode
+      options:
+        - stdio (Claude Desktop / Claude Code, default)
+        - HTTP (--http / remote/mobile access)
+    validations:
+      required: true
+
+  - type: input
+    id: tool
+    attributes:
+      label: Which tool (if applicable)
+      placeholder: e.g. search_products, add_to_cart
+    validations:
+      required: false
+
+  - type: input
+    id: banner
+    attributes:
+      label: Banner
+      placeholder: e.g. superstore, nofrills
+    validations:
+      required: false
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected to happen
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: What actually happened
+      description: Paste the exact `{"error": ...}` response or error message. No raw tokens.
+    validations:
+      required: true
+
+  - type: textarea
+    id: scrubbed-response
+    attributes:
+      label: Scrubbed raw API response (optional, but most useful)
+      description: >-
+        If you can reproduce it with `curl` using your own token and redact
+        anything personal (name, address, order numbers), a raw response
+        body is the single most useful thing for fixing a shape mismatch.
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: Version / commit
+      placeholder: git rev-parse HEAD, or a release tag
+    validations:
+      required: false

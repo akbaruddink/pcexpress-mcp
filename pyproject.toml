@@ -1,0 +1,56 @@
+[project]
+name = "pc-express-mcp"
+version = "0.1.0"
+description = "Unofficial MCP server wrapping PC Express (Loblaws/Real Canadian Superstore/No Frills) online grocery ordering for personal use."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+dependencies = [
+    # Pinned exact, not >=: this project deliberately does not track new
+    # releases automatically -- every version here is what the test suite
+    # (see CI) and the live deployment were actually run against. Bumping
+    # any of these is a deliberate, tested action (re-run the full suite +
+    # a live smoke check), never an incidental side effect of a fresh
+    # install. See README "Dependency policy".
+    #
+    # mcp.server.mcpserver.MCPServer (this project's server.py) doesn't
+    # exist before 2.0 -- older releases had it at mcp.server.fastmcp.FastMCP
+    # instead. Verified against an actual `uv pip install`, not assumed.
+    "mcp[cli]==2.0.0",
+    "httpx==0.28.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "pytest-cov==7.1.0",
+]
+# Only needed for `python -m pc_express_mcp.server --http` (remote/mobile
+# access). Stdio mode (Claude Desktop / Claude Code, the default) doesn't
+# need this. See README "Remote/mobile access".
+http = [
+    "uvicorn==0.52.1",
+    # Encrypts tenant PC Express credentials into the OAuth tokens issued to
+    # Claude -- see pc_express_mcp/token_crypto.py.
+    "cryptography==50.0.0",
+]
+
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["pc_express_mcp"]
+
+[tool.coverage.run]
+source = ["pc_express_mcp"]
+# scripts/login.py is an interactive script (prompts, webbrowser.open, real
+# PC ID login) -- exercising it means logging into a real account, so it's
+# deliberately excluded from the coverage target rather than faked out.
+omit = ["scripts/*"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]

@@ -1,0 +1,8 @@
+# Minimal runtime deps, pinned exact (see README "Dependency policy") --
+# these are the direct dependencies only, not the full transitive closure.
+# Prefer `uv sync` (uses uv.lock, the actually-tested full dependency tree)
+# or `pip install -e .` over this file when possible; this exists for
+# environments that want a plain `pip install -r requirements.txt` with no
+# editable install and no uv.
+mcp[cli]==2.0.0
+httpx==0.28.1

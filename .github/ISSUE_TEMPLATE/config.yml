@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Security vulnerability
+    url: https://github.com/CHANGE_ME/pc-express-mcp/security/advisories/new
+    about: >-
+      Use GitHub's private security advisory flow for anything actively
+      exploitable, not a public issue -- see docs/SECURITY.md. (Repo owner:
+      update CHANGE_ME above once this is pushed to your own GitHub account.)

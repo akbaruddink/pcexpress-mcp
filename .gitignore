@@ -1,0 +1,28 @@
+# Secrets / local auth state -- NEVER commit these
+.env
+.env.*
+!.env.example
+pcexpress-state/
+*.pcexpress-state.json
+state.json
+auth_state.json
+session_state.json
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+
+# OS/editor cruft
+.DS_Store
+.vscode/
+.idea/

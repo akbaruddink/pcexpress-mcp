@@ -1,0 +1,66 @@
+# HTTP-mode ("remote/mobile access") self-hosting stack: this project's own
+# app, plus Caddy for automatic HTTPS via a real domain -- see README
+# "Remote/mobile access" for what HTTP mode actually is (an open
+# self-service multi-tenant OAuth server, not a private single-user
+# endpoint) before running this. The Dockerfile itself defaults to the
+# safer stdio mode; this compose file is what deliberately opts into HTTP
+# mode, one level up, where that choice is explicit and easy to see rather
+# than a container default.
+#
+# Setup:
+#   1. cp .env.example .env, fill in PCEXPRESS_PUBLIC_URL (your https://
+#      domain), PCEXPRESS_TOKEN_SECRET (`python scripts/generate_secret.py`),
+#      and PCEXPRESS_DOMAIN (the bare domain, no scheme, for Caddy).
+#   2. Point that domain's DNS A/AAAA record at this host.
+#   3. docker compose up -d --build
+
+services:
+  pc-express-mcp:
+    build: .
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PCEXPRESS_HTTP: "1"
+      PCEXPRESS_HTTP_HOST: "0.0.0.0"
+    expose:
+      - "8090"
+    healthcheck:
+      # Safe to rely on here specifically -- unlike the bare Dockerfile,
+      # this service always runs HTTP mode, so /health always exists.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8090/health', timeout=3)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    # No `ports:` -- only Caddy is published to the host; this container is
+    # reachable solely from Caddy over the compose-internal network.
+    #
+    # No `volumes:` either: HTTP mode keeps zero persistent state on disk.
+    # Every tenant's PC Express credentials live only inside the encrypted
+    # OAuth token they're holding (see pc_express_mcp/token_crypto.py), and
+    # session/cart state is an in-memory cache that just costs one extra API
+    # round-trip to rebuild if lost. This container is fully disposable and
+    # recreatable with no data loss beyond forcing tenants to reconnect.
+
+  caddy:
+    image: caddy:2.11.4-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      PCEXPRESS_DOMAIN: ${PCEXPRESS_DOMAIN:?set PCEXPRESS_DOMAIN in .env to your bare domain, e.g. pcexpress.example.com}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - pc-express-mcp
+
+volumes:
+  # Caddy's ACME account key + issued certificates -- persisted so a
+  # restart doesn't re-request a new certificate from Let's Encrypt every
+  # time (rate limits are real). Not application state.
+  caddy_data:
+  caddy_config:

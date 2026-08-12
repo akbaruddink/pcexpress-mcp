@@ -1,0 +1,42 @@
+{
+  "offlineOrdersCount": 47,
+  "onlineOrdersCount": 237,
+  "orderHistory": [
+    {
+      "bannerImageUrl": null,
+      "bannerName": "superstore",
+      "deliveryFee": null,
+      "fulfillmentType": "DELIVERY",
+      "id": "REDACTED",
+      "orderType": "Online",
+      "placed": "2026-08-08T03:50:05.284Z",
+      "serviceFee": null,
+      "store": "Real Canadian Superstore Oak Park Drive",
+      "total": 77.61
+    },
+    {
+      "bannerImageUrl": null,
+      "bannerName": "no frills",
+      "deliveryFee": null,
+      "fulfillmentType": "DELIVERY",
+      "id": "REDACTED",
+      "orderType": "Online",
+      "placed": "2026-08-07T09:13:13.000Z",
+      "serviceFee": null,
+      "store": "Daniel's NOFRILLS Mississauga Eglinton",
+      "total": 34.39
+    },
+    {
+      "bannerImageUrl": null,
+      "bannerName": "real canadian superstore",
+      "deliveryFee": null,
+      "fulfillmentType": "DELIVERY",
+      "id": "REDACTED",
+      "orderType": "Online",
+      "placed": "2026-08-05T10:36:21.000Z",
+      "serviceFee": null,
+      "store": "Real Canadian Superstore Oak Park Drive",
+      "total": 42.1
+    }
+  ]
+}
