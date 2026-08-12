@@ -801,6 +801,28 @@ Apps-branch response explaining exactly this, and updating
 before the tool is even called -- see `tests/test_interactive_search.py`
 for the regression test pinning the note's presence.
 
+### Expired result_refs looked exactly like a real zero-result search
+
+Reported directly: a widget that showed real products in one screenshot
+showed "No results" for the same search after navigating away and back
+in the client. Cause: `_search_results_cache` is a plain in-memory Python
+dict, not persisted anywhere -- restarting the server (a `systemctl
+restart`, deploying an unrelated change, a crash) wipes it, and any
+`result_ref` issued before that restart becomes invalid. This is expected
+given the design (see the token-economy section above), not itself a
+bug -- but the widget was treating "server says this ref no longer
+exists" identically to "server says zero products matched," rendering
+both as a plain "No results." That's the actual bug: a real, recoverable
+condition (search again) looked indistinguishable from a real, final one
+(nothing matched). Fixed in the widget: `_interactive_search_results`'s
+`error: "expired"` response now renders as "This search has expired --
+ask Claude to search again," not folded into the empty-results state.
+The cache itself stays in-memory and bounded (50 entries) on purpose --
+search results going stale after a restart or eviction is a reasonable
+thing to happen given prices/availability can change, so the fix is
+honest messaging, not trying to make a deliberately ephemeral cache
+durable.
+
 ## Loyalty offers (no dedicated endpoint found)
 
 Two real, working, account-level loyalty endpoints exist and are wired to

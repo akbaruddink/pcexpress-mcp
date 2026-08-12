@@ -39,6 +39,13 @@ const root = document.getElementById("root");
 let app = null;
 let query = "";
 let results = MOCK_RESULTS;
+// Set when the widget's data fetch failed or its result_ref expired (the
+// server's search-results cache is in-memory and doesn't survive a
+// restart) -- distinct from a genuine zero-result search, which this
+// project's own real usage showed getting silently conflated with "no
+// results" is actively confusing (see docs/RESEARCH.md "Interactive
+// product search widget").
+let resultsError = null;
 const addedCodes = new Set();
 
 function caps() {
@@ -87,7 +94,7 @@ function render() {
   root.appendChild(head);
 
   if (results.length === 0) {
-    root.appendChild(el("div", "empty", "No results."));
+    root.appendChild(el("div", "empty", resultsError || "No results."));
   } else {
     const grid = el("div", "grid");
     for (const product of results) grid.appendChild(renderCard(product));
@@ -260,6 +267,7 @@ async function boot() {
       return;
     }
     query = launch.query || "";
+    resultsError = null;
     try {
       const dataRes = await app.callServerTool({
         name: "_interactive_search_results",
@@ -267,9 +275,15 @@ async function boot() {
       });
       const data = extractToolData(dataRes);
       results = Array.isArray(data?.results) ? data.results : [];
+      if (data?.error === "expired") {
+        resultsError = "This search has expired -- ask Claude to search again.";
+      } else if (data?.error) {
+        resultsError = data.message || "Couldn't load results -- ask Claude to search again.";
+      }
     } catch (e) {
       log("warning", { event: "fetch_results_failed", error: String(e) });
       results = [];
+      resultsError = "Couldn't load results -- ask Claude to search again.";
     }
     render();
   };

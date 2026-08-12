@@ -18608,6 +18608,7 @@ container holding the app. Specify either width or maxWidth, and either height o
   var app = null;
   var query = "";
   var results = MOCK_RESULTS;
+  var resultsError = null;
   var addedCodes = /* @__PURE__ */ new Set();
   function caps() {
     return app?.getHostCapabilities() ?? {};
@@ -18644,7 +18645,7 @@ container holding the app. Specify either width or maxWidth, and either height o
     head.appendChild(el("div", "count", `${results.length} item${results.length === 1 ? "" : "s"}`));
     root.appendChild(head);
     if (results.length === 0) {
-      root.appendChild(el("div", "empty", "No results."));
+      root.appendChild(el("div", "empty", resultsError || "No results."));
     } else {
       const grid = el("div", "grid");
       for (const product of results) grid.appendChild(renderCard(product));
@@ -18786,6 +18787,7 @@ container holding the app. Specify either width or maxWidth, and either height o
         return;
       }
       query = launch.query || "";
+      resultsError = null;
       try {
         const dataRes = await app.callServerTool({
           name: "_interactive_search_results",
@@ -18793,9 +18795,15 @@ container holding the app. Specify either width or maxWidth, and either height o
         });
         const data = extractToolData(dataRes);
         results = Array.isArray(data?.results) ? data.results : [];
+        if (data?.error === "expired") {
+          resultsError = "This search has expired -- ask Claude to search again.";
+        } else if (data?.error) {
+          resultsError = data.message || "Couldn't load results -- ask Claude to search again.";
+        }
       } catch (e) {
         log("warning", { event: "fetch_results_failed", error: String(e) });
         results = [];
+        resultsError = "Couldn't load results -- ask Claude to search again.";
       }
       render();
     };
