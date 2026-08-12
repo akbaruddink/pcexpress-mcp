@@ -262,22 +262,26 @@ async function boot() {
   // fires immediately after the handshake.
   app.ontoolresult = async (res) => {
     const launch = extractToolData(res);
-    if (!launch?.result_ref) {
-      log("warning", { event: "missing_result_ref", data: launch });
+    if (!launch?.query) {
+      log("warning", { event: "missing_launch_data", data: launch });
       return;
     }
     query = launch.query || "";
     resultsError = null;
     try {
+      // Re-runs the actual search live -- see interactive_search
+      // (Python side) for why this isn't a cached-result lookup: a
+      // cache entry can go stale or disappear (a server restart between
+      // this search and the widget re-fetching it, confirmed to happen
+      // in practice), while re-running the same query/store/banner
+      // can't expire.
       const dataRes = await app.callServerTool({
         name: "_interactive_search_results",
-        arguments: { result_ref: launch.result_ref },
+        arguments: { query: launch.query, size: launch.size, store_id: launch.store_id, banner: launch.banner },
       });
       const data = extractToolData(dataRes);
       results = Array.isArray(data?.results) ? data.results : [];
-      if (data?.error === "expired") {
-        resultsError = "This search has expired -- ask Claude to search again.";
-      } else if (data?.error) {
+      if (data?.error) {
         resultsError = data.message || "Couldn't load results -- ask Claude to search again.";
       }
     } catch (e) {

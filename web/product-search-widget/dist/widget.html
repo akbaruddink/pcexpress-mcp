@@ -18782,8 +18782,8 @@ container holding the app. Specify either width or maxWidth, and either height o
     app = new i({ name: "PC Express Product Search", version: "1.0.0" });
     app.ontoolresult = async (res) => {
       const launch = extractToolData(res);
-      if (!launch?.result_ref) {
-        log("warning", { event: "missing_result_ref", data: launch });
+      if (!launch?.query) {
+        log("warning", { event: "missing_launch_data", data: launch });
         return;
       }
       query = launch.query || "";
@@ -18791,13 +18791,11 @@ container holding the app. Specify either width or maxWidth, and either height o
       try {
         const dataRes = await app.callServerTool({
           name: "_interactive_search_results",
-          arguments: { result_ref: launch.result_ref }
+          arguments: { query: launch.query, size: launch.size, store_id: launch.store_id, banner: launch.banner }
         });
         const data = extractToolData(dataRes);
         results = Array.isArray(data?.results) ? data.results : [];
-        if (data?.error === "expired") {
-          resultsError = "This search has expired -- ask Claude to search again.";
-        } else if (data?.error) {
+        if (data?.error) {
           resultsError = data.message || "Couldn't load results -- ask Claude to search again.";
         }
       } catch (e) {

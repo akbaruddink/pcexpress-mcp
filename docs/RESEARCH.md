@@ -726,20 +726,37 @@ module has finished importing, not at `def` time.
 
 Following the referenced repo's own documented pattern (its
 `docs/06-token-economy.md`): `interactive_product_search` (the
-model-visible launcher) returns only `{result_ref, query, count}` --
-never the actual product list -- when the connected client negotiated
-Apps support (`client_supports_apps(ctx)`). The full results (photos,
-prices, everything `_simplify_product` produces) are cached server-side,
-keyed by a random `result_ref`, in a bounded in-memory dict
-(`_search_results_cache`, capped at 50 entries, oldest evicted first --
-there's no user-facing "clear" action, so eviction is the only cleanup
-path). The widget fetches the real data itself, over the postMessage
-bridge, via `_interactive_search_results` -- a second tool bound to the
-same `ui://` resource but registered with `visibility=["app"]`, which
-excludes it from the model's tool list entirely (confirmed via the
-referenced docs: this hides the *whole tool*, not per-result content --
-there is no way to make one tool return different content to the model
-vs. the widget, which is why this needs two tools, not one).
+model-visible launcher) returns only a small reference --
+`{query, size, store_id, banner, count}`, never the actual product list
+-- when the connected client negotiated Apps support
+(`client_supports_apps(ctx)`). The widget fetches the real data itself,
+over the postMessage bridge, via `_interactive_search_results` -- a
+second tool bound to the same `ui://` resource but registered with
+`visibility=["app"]`, which excludes it from the model's tool list
+entirely (confirmed via the referenced docs: this hides the *whole
+tool*, not per-result content -- there is no way to make one tool return
+different content to the model vs. the widget, which is why this needs
+two tools, not one).
+
+**This reference is reproducible, not a cache key.** The first version
+cached the actual *results* server-side, keyed by a random `result_ref`
+-- the widget just handed that id back to fetch them. A real user report
+(see "Expired result_refs" below) showed the problem with that: the cache
+was in-memory, so it didn't survive a server restart, and a `result_ref`
+issued before one became permanently dead with no way to recover except
+"search again." The fix, suggested directly by the user asking "can't it
+carry the search query and params... so the widget renders every time?":
+stop caching results at all, and instead have the small reference carry
+everything needed to *reproduce* them -- `query`/`size`/`store_id`/
+`banner` -- so `_interactive_search_results` just re-runs
+`api.search_products` live, every time it's called. Search is cheap,
+safe (read-only), and has no real state to preserve, unlike the
+referenced repo's own example (a pizza *order*, which genuinely needs a
+durable `orderId` since a build-your-own-pizza session has real
+in-progress state a live re-run can't reconstruct) -- so there was never
+a good reason to cache it here. This removes the entire failure mode:
+there's no cache, so nothing to expire, so no "search again" message is
+ever needed for this reason again.
 
 **Graceful degradation is not an edge case here, it's the default path.**
 When `ctx` is `None` (the tool called directly, outside any real client
@@ -762,7 +779,11 @@ resource is served with the right MIME type
 external images by default -- see the referenced repo's CSP doc), and
 both branches of `interactive_product_search` (Apps-supporting and
 plain-text fallback) work end-to-end against a real account and real
-search results, including the widget-side cache-fetch round trip.
+search results, including the widget re-fetching live via
+`_interactive_search_results` -- confirmed idempotent (calling it twice
+with the same params returns the same results, not an expiry error) and
+confirmed to surface a real upstream failure correctly (`_tool_error`'s
+usual shape) rather than crashing.
 
 Verified live, against the real deployed connector, on the Claude mobile
 app: the widget renders correctly (photo, name, price, a working Add
@@ -817,11 +838,17 @@ condition (search again) looked indistinguishable from a real, final one
 (nothing matched). Fixed in the widget: `_interactive_search_results`'s
 `error: "expired"` response now renders as "This search has expired --
 ask Claude to search again," not folded into the empty-results state.
-The cache itself stays in-memory and bounded (50 entries) on purpose --
-search results going stale after a restart or eviction is a reasonable
-thing to happen given prices/availability can change, so the fix is
-honest messaging, not trying to make a deliberately ephemeral cache
-durable.
+At the time, the cache itself was left in-memory and bounded on
+purpose -- the fix was honest messaging, not trying to make a
+deliberately ephemeral cache durable.
+
+**Superseded shortly after, by a better fix than either of those
+options**: asked directly why the reference should be allowed to expire
+at all instead of just carrying enough to reproduce the search, the
+cache was removed entirely -- see "Design: keep the widget's payload out
+of the model's context" above. The honest-messaging fix in this section
+is kept here as the real record of the first (reasonable, but not best)
+fix, not because it's still how this works.
 
 ## Loyalty offers (no dedicated endpoint found)
 

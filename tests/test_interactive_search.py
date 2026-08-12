@@ -1,12 +1,15 @@
-"""Unit tests for interactive_product_search and its supporting cache/
-app-only fetch tool -- the MCP Apps widget feature added after a user
-asked for interactive, visual search results instead of plain text.
+"""Unit tests for interactive_product_search and its app-only fetch tool --
+the MCP Apps widget feature added after a user asked for interactive,
+visual search results instead of plain text.
 
 See docs/RESEARCH.md "Interactive product search widget" for how this was
 built (an actual client-side widget, bundled with esbuild from
 web/product-search-widget/, verified against real ext-apps documentation
-and a working reference implementation rather than guessed) and verified
-live end-to-end against a real account before shipping.
+and a working reference implementation rather than guessed), verified
+live end-to-end against a real account before shipping, and later
+reworked from a cached-result-ref design to a re-run-the-search-live
+design after a real user report showed the cache going stale across
+server restarts.
 """
 
 import sys
@@ -14,6 +17,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
+from pc_express_mcp.api_client import PcxApiError  # noqa: E402
+from pc_express_mcp.auth import PcidAuthError  # noqa: E402
 from pc_express_mcp import server, session_state  # noqa: E402
 
 REAL_RAW_SEARCH_RESULT = {
@@ -34,38 +39,44 @@ class _FakeApi:
         return REAL_RAW_SEARCH_RESULT
 
 
-def _patch(monkeypatch, store_id="1024"):
+class _FailingApi:
+    def search_products(self, term, store_id, cart_id=None, size=25, from_=0):
+        raise PcxApiError("boom", status_code=500, body="")
+
+
+def _patch(monkeypatch, store_id="1024", api=None):
     session = session_state.SessionState(store_id=store_id, cart_id="cart-1")
     monkeypatch.setattr(server, "_load_session", lambda: session)
-    monkeypatch.setattr(server, "_get_api", lambda banner: _FakeApi())
+    monkeypatch.setattr(server, "_get_api", lambda banner: api or _FakeApi())
 
 
 def test_launcher_returns_full_results_when_client_lacks_apps_support(monkeypatch):
     _patch(monkeypatch)
     result = server.interactive_product_search(query="cheese", size=5, ctx=None)
-    assert "result_ref" not in result
+    assert "store_id" not in result  # that's the Apps-branch reference shape, not this one
     assert result["count"] == 1
     assert result["results"][0]["photo_markdown"] == "![Test Cheese](https://digital.loblaws.ca/PCX/20700462_EA/en/1/test.png)"
 
 
-def test_launcher_returns_only_a_reference_when_client_supports_apps(monkeypatch):
+def test_launcher_returns_a_small_reproducible_reference_when_client_supports_apps(monkeypatch):
     _patch(monkeypatch)
     monkeypatch.setattr(server, "client_supports_apps", lambda ctx: True)
     result = server.interactive_product_search(query="cheese", size=5, ctx=object())
     assert "results" not in result
-    assert result["query"] == "cheese"
-    assert result["count"] == 1
-    assert result["result_ref"]
+    note = result.pop("note")
+    assert result == {"query": "cheese", "size": 5, "store_id": "1024", "banner": "superstore", "count": 1}
     # The small reference is the *correct* outcome, not a rendering
     # failure -- a real user report showed a model misreading this
     # terse shape as "the widget didn't render" and stating that as
     # fact, which it can't actually observe. The note exists so the
     # model doesn't have to guess.
-    assert "not a sign" in result["note"] or "correct behavior" in result["note"]
-    assert "widget" in result["note"].lower()
+    assert "not a sign" in note or "correct behavior" in note
+    assert "widget" in note.lower()
 
-    # The widget fetches the real data itself via the app-only tool.
-    fetched = server._interactive_search_results(result_ref=result["result_ref"])
+    # The widget fetches the real data itself via the app-only tool,
+    # re-running the search live from these exact params -- not reading
+    # a cache back by an opaque id.
+    fetched = server._interactive_search_results(query="cheese", size=5, store_id="1024", banner="superstore")
     assert fetched["results"][0]["name"] == "Test Cheese"
 
 
@@ -75,21 +86,22 @@ def test_launcher_requires_active_store(monkeypatch):
     assert result["error"] == "no_active_store"
 
 
-def test_interactive_search_results_returns_expired_for_unknown_ref():
-    result = server._interactive_search_results(result_ref="not-a-real-ref")
-    assert result["error"] == "expired"
+def test_interactive_search_results_re_runs_the_search_live(monkeypatch):
+    monkeypatch.setattr(server, "_get_api", lambda banner: _FakeApi())
+    result = server._interactive_search_results(query="cheese", size=5, store_id="1024", banner="superstore")
+    assert result["results"][0]["name"] == "Test Cheese"
+    # No cache, so nothing to expire -- calling it again with the exact
+    # same params (simulating a widget re-fetch after a server restart)
+    # works identically, not "expired."
+    result_again = server._interactive_search_results(query="cheese", size=5, store_id="1024", banner="superstore")
+    assert result_again == result
+
+
+def test_interactive_search_results_surfaces_a_real_api_failure(monkeypatch):
+    monkeypatch.setattr(server, "_get_api", lambda banner: _FailingApi())
+    result = server._interactive_search_results(query="cheese", size=5, store_id="1024", banner="superstore")
     assert result["results"] == []
-
-
-def test_cache_eviction_is_bounded(monkeypatch):
-    monkeypatch.setattr(server, "_search_results_cache", server.OrderedDict())
-    monkeypatch.setattr(server, "_SEARCH_RESULTS_CACHE_MAX", 3)
-    refs = [server._cache_interactive_search_results([{"code": f"P{i}"}]) for i in range(5)]
-    assert len(server._search_results_cache) == 3
-    # The two oldest were evicted; the three newest remain.
-    assert server._interactive_search_results(result_ref=refs[0])["error"] == "expired"
-    assert server._interactive_search_results(result_ref=refs[1])["error"] == "expired"
-    assert server._interactive_search_results(result_ref=refs[-1])["results"][0]["code"] == "P4"
+    assert result["error"] == "api_error"
 
 
 def test_widget_resource_is_registered_with_correct_mime_and_csp():

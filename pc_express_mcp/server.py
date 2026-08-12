@@ -24,8 +24,6 @@ from __future__ import annotations
 
 import re
 import time
-import uuid
-from collections import OrderedDict
 from pathlib import Path
 from typing import Any, Optional
 
@@ -77,29 +75,6 @@ apps.add_html_resource(
     csp=ResourceCsp(resource_domains=["https://digital.loblaws.ca"]),
 )
 
-# Server-side "reference and fetch" cache for interactive_product_search:
-# the launcher tool below returns only a tiny { result_ref, query, count }
-# to the model (keeps the full product list, images included, out of the
-# model's context -- see docs/RESEARCH.md "Interactive product search
-# widget"), and the widget fetches the real data itself via the app-only
-# _interactive_search_results tool. Bounded (not a memory leak): oldest
-# entry evicted once this holds more than _SEARCH_RESULTS_CACHE_MAX
-# searches -- there's no user-facing "clear" action, so eviction is the
-# only cleanup path, and a handful of recent searches is all a single
-# widget session ever needs.
-_SEARCH_RESULTS_CACHE_MAX = 50
-_search_results_cache: "OrderedDict[str, list[dict]]" = OrderedDict()
-
-
-def _cache_interactive_search_results(results: list[dict]) -> str:
-    result_ref = uuid.uuid4().hex
-    _search_results_cache[result_ref] = results
-    _search_results_cache.move_to_end(result_ref)
-    while len(_search_results_cache) > _SEARCH_RESULTS_CACHE_MAX:
-        _search_results_cache.popitem(last=False)
-    return result_ref
-
-
 # NOTE: these two @apps.tool()-decorated functions must be defined here,
 # before MCPServer(...) is constructed below -- unlike @mcp.tool(), which
 # registers incrementally on the already-existing `mcp` object wherever it
@@ -135,14 +110,14 @@ def interactive_product_search(query: str, size: int = 20, ctx: Optional[Context
     not just get information about them.
 
     On a client that DOES support MCP Apps, this returns only a small
-    {result_ref, query, count} reference, not the actual results -- by
-    design, to keep the widget's data out of your context. That small
-    response is the *correct* outcome for a supporting client, not a
-    sign the widget failed to render. Whether it actually rendered is not
-    something you can see from here: the widget renders client-side, in
-    the user's own app, and you never receive its visual output, only
-    this JSON. Do not tell the user it did or didn't render -- if that's
-    in question, ask them what's on their screen.
+    {query, size, store_id, banner, count} reference, not the actual
+    results -- by design, to keep the widget's data out of your context.
+    That small response is the *correct* outcome for a supporting
+    client, not a sign the widget failed to render. Whether it actually
+    rendered is not something you can see from here: the widget renders
+    client-side, in the user's own app, and you never receive its visual
+    output, only this JSON. Do not tell the user it did or didn't
+    render -- if that's in question, ask them what's on their screen.
     """
     session = _load_session()
     if not session.store_id:
@@ -155,10 +130,11 @@ def interactive_product_search(query: str, size: int = 20, ctx: Optional[Context
     results = [_simplify_product(p) for p in raw.get("results", []) or []]
 
     if ctx is not None and client_supports_apps(ctx):
-        result_ref = _cache_interactive_search_results(results)
         return {
-            "result_ref": result_ref,
             "query": query,
+            "size": size,
+            "store_id": session.store_id,
+            "banner": session.banner,
             "count": len(results),
             "note": (
                 "This client negotiated MCP Apps support, so the widget was requested for these "
@@ -177,15 +153,33 @@ def interactive_product_search(query: str, size: int = 20, ctx: Optional[Context
     resource_uri=_INTERACTIVE_SEARCH_RESOURCE_URI,
     visibility=["app"],
 )
-def _interactive_search_results(result_ref: str) -> dict:
+def _interactive_search_results(query: str, size: int, store_id: str, banner: str) -> dict:
     """App-only: not in the model's tool list (visibility=["app"]) -- the
     interactive_product_search widget calls this itself, over the
-    postMessage bridge, to fetch the full product list a result_ref points
-    at. See _cache_interactive_search_results above.
+    postMessage bridge, to fetch the actual product list for the search
+    the launcher tool ran.
+
+    Deliberately re-runs the search live, from the exact query/size/
+    store/banner the launcher used, rather than reading cached results
+    back out by an opaque reference. An earlier version cached the
+    *results* behind a random result_ref -- simpler at the call site, but
+    that cache was an in-memory dict with no persistence, so a server
+    restart between the search and the widget re-fetching it (confirmed
+    live: this happens routinely during active development, but a crash
+    or redeploy at any time has the same effect) silently invalidated it,
+    and the widget had no way to recover except telling the user to
+    search again. Re-running the search is cheap, safe (read-only), and
+    idempotent enough that there's no real reason to cache it at all --
+    see docs/RESEARCH.md "Interactive product search widget".
     """
-    results = _search_results_cache.get(result_ref)
-    if results is None:
-        return {"error": "expired", "message": "This search's results are no longer cached -- search again.", "results": []}
+    api = _get_api(banner)
+    try:
+        raw = api.search_products(query, store_id, size=size)
+    except (PcidAuthError, PcxApiError) as exc:
+        error = _tool_error(exc)
+        error["results"] = []
+        return error
+    results = [_simplify_product(p) for p in raw.get("results", []) or []]
     return {"results": results}
 
 
