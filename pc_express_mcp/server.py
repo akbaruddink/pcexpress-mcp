@@ -30,7 +30,7 @@ import httpx
 from mcp.server.mcpserver import MCPServer
 from mcp_types import ToolAnnotations
 
-from . import config, nutrition_client, session_state
+from . import config, mcp_apps_probe, nutrition_client, session_state
 from .api_client import PCExpressAPI, PcxApiError
 from .auth import EphemeralTokenManager, PcidAuthError, TokenManager
 
@@ -38,7 +38,7 @@ from .auth import EphemeralTokenManager, PcidAuthError, TokenManager
 # older SDK releases -- same @mcp.tool()/.run()/.streamable_http_app()
 # surface this module uses, just moved and renamed. Confirmed by actually
 # installing the SDK with uv and inspecting it, not assumed from memory.
-mcp = MCPServer("pc-express")
+mcp = MCPServer("pc-express", extensions=[mcp_apps_probe.apps])
 
 # Single global stdio-mode TokenManager (file-backed, cheap to re-read, one
 # process = one user, no isolation concerns). HTTP-mode tenants deliberately
