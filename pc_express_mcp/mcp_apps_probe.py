@@ -56,14 +56,15 @@ apps.add_html_resource(
 @apps.tool(
     resource_uri="ui://pc-express/mcp-apps-test.html",
     description=(
-        "TEMPORARY diagnostic tool, not part of the real PC Express feature set. "
-        "Renders a minimal interactive widget to test whether this specific client "
-        "actually supports MCP Apps UI. Call this when asked to test MCP Apps rendering."
+        "Temporary diagnostic tool, not part of the real PC Express feature set. "
+        "Renders a small interactive HTML widget (a button with live status text) "
+        "via the MCP Apps extension. Its purpose is checking whether the connected "
+        "client displays that widget or falls back to plain text."
     ),
 )
 def probe_mcp_apps_support() -> str:
     return (
-        "If you're reading this as plain text instead of seeing a styled box with a "
-        "working button, this client did not render the MCP Apps widget (it fell back "
-        "to text) -- tell the user MCP Apps isn't currently working on this client."
+        "Plain-text fallback content for this tool call. A client that renders MCP "
+        "Apps widgets shows a styled box with a button instead of this sentence; a "
+        "client that doesn't shows this sentence as-is."
     )
