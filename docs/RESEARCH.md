@@ -615,6 +615,137 @@ prices, total) before ever mentioning the checkout link, so the only
 remaining reason to open the PC Express app is the actual payment tap --
 not to go check what's in the cart.
 
+## Interactive product search widget (MCP Apps)
+
+The photo_markdown work above was the practical fallback after concluding
+MCP Apps (real embedded UI in the chat) wasn't usable here. That
+conclusion turned out to be half right: a user found a runnable,
+MIT-licensed example repo
+([iamneilroberts/mcp-apps-interactive-ui](https://github.com/iamneilroberts/mcp-apps-interactive-ui))
+proving MCP Apps genuinely works on Claude Desktop, and Anthropic's own
+MCP Apps announcement confirms "Claude: Web and desktop" as supported
+clients. What's still true: mobile isn't on that list, and a real bug
+report describes MCP Apps widgets failing to load on the Claude mobile
+app specifically ("Failed to fetch app content," a client-side
+session-recovery issue). So this is worth building for Desktop/web, on
+the condition that it degrades cleanly everywhere else -- which is
+exactly what `interactive_product_search` does.
+
+**A first attempt at testing this directly backfired instructively.** A
+minimal `probe_mcp_apps_support` diagnostic tool was shipped first, to
+settle the mobile question empirically instead of trusting secondhand
+reports. Its description read "Call this when asked to test MCP Apps
+rendering." The user's own Claude session, on being asked to call it,
+refused -- correctly -- because that phrasing is an instruction embedded
+in tool metadata telling a model when to act on its own, which is
+exactly the shape of a prompt-injection-via-tool-description attempt,
+regardless of actual intent. A model treating its own tool descriptions
+as untrusted data, not authoritative instructions, is the right
+instinct, and the fix was not to find better wording to get past it --
+that would mean optimizing for talking a model past a legitimate trust
+boundary. The real fix: tool descriptions state what a tool does, never
+when to invoke it. The probe was later removed entirely once its purpose
+(build confidence before investing in a real widget) was better served by
+building the real widget with graceful degradation, which is safe to
+ship regardless of the mobile answer.
+
+### How this was actually built
+
+Rather than implement against the spec from memory, the referenced
+example repo was cloned locally and its docs (`docs/03-host-api.md`,
+`docs/02-ui-resources.md`, `docs/04-csp-and-imagery.md`,
+`docs/05-two-way-comms.md`) read directly -- the same "cross-check
+against real source, not a summary" approach this whole project has used
+throughout (see "Research summary" at the top of this file). Two things
+that mattered:
+
+- **No new Python dependency was needed.** `mcp.server.apps` (`Apps`,
+  `ResourceCsp`, `client_supports_apps`) is already part of this
+  project's pinned `mcp[cli]==2.0.0` SDK -- confirmed by finding the
+  module directly (`.venv/.../mcp/server/apps.py`) before writing any
+  code, not assumed from the JS-focused blog post/spec pages.
+- **The client-side widget genuinely needs a JS build step.** MCP App
+  resources must be one self-contained HTML document; the real SDK
+  (`@modelcontextprotocol/ext-apps`, ~760KB unminified once bundled --
+  confirmed near-identical to the reference repo's own bundle size, so
+  not a mistake on this project's end) is an npm package, not something
+  usable via a CDN `<script>` tag under the sandbox's default
+  `script-src 'self'` CSP. `web/product-search-widget/` is a small,
+  separate Node project for exactly this: `npm run build` bundles
+  `src/widget.js` + `src/styles.css` into `src/widget.html`'s
+  placeholders via esbuild, producing `dist/widget.html`, which
+  `server.py` reads as a plain static file at import time. Node is a
+  build-time-only tool here -- the deployed Python server never runs it;
+  `dist/widget.html` is committed to git like any other checked-in build
+  artifact needed at runtime.
+
+**A real registration-order bug, caught by checking, not assumed
+working.** `Apps.tools()` is only consumed once, inside
+`MCPServer.__init__` (`mcp/server/mcpserver/server.py`'s
+`_apply_extension`) -- unlike `@mcp.tool()`, which registers
+incrementally onto the already-constructed `mcp` object wherever it
+appears in the file. A first pass defined `interactive_product_search`
+near `search_products` (its natural home, much later in the file, after
+`mcp = MCPServer(...)` had already run) and both new tools silently never
+registered -- no exception, just missing from `mcp.list_tools()`. Caught
+by actually checking the tool count after wiring things up, not by
+assuming the decorator worked. Fixed by moving both `@apps.tool()`-bound
+functions to before the `MCPServer(...)` construction; their *bodies*
+still reference `_load_session`/`_get_api`/`_simplify_product`/
+`_tool_error`, defined later in the file, which is fine -- Python
+resolves names inside a function body at call time, long after the whole
+module has finished importing, not at `def` time.
+
+### Design: keep the widget's payload out of the model's context
+
+Following the referenced repo's own documented pattern (its
+`docs/06-token-economy.md`): `interactive_product_search` (the
+model-visible launcher) returns only `{result_ref, query, count}` --
+never the actual product list -- when the connected client negotiated
+Apps support (`client_supports_apps(ctx)`). The full results (photos,
+prices, everything `_simplify_product` produces) are cached server-side,
+keyed by a random `result_ref`, in a bounded in-memory dict
+(`_search_results_cache`, capped at 50 entries, oldest evicted first --
+there's no user-facing "clear" action, so eviction is the only cleanup
+path). The widget fetches the real data itself, over the postMessage
+bridge, via `_interactive_search_results` -- a second tool bound to the
+same `ui://` resource but registered with `visibility=["app"]`, which
+excludes it from the model's tool list entirely (confirmed via the
+referenced docs: this hides the *whole tool*, not per-result content --
+there is no way to make one tool return different content to the model
+vs. the widget, which is why this needs two tools, not one).
+
+**Graceful degradation is not an edge case here, it's the default path.**
+When `ctx` is `None` (the tool called directly, outside any real client
+session) or `client_supports_apps(ctx)` is `False` (any client that
+hasn't negotiated the extension -- including, as far as currently
+confirmed, the Claude mobile app), `interactive_product_search` returns
+the exact same shape as `search_products`: full results with
+`photo_markdown`. This is not a fallback bolted on after the fact; it's
+the same code path exercised by every non-Apps-aware caller, so there's
+no separate "degraded mode" to keep in sync -- see
+`tests/test_interactive_search.py`.
+
+### What's confirmed vs. still open
+
+Verified directly, before shipping: the tool and app-only fetch tool both
+register correctly (`mcp.list_tools()`/`apps.tools()`), the `ui://`
+resource is served with the right MIME type
+(`text/html;profile=mcp-app`) and CSP (`resourceDomains:
+["https://digital.loblaws.ca"]`, needed because the sandbox blocks
+external images by default -- see the referenced repo's CSP doc), and
+both branches of `interactive_product_search` (Apps-supporting and
+plain-text fallback) work end-to-end against a real account and real
+search results, including the widget-side cache-fetch round trip.
+
+**Not yet verified**: whether the widget actually *renders* inside a
+real Claude Desktop/web session connected to this project's real HTTP
+deployment -- everything above tests this project's own server-side
+logic, not Claude's client-side handling of it. That's the next thing to
+confirm live, the same way every other undocumented behavior in this
+project has been -- by trying it against the real thing, not by trusting
+that following the spec correctly is sufficient.
+
 ## Loyalty offers (no dedicated endpoint found)
 
 Two real, working, account-level loyalty endpoints exist and are wired to

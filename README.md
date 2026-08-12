@@ -132,8 +132,8 @@ Search results and cart items carry a ready-to-paste `photo_markdown`
 field, so products actually show up as photos in the chat instead of
 plain text — see [docs/RESEARCH.md](docs/RESEARCH.md#product-photos-in-chat-why-plain-markdown-not-mcp-imageui-features)
 for why that's plain markdown rather than an MCP-specific image/UI
-mechanism (short version: the fancier options don't currently work on
-Claude's mobile app or for custom connectors like this one).
+mechanism. `interactive_product_search` goes a step further on clients
+that support it — see below and [docs/RESEARCH.md](docs/RESEARCH.md#interactive-product-search-widget-mcp-apps).
 
 | Tool | Spends money? | Notes |
 |---|---|---|
@@ -142,6 +142,7 @@ Claude's mobile app or for custom connectors like this one).
 | `get_store_hours(store_id?)` | No | Open/closed + today's hours, fetched fresh (deliberately not cached) |
 | `get_loyalty_status` | No | Real PC Optimum points balance + stamp-card status. **Not** an available-offers feed — no such endpoint exists in this API, see [docs/RESEARCH.md](docs/RESEARCH.md#loyalty-offers-no-dedicated-endpoint-found) |
 | `search_products(query, size?, offset?)` | No | Requires an active store. Real, working pagination (`offset`, `total_results`, `has_more`) — see [docs/RESEARCH.md](docs/RESEARCH.md#search-pagination). Enriched per-result data (description, all product photo angles, barcode, unit price, deals) — no nutrition facts/ingredients from PC Express itself; pair a result's `barcode` with `get_nutrition_info` below |
+| `interactive_product_search(query, size?)` | No | Same search, but on a client that renders [MCP Apps](https://github.com/modelcontextprotocol/ext-apps) UI (confirmed: Claude Desktop, claude.ai web — not yet the Claude mobile app), shows results as an interactive widget with per-item Add-to-Cart buttons instead of text. Degrades automatically to full `search_products`-equivalent text/photos on any client that doesn't support it, so it's always safe to call. See [docs/RESEARCH.md](docs/RESEARCH.md#interactive-product-search-widget-mcp-apps) |
 | `get_nutrition_info(barcode)` | No | Nutrition facts, ingredients, allergens, Nutri-Score/NOVA grade via [Open Food Facts](https://openfoodfacts.org) (a separate, free database — not PC Express data). "Not found" is common and expected, not a bug — see [docs/RESEARCH.md](docs/RESEARCH.md#nutrition-enrichment-open-food-facts) |
 | `get_cart` | No | |
 | `add_to_cart(items)` | No | `items`: list of `{product_code, quantity?, fulfillment_method?}` — add/increase several products in one call. Fails with a clear `cart_store_mismatch` error (not a raw platform error) if this account's cart is bound to a different store than the active one — real PC Express constraint (one cart per account); call `switch_cart_store` to fix it, see [docs/RESEARCH.md](docs/RESEARCH.md#the-real-fix-switch_cart_store-found-from-a-user-supplied-real-capture) |
@@ -152,7 +153,7 @@ Claude's mobile app or for custom connectors like this one).
 | `place_order(confirm)` | **No** | Requires `confirm=True`; only validates cart + returns a checkout handoff link. Never submits payment. |
 | `get_order_status(order_id?, limit?)` | No | Order history (capped by `limit`, default 10) / a specific past order |
 
-All 14 tools carry proper MCP tool annotations (`readOnlyHint`/`destructiveHint`/
+All 15 tools carry proper MCP tool annotations (`readOnlyHint`/`destructiveHint`/
 `idempotentHint`/`openWorldHint`), so any MCP client can categorize them the
 way it would Gmail/other well-built MCP servers — `place_order` is flagged
 non-read-only *and* destructive on purpose, since it's the closest thing to
