@@ -287,25 +287,33 @@ def _tool_error(exc: Exception) -> dict[str, Any]:
         pcx_error = exc.pcx_error
         if pcx_error and pcx_error.get("error_code") == "SELLER_ID_MISMATCH":
             # Real PC Express platform constraint, not a bug or a
-            # "corrupted" cart: an account has exactly one active cart at
-            # a time, bound to whichever store it was last used at. This
-            # matters most for accounts shared across locations (e.g.
-            # family members ordering from different stores on the same
-            # account). There IS a real, confirmed-live fix, though --
+            # "corrupted" cart: within a single banner, an account has
+            # exactly one active cart at a time, bound to whichever store
+            # it was last used at. Confirmed live this is scoped per
+            # banner, not the whole account -- a real "one cart per
+            # account, period" claim shipped here initially was wrong,
+            # caught after a user's gut feeling and direct verification
+            # (list_carts returns genuinely different, simultaneously
+            # valid cart ids per banner; see docs/RESEARCH.md "Cart is
+            # bound to a single store"). Matters most for accounts shared
+            # across locations that also happen to use the same banner
+            # (e.g. two family members both ordering from Superstore, at
+            # different Superstore locations) -- different banners
+            # (Superstore vs No Frills) don't conflict at all. There IS a
+            # real, confirmed-live fix for the same-banner case, though --
             # switch_cart_store re-binds the existing cart to the store
-            # this call actually needs; see docs/RESEARCH.md "Cart is
-            # bound to a single store" for how that was found (a real
-            # user-supplied curl capture) and verified.
+            # this call actually needs.
             details = pcx_error.get("details") or {}
             expected, provided = details.get("expected"), details.get("provided")
             return {
                 "error": "cart_store_mismatch",
                 "message": (
-                    f"Your PC Express account's active cart is currently bound to store {expected}, "
-                    f"not store {provided}. PC Express only supports one active cart per account at a "
-                    "time -- this happens when the account was last used at a different store (e.g. a "
-                    f"family member ordering from another location). Call switch_cart_store(store_id="
-                    f"'{provided}', postal_code=...) to re-bind the cart to store {provided}, then retry."
+                    f"Your PC Express account's active cart for this banner is currently bound to store "
+                    f"{expected}, not store {provided}. PC Express only supports one active cart per banner "
+                    "at a time -- this happens when this banner's cart was last used at a different store "
+                    "(e.g. a family member ordering from another location on the same banner). Call "
+                    f"switch_cart_store(store_id='{provided}', postal_code=...) to re-bind the cart to store "
+                    f"{provided}, then retry."
                 ),
                 "cart_bound_to_store": expected,
                 "requested_store": provided,
@@ -784,15 +792,19 @@ def set_active_store(store_id: str, banner: Optional[str] = None) -> dict:
     Validates the store id against the pickup-locations endpoint so a typo
     fails immediately instead of silently breaking later tool calls.
 
-    If this account was last used at a *different* store (common on an
-    account shared across locations -- e.g. family members ordering from
-    different stores), the response includes a `cart_note` warning: PC
-    Express only supports one active cart per account at a time, bound to
-    whichever store it was last used at (see docs/RESEARCH.md "Cart is
-    bound to a single store"). This is a heads-up, not a hard error --
-    search/browsing work fine regardless; adding/updating cart items will
-    fail with a `cart_store_mismatch` error until you call
-    switch_cart_store to re-bind the cart to this store.
+    If this banner's cart was last used at a *different* store (common on
+    an account shared across locations -- e.g. family members both
+    ordering from the same banner but different stores), the response
+    includes a `cart_note` warning: PC Express only supports one active
+    cart per banner at a time, bound to whichever store it was last used
+    at (see docs/RESEARCH.md "Cart is bound to a single store" --
+    confirmed live to be scoped per banner, not the whole account:
+    Superstore and No Frills carts, for example, are genuinely
+    independent and don't conflict with each other at all). This is a
+    heads-up, not a hard error -- search/browsing work fine regardless;
+    adding/updating cart items will fail with a `cart_store_mismatch`
+    error until you call switch_cart_store to re-bind the cart to this
+    store.
     """
     session = _load_session()
     if banner:
@@ -862,12 +874,16 @@ def switch_cart_store(store_id: str, postal_code: str) -> dict:
     real, confirmed-live fix for a `cart_store_mismatch`/SELLER_ID_MISMATCH
     error, no PC Express app needed.
 
-    PC Express only has one active cart per account, bound to whichever
-    store it was last used at (see set_active_store's docstring). An
-    earlier version of this project concluded there was no API-level way
-    to change that -- wrong, corrected after a user-supplied real curl
-    capture showed the actual working shape (see docs/RESEARCH.md "Cart is
-    bound to a single store"): this looks up the real delivery
+    PC Express only has one active cart per banner (Superstore, No
+    Frills, etc. each have their own -- confirmed live, this is not
+    account-wide), bound to whichever store it was last used at within
+    that banner (see set_active_store's docstring). This tool re-binds
+    the *active banner's* cart, the same one every other cart tool in
+    this session uses. An earlier version of this project concluded
+    there was no API-level way to change that -- wrong, corrected after
+    a user-supplied real curl capture showed the actual working shape
+    (see docs/RESEARCH.md "Cart is bound to a single store"): this
+    looks up the real delivery
     fulfillment-location id for `store_id` from `postal_code` (a delivery
     address that store can actually service -- its own store address is a
     reasonable default if you don't have a specific one), then re-binds

@@ -384,12 +384,17 @@ project needs, which is one GET request with a `fields` filter. See
 Reported by a real user: `add_to_cart` started failing with a raw
 `SELLER_ID_MISMATCH` error and no clear explanation, described (accurately,
 as it turned out) as looking like "the same corrupted cart from earlier."
-The actual cause, confirmed live against the real account: **a PC Express
-account has exactly one active cart at a time, account-wide, bound to
-whichever store it was last used at** -- not a bug, not corruption, and
-not specific to this project. This surfaces most for accounts shared
-across locations (the reporting user's case: themselves ordering from one
-store, a family member from another, on the same login).
+The actual cause, confirmed live against the real account at the time:
+**a PC Express account has exactly one active cart at a time, account-wide,
+bound to whichever store it was last used at** -- not a bug, not
+corruption, and not specific to this project. This surfaces most for
+accounts shared across locations (the reporting user's case: themselves
+ordering from one store, a family member from another, on the same
+login). **The "account-wide" part of this was later found to be wrong --
+see "Correction: it's one cart per banner, not one per account" near the
+end of this section.** The rest holds: within a single banner, there
+really is only one cart, bound to one store at a time, and everything
+below about `SELLER_ID_MISMATCH` and `switch_cart_store` is unaffected.
 
 **Confirmed via the account's real state**: `get_profile()`'s `cartId` and
 `lastStoreId` fields, and `get_cart()`'s `orders[].fulfillment.courier.storeId`,
@@ -423,8 +428,11 @@ the identical SELLER_ID_MISMATCH), `PUT /carts/{id}` (405), the cart
 heartbeat endpoint (just confirms liveness, resets nothing), and a
 `sellerId` query parameter on the update call (500, not a recognized
 parameter). `list_carts` also confirmed there is genuinely only one cart
-per account, not one per store -- switching stores isn't a matter of
-picking a different existing cart. At the time, the practical guidance
+*within this banner*, not one per store -- switching stores isn't a
+matter of picking a different existing cart (this `list_carts` check
+was only ever run against one banner at the time -- see the correction
+near the end of this section for what checking a second banner found).
+At the time, the practical guidance
 was "empty the cart in the app first" -- honest about the limitation, but
 wrong that no API fix existed at all; the actual working shape (below)
 just hadn't been tried yet.
@@ -563,6 +571,65 @@ real current binding (`_cart_bound_store`) rather than the locally cached
 `switch_cart_store` without also calling `set_active_store`), and only
 the cart's own live value is guaranteed to pass validation. See
 `_seller_id_for_removal` in `server.py`.
+
+### Correction: it's one cart per banner, not one per account
+
+Every claim above ("account has exactly one active cart," "account-wide")
+was wrong in one specific way, caught only because a user pushed back
+directly on it -- "are you absolutely sure we cannot have more than 1
+cart... I have a gut feeling." Re-verified live rather than re-asserting
+the earlier conclusion:
+
+```
+[superstore] list_carts -> {"carts": [{"id": "bc7256ec-...", ...}]}
+[nofrills]   list_carts -> {"carts": [{"id": "e5a23b6a-...", ...}]}
+```
+
+Two different, real, simultaneously valid cart ids -- confirmed each is
+independently fetchable via `GET /carts/{id}` regardless of which
+banner's headers are used to fetch it, and each carries its own
+`bannerId`/fulfillment state (the superstore cart bound to store 2841
+via courier fulfillment; the nofrills cart on pickup fulfillment,
+untouched). The original investigation's `list_carts` check (cited above
+as confirming "genuinely only one cart per account") only ever queried a
+single banner -- it never occurred to check a second one, so a
+banner-scoped result got over-generalized to an account-wide claim.
+
+**The corrected model**: PC Express carts are scoped per banner, not per
+account. Within a single banner, the original findings hold exactly as
+described -- one cart, bound to one store at a time, real
+`SELLER_ID_MISMATCH` on conflict, `switch_cart_store` as the real fix.
+Across banners, there's no conflict at all: ordering from Superstore and
+No Frills on the same account uses two independent carts that never
+interact. This also explains why a `cart_store_mismatch` can look
+confusing when you don't know a family member used a *different banner*
+recently, not just a different store -- the store number alone
+(e.g. "1356") doesn't tell you it's actually a different banner
+(a No Frills location) than the one you're currently searching, until you
+look it up.
+
+Also found along the way, a separate and unrelated wrinkle worth
+recording: this project's own session-level `cart_id` caching
+(`session_state.cart_id`, only refreshed on an explicit 404 -- see
+`_rediscover_cart`/`_ensure_customer_and_cart`) can hold a cart id that
+PC Express has since retired server-side. Confirmed live: a `cart_id`
+that had worked earlier in this same investigation later 404'd with
+`CART_STATUS_NOT_VALID` when fetched again, while `profile.cartId` (fetched
+fresh) had already moved on to a different, current cart id for that
+banner. This is exactly the self-healing path `_get_cart_healing`/
+`_update_cart_healing` already exist to handle (re-discover via
+`get_profile()` on a 404, retry once) -- so no code change was needed
+here, just confirmation that the existing self-healing covers a real,
+observed case and not only a hypothetical one.
+
+Corrected everywhere the wrong claim appeared: `_tool_error`'s
+`SELLER_ID_MISMATCH` message, `_cart_store_mismatch_note`,
+`set_active_store`'s and `switch_cart_store`'s docstrings, and README.md
+-- the same reason this mattered enough to fix promptly as the MCP Apps
+mobile-rendering claim earlier: a wrong claim baked into what a model
+reads (tool descriptions, error messages) doesn't just mislead a human
+reader, it actively shapes what the model tells the user with unearned
+confidence.
 
 ## Product photos in chat (why plain markdown, not MCP image/UI features)
 

@@ -145,7 +145,7 @@ that support it — see below and [docs/RESEARCH.md](docs/RESEARCH.md#interactiv
 | `interactive_product_search(query, size?)` | No | Same search, but on a client that renders [MCP Apps](https://github.com/modelcontextprotocol/ext-apps) UI (confirmed live, Add-to-Cart round trip included: Claude Desktop, claude.ai web, and the Claude mobile app), shows results as an interactive widget with per-item Add-to-Cart buttons instead of text. Degrades automatically to full `search_products`-equivalent text/photos on any client that doesn't support it, so it's always safe to call. See [docs/RESEARCH.md](docs/RESEARCH.md#interactive-product-search-widget-mcp-apps) |
 | `get_nutrition_info(barcode)` | No | Nutrition facts, ingredients, allergens, Nutri-Score/NOVA grade via [Open Food Facts](https://openfoodfacts.org) (a separate, free database — not PC Express data). "Not found" is common and expected, not a bug — see [docs/RESEARCH.md](docs/RESEARCH.md#nutrition-enrichment-open-food-facts) |
 | `get_cart` | No | |
-| `add_to_cart(items)` | No | `items`: list of `{product_code, quantity?, fulfillment_method?}` — add/increase several products in one call. Fails with a clear `cart_store_mismatch` error (not a raw platform error) if this account's cart is bound to a different store than the active one — real PC Express constraint (one cart per account); call `switch_cart_store` to fix it, see [docs/RESEARCH.md](docs/RESEARCH.md#the-real-fix-switch_cart_store-found-from-a-user-supplied-real-capture) |
+| `add_to_cart(items)` | No | `items`: list of `{product_code, quantity?, fulfillment_method?}` — add/increase several products in one call. Fails with a clear `cart_store_mismatch` error (not a raw platform error) if this banner's cart is bound to a different store than the active one — real PC Express constraint (one cart per *banner*, not per account — Superstore and No Frills carts are independent); call `switch_cart_store` to fix it, see [docs/RESEARCH.md](docs/RESEARCH.md#the-real-fix-switch_cart_store-found-from-a-user-supplied-real-capture) |
 | `remove_from_cart(product_codes)` | No | `product_codes`: list — remove several products in one call |
 | `update_quantity(items)` | No | `items`: list of `{product_code, quantity}` — set several quantities in one call; `quantity=0` removes that item |
 | `switch_cart_store(store_id, postal_code)` | No | Re-binds the account's existing cart to a different store — the real fix for `cart_store_mismatch`, no app needed. Changes the real cart immediately (no confirm step); see [docs/RESEARCH.md](docs/RESEARCH.md#the-real-fix-switch_cart_store-found-from-a-user-supplied-real-capture) |
@@ -463,9 +463,15 @@ building it and the full verification record.
   instances of this server (or this server plus `login.py`) concurrently
   against the same refresh token will cause one of them to fail with an
   auth error, because refresh tokens are single-use/rotating.
-- **One active cart per PC Express account, account-wide** — a real
-  platform constraint confirmed live. If your account is shared across
-  locations (e.g. family members ordering from different stores), this
+- **One active cart per PC Express *banner*** — Superstore, No Frills,
+  etc. each have their own independent cart; within a single banner,
+  though, there's still only one cart account-wide, bound to whichever
+  store it was last used at (confirmed live — an earlier version of this
+  doc said "account-wide" with no banner qualifier, which was wrong: a
+  user's own account had two genuinely separate, simultaneously valid
+  carts, one per banner, at the same time). If your account is shared
+  across locations on the *same* banner (e.g. family members both
+  ordering from Superstore, at different Superstore locations), this
   tool will tell you clearly when that's the problem (`cart_note` from
   `set_active_store`, `cart_store_mismatch` from a failed add) and can now
   actually fix it: call `switch_cart_store(store_id, postal_code)` to
