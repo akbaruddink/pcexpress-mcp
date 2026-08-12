@@ -1,0 +1,20 @@
+{
+  "name": "pc-express-product-search-widget",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "MCP Apps widget (io.modelcontextprotocol/ui) for interactive_product_search -- bundled once with esbuild into dist/widget.html, which pc_express_mcp/interactive_search.py reads as a static asset. No Node needed at server runtime, only to rebuild this widget after editing src/.",
+  "license": "MIT",
+  "engines": {
+    "node": ">=20.11"
+  },
+  "scripts": {
+    "build": "node esbuild.mjs"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/ext-apps": "^1.7.0"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.1"
+  }
+}

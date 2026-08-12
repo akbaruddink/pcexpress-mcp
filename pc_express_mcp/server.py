@@ -24,13 +24,18 @@ from __future__ import annotations
 
 import re
 import time
+import uuid
+from collections import OrderedDict
+from pathlib import Path
 from typing import Any, Optional
 
 import httpx
+from mcp.server.apps import Apps, ResourceCsp, client_supports_apps
 from mcp.server.mcpserver import MCPServer
+from mcp.server.mcpserver.context import Context
 from mcp_types import ToolAnnotations
 
-from . import config, mcp_apps_probe, nutrition_client, session_state
+from . import config, nutrition_client, session_state
 from .api_client import PCExpressAPI, PcxApiError
 from .auth import EphemeralTokenManager, PcidAuthError, TokenManager
 
@@ -38,7 +43,131 @@ from .auth import EphemeralTokenManager, PcidAuthError, TokenManager
 # older SDK releases -- same @mcp.tool()/.run()/.streamable_http_app()
 # surface this module uses, just moved and renamed. Confirmed by actually
 # installing the SDK with uv and inspecting it, not assumed from memory.
-mcp = MCPServer("pc-express", extensions=[mcp_apps_probe.apps])
+
+# MCP Apps (io.modelcontextprotocol/ui): interactive_product_search's
+# widget. See "Interactive product search widget" in docs/RESEARCH.md for
+# why the client-side JS is a separately built asset (web/product-search-
+# widget/), not inline Python -- MCP App resources must be a single
+# self-contained HTML document, bundled once with esbuild and committed,
+# not built at server runtime (this project has no Node dependency
+# otherwise and shouldn't gain one just to serve one static file).
+apps = Apps()
+
+_WIDGET_HTML_PATH = (
+    Path(__file__).resolve().parent.parent / "web" / "product-search-widget" / "dist" / "widget.html"
+)
+_INTERACTIVE_SEARCH_RESOURCE_URI = "ui://pc-express/product-search.html"
+
+try:
+    _widget_html = _WIDGET_HTML_PATH.read_text(encoding="utf-8")
+except FileNotFoundError as exc:
+    raise RuntimeError(
+        f"{_WIDGET_HTML_PATH} is missing -- build it first: "
+        "cd web/product-search-widget && npm install && npm run build"
+    ) from exc
+
+apps.add_html_resource(
+    _INTERACTIVE_SEARCH_RESOURCE_URI,
+    _widget_html,
+    name="pc-express-product-search",
+    title="PC Express Product Search",
+    # Product photos are served from digital.loblaws.ca (confirmed live
+    # throughout this project's search/cart results) -- the MCP Apps
+    # sandbox blocks external images by default unless declared here.
+    csp=ResourceCsp(resource_domains=["https://digital.loblaws.ca"]),
+)
+
+# Server-side "reference and fetch" cache for interactive_product_search:
+# the launcher tool below returns only a tiny { result_ref, query, count }
+# to the model (keeps the full product list, images included, out of the
+# model's context -- see docs/RESEARCH.md "Interactive product search
+# widget"), and the widget fetches the real data itself via the app-only
+# _interactive_search_results tool. Bounded (not a memory leak): oldest
+# entry evicted once this holds more than _SEARCH_RESULTS_CACHE_MAX
+# searches -- there's no user-facing "clear" action, so eviction is the
+# only cleanup path, and a handful of recent searches is all a single
+# widget session ever needs.
+_SEARCH_RESULTS_CACHE_MAX = 50
+_search_results_cache: "OrderedDict[str, list[dict]]" = OrderedDict()
+
+
+def _cache_interactive_search_results(results: list[dict]) -> str:
+    result_ref = uuid.uuid4().hex
+    _search_results_cache[result_ref] = results
+    _search_results_cache.move_to_end(result_ref)
+    while len(_search_results_cache) > _SEARCH_RESULTS_CACHE_MAX:
+        _search_results_cache.popitem(last=False)
+    return result_ref
+
+
+# NOTE: these two @apps.tool()-decorated functions must be defined here,
+# before MCPServer(...) is constructed below -- unlike @mcp.tool(), which
+# registers incrementally on the already-existing `mcp` object wherever it
+# appears in this file, Extension.tools() is only consumed once, inside
+# MCPServer.__init__ (see mcp/server/mcpserver/server.py's
+# _apply_extension). A first attempt defined these near search_products
+# (much later in the file, after mcp = MCPServer(...)) and both tools
+# silently never registered -- caught by checking mcp.list_tools() showed
+# 14, not 16, not any exception. The function *bodies* below can still
+# reference _load_session/_get_api/_simplify_product/_tool_error even
+# though those aren't defined until later in this file -- Python resolves
+# names inside a function body at call time, long after the whole module
+# has finished importing, not at def time.
+@apps.tool(
+    resource_uri=_INTERACTIVE_SEARCH_RESOURCE_URI,
+    annotations=ToolAnnotations(
+        title="Interactive Product Search", read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False
+    ),
+)
+def interactive_product_search(query: str, size: int = 20, ctx: Optional[Context] = None) -> dict:
+    """Search products and, on a client that renders MCP Apps UI, show them
+    as an interactive widget (photos, prices, per-item Add-to-Cart buttons)
+    instead of plain text.
+
+    Requires an active store (see set_active_store). Confirmed live: MCP
+    Apps widgets render on Claude Desktop and claude.ai web, but not on
+    the Claude mobile app (a client-side bug, not something this project
+    can fix) -- see docs/RESEARCH.md "Interactive product search widget".
+    On a client that doesn't support MCP Apps, this degrades automatically
+    to the same full text/photo_markdown results as search_products, so
+    it's always safe to call regardless of client -- use this instead of
+    search_products whenever the user is meant to browse and pick items,
+    not just get information about them.
+    """
+    session = _load_session()
+    if not session.store_id:
+        return {"error": "no_active_store", "message": "Call set_active_store first."}
+    api = _get_api(session.banner)
+    try:
+        raw = api.search_products(query, session.store_id, cart_id=session.cart_id, size=size)
+    except (PcidAuthError, PcxApiError) as exc:
+        return _tool_error(exc)
+    results = [_simplify_product(p) for p in raw.get("results", []) or []]
+
+    if ctx is not None and client_supports_apps(ctx):
+        result_ref = _cache_interactive_search_results(results)
+        return {"result_ref": result_ref, "query": query, "count": len(results)}
+
+    return {"query": query, "count": len(results), "results": results}
+
+
+@apps.tool(
+    resource_uri=_INTERACTIVE_SEARCH_RESOURCE_URI,
+    visibility=["app"],
+)
+def _interactive_search_results(result_ref: str) -> dict:
+    """App-only: not in the model's tool list (visibility=["app"]) -- the
+    interactive_product_search widget calls this itself, over the
+    postMessage bridge, to fetch the full product list a result_ref points
+    at. See _cache_interactive_search_results above.
+    """
+    results = _search_results_cache.get(result_ref)
+    if results is None:
+        return {"error": "expired", "message": "This search's results are no longer cached -- search again.", "results": []}
+    return {"results": results}
+
+
+mcp = MCPServer("pc-express", extensions=[apps])
 
 # Single global stdio-mode TokenManager (file-backed, cheap to re-read, one
 # process = one user, no isolation concerns). HTTP-mode tenants deliberately

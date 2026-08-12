@@ -15,8 +15,8 @@ __pycache__/
 .venv/
 venv/
 *.egg-info/
-build/
-dist/
+/build/
+/dist/
 .pytest_cache/
 .coverage
 coverage.xml
@@ -26,3 +26,11 @@ htmlcov/
 .DS_Store
 .vscode/
 .idea/
+
+# web/product-search-widget: a small Node project that builds the MCP Apps
+# widget (see docs/RESEARCH.md "Interactive product search widget"). Its
+# dist/widget.html *is* committed -- it's the runtime asset server.py
+# reads, not a throwaway build artifact -- so this only ignores the
+# installed-package tree and lockfile-adjacent noise, not /dist/ itself
+# (the root-scoped /dist/ rule above intentionally doesn't reach it).
+web/product-search-widget/node_modules/
