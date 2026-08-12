@@ -917,6 +917,49 @@ of the model's context" above. The honest-messaging fix in this section
 is kept here as the real record of the first (reasonable, but not best)
 fix, not because it's still how this works.
 
+## Cart discovery must be banner-scoped (a real, shipped bug)
+
+Found while directly fulfilling a user request to put items in two
+different banners' carts in the same session (one in Superstore, one in
+No Frills) -- switching the active session from superstore to nofrills
+via `set_active_store`, then adding an item, would have written to the
+*superstore* cart under nofrills headers instead of erroring or using
+the right cart. Caught before it actually happened, by checking
+`session_state.json` after the switch and noticing `cart_id` still held
+the superstore cart's id despite `banner` correctly reading `"nofrills"`.
+
+**Root cause**: `_rediscover_cart` (server.py) discovered the session's
+cart id from `get_profile()`'s `cartId` field -- the prior-art project's
+own approach, and what `api_client.list_carts`'s docstring used to
+describe as the reason `list_carts` itself was unused. Confirmed live
+this is wrong: calling `get_profile()` with nofrills headers returned the
+exact same `cartId` as calling it with superstore headers -- always the
+superstore cart, regardless of which banner actually asked. `list_carts`
+(`GET /customers/{id}/carts?banner=X`), by contrast, correctly returns
+each banner's own, different cart id. This is the same underlying API
+surface, just a different endpoint, that the "one cart per account"
+correction above already relied on for evidence -- but the fix for
+*that* was documentation and error messages; this is the fix for the
+actual cart-selection code path itself.
+
+**Two-part fix**:
+1. `_rediscover_cart` now calls `list_carts(customer_id)` (scoped to
+   `session.banner` via the API client's own banner headers) instead of
+   reading `profile.cartId`.
+2. `set_active_store` now clears `session.cart_id` whenever the `banner`
+   argument actually changes the active banner (not on every call --
+   only a real switch, and not at all when `banner` is omitted). A
+   cleared `cart_id` forces the next cart operation to call
+   `_rediscover_cart` fresh, scoped to the new banner, instead of
+   `_ensure_customer_and_cart` skipping rediscovery because *a*
+   `cart_id` (just the wrong banner's) was already cached.
+
+Verified live, including the negative case: `list_carts` for a banner
+this account has never used (Zehrs) correctly returns an empty list, and
+`_rediscover_cart` raises a clear, banner-named error rather than
+silently reusing a stale id from a different banner. See
+`tests/test_cart_discovery_banner_scoped.py`.
+
 ## Loyalty offers (no dedicated endpoint found)
 
 Two real, working, account-level loyalty endpoints exist and are wired to

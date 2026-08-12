@@ -235,8 +235,18 @@ class PCExpressAPI:
     # -- cart ---------------------------------------------------------------
 
     def list_carts(self, customer_id: str) -> dict:
-        """Not used by the default cart-discovery path (get_profile's cartId is simpler
-        and is what's actually exercised by working prior-art code); kept for completeness."""
+        """The banner-scoped cart-discovery path -- server.py's
+        `_rediscover_cart` uses this, not `get_profile()['cartId']`.
+
+        An earlier version of this client used `profile.cartId` instead
+        (simpler, and what the prior-art project's own code does) --
+        confirmed live to be wrong: `profile.cartId` returns the *same*
+        cart id regardless of which banner's headers request it (observed
+        always the superstore cart, even queried with nofrills headers),
+        while this endpoint correctly returns each banner's own,
+        genuinely different cart. See docs/RESEARCH.md "Cart discovery
+        must be banner-scoped".
+        """
         url = f"{config.PCX_BFF_BASE}/customers/{customer_id}/carts"
         return self._request("GET", url, params={"banner": self.banner}).json()
 

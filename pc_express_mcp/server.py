@@ -334,14 +334,34 @@ def _ensure_customer_and_cart(api: PCExpressAPI, session: session_state.SessionS
 
 
 def _rediscover_cart(api: PCExpressAPI, session: session_state.SessionState) -> None:
+    """Discover session.customer_id/cart_id fresh, scoped to session.banner.
+
+    Uses `list_carts`, not `profile.cartId` -- confirmed live these
+    disagree: `profile.cartId` returns the *same* cart id regardless of
+    which banner's API client calls it (observed always returning the
+    superstore cart, even when called with nofrills headers), while
+    `list_carts` correctly returns each banner's own, genuinely different
+    cart. An earlier version of this function used `profile.cartId`
+    (the prior-art project's own approach, and `list_carts`'s docstring
+    used to say as much) -- wrong for any banner switch, caught only by
+    directly testing a real cross-banner scenario: after `set_active_store`
+    switched the active banner, this kept resolving to the *previous*
+    banner's cart id, which would have made the next add_to_cart write to
+    the wrong cart under the new banner's headers instead of erroring
+    loudly. See docs/RESEARCH.md "Cart discovery must be banner-scoped".
+    """
     profile = api.get_profile()
     session.customer_id = profile.get("id") or profile.get("customerId") or session.customer_id
-    session.cart_id = profile.get("cartId") or None
+    session.cart_id = None
+    if session.customer_id:
+        carts = api.list_carts(session.customer_id).get("carts") or []
+        if carts:
+            session.cart_id = carts[0]["id"]
     _save_session(session)
     if not session.cart_id:
         raise PcxApiError(
-            "Could not discover a cart id from the customer profile response -- "
-            "add an item via the PC Express app/website once to create a cart, then retry."
+            f"Could not discover a cart id for banner {session.banner!r} -- "
+            "add an item via the PC Express app/website (on this banner) once to create a cart, then retry."
         )
 
 
@@ -812,6 +832,15 @@ def set_active_store(store_id: str, banner: Optional[str] = None) -> dict:
             config.banner_info(banner)
         except ValueError as exc:
             return {"error": "invalid_banner", "message": str(exc)}
+        if banner != session.banner:
+            # A cached cart_id belongs to whichever banner discovered it --
+            # confirmed live this isn't just theoretical: without this,
+            # a real cross-banner switch kept the previous banner's cart_id
+            # cached, and the next cart write would have silently targeted
+            # the wrong banner's cart instead of erroring. Clearing it here
+            # forces _rediscover_cart to look it up fresh, scoped to the
+            # new banner, the next time any cart tool runs.
+            session.cart_id = None
         session.banner = banner
 
     api = _get_api(session.banner)
