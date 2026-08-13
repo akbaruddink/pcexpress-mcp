@@ -76,6 +76,14 @@ def test_simplify_cart_against_real_snapshot():
         assert item["quantity"] is not None
         assert item["photo_markdown"] is not None
         assert item["photo_markdown"].startswith("![")
+        # Every real entry in this snapshot has a brand/package size/unit
+        # price -- guards the enrichment added after a direct request,
+        # including the comparisonPrices "price" vs "value" key gotcha
+        # (see _simplify_cart's docstring).
+        assert item["brand"] is not None
+        assert item["package_size"] is not None
+        assert item["unit_price"] is not None
+        assert item["unit_price"]["value"] is not None
 
 
 def test_simplify_product_against_real_snapshot():

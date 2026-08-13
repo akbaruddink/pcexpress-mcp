@@ -559,6 +559,18 @@ def _simplify_cart(cart: dict) -> dict:
     built from `product.primaryImage` -- a single URL, unlike search
     results' multi-angle `image_urls` (the raw cart entry shape only ever
     carries one photo per product, confirmed against a real cart).
+
+    Entries also carry `brand`/`package_size`/`unit_price`/`regular_price`/
+    `deal_text` -- real fields confirmed present on a real cart entry
+    (`product.brand`, `product.sizeLabel`, `prices.comparisonPrices`,
+    `prices.totalRegularPrice`, `offer.badges.dealBadge`/
+    `offer.promotionLabel`) that just weren't extracted before. One real
+    shape gotcha caught here: a cart entry's `comparisonPrices` items key
+    the number as `"price"` (e.g. `{"price": 0.36, "quantity": 100, "unit":
+    "g"}`), not `"value"` like a search result's `comparisonPrices` does
+    (`_simplify_product` above) -- same-looking field, different key name,
+    confirmed against a real cart fixture rather than assumed identical to
+    search's shape.
     """
     orders = cart.get("orders") or []
     entries: list[dict] = []
@@ -574,12 +586,26 @@ def _simplify_cart(cart: dict) -> dict:
             product = offer.get("product") or {}
             prices = entry.get("prices") or {}
             total_sale_price = prices.get("totalSalePrice")
+            comparison_prices = prices.get("comparisonPrices") or []
+            comparison = comparison_prices[0] if comparison_prices else {}
+            unit_price = None
+            if comparison.get("price") is not None:
+                unit_price = {
+                    "value": comparison.get("price"),
+                    "per": f"{comparison.get('quantity')}{comparison.get('unit')}" if comparison.get("unit") else None,
+                }
+            deal_badge = (offer.get("badges") or {}).get("dealBadge") or {}
             entries.append(
                 {
                     "code": offer.get("id") or product.get("id"),
                     "name": product.get("name"),
+                    "brand": product.get("brand"),
+                    "package_size": product.get("sizeLabel"),
                     "quantity": entry.get("quantity"),
                     "total_price": total_sale_price if total_sale_price is not None else prices.get("totalRegularPrice"),
+                    "regular_price": prices.get("totalRegularPrice"),
+                    "unit_price": unit_price,
+                    "deal_text": deal_badge.get("text") or offer.get("promotionLabel"),
                     "photo_markdown": _markdown_image(product.get("name"), product.get("primaryImage")),
                 }
             )

@@ -183,10 +183,20 @@ def test_simplify_cart_flattens_orders_and_entries():
                                 "id": "111_EA",
                                 "name": "Eggs",
                                 "brand": "No Name",
+                                "sizeLabel": "DOZ",
                                 "primaryImage": "https://x/eggs.png",
                             },
+                            "badges": {"dealBadge": {"text": "SAVE $0.52"}},
+                            "promotionLabel": "Subscribe & Earn",
                         },
-                        "prices": {"totalSalePrice": 3.98, "totalRegularPrice": 4.5},
+                        # Real gotcha: a cart entry's comparisonPrices keys the
+                        # number as "price", not "value" like a search result's
+                        # comparisonPrices does -- confirmed against a real cart.
+                        "prices": {
+                            "totalSalePrice": 3.98,
+                            "totalRegularPrice": 4.5,
+                            "comparisonPrices": [{"price": 0.33, "quantity": 1, "unit": "egg"}],
+                        },
                     },
                     {
                         "quantity": 1.0,
@@ -207,13 +217,30 @@ def test_simplify_cart_flattens_orders_and_entries():
         {
             "code": "111_EA",
             "name": "Eggs",
+            "brand": "No Name",
+            "package_size": "DOZ",
             "quantity": 2.0,
             "total_price": 3.98,
+            "regular_price": 4.5,
+            "unit_price": {"value": 0.33, "per": "1egg"},
+            "deal_text": "SAVE $0.52",
             "photo_markdown": "![Eggs](https://x/eggs.png)",
         },
         # totalSalePrice absent -> falls back to totalRegularPrice; no
-        # primaryImage on this one -> photo_markdown is None, not omitted.
-        {"code": "222_EA", "name": "Cheese", "quantity": 1.0, "total_price": 5.99, "photo_markdown": None},
+        # primaryImage/brand/sizeLabel/comparisonPrices/badges on this one
+        # -> everything enrichment-related is None, not omitted.
+        {
+            "code": "222_EA",
+            "name": "Cheese",
+            "brand": None,
+            "package_size": None,
+            "quantity": 1.0,
+            "total_price": 5.99,
+            "regular_price": 5.99,
+            "unit_price": None,
+            "deal_text": None,
+            "photo_markdown": None,
+        },
     ]
 
 
