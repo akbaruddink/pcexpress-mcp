@@ -88,50 +88,118 @@ apps.add_html_resource(
 # though those aren't defined until later in this file -- Python resolves
 # names inside a function body at call time, long after the whole module
 # has finished importing, not at def time.
+def _lookup_products_by_code(api: PCExpressAPI, store_id: str, product_codes: list[str]) -> tuple[list[dict], list[str]]:
+    """Resolve specific product codes to their real, current data.
+
+    No dedicated lookup-by-code endpoint exists (`api_client.get_product`
+    is confirmed broken -- see its docstring); confirmed live instead that
+    searching with the exact code as the search term reliably returns
+    that product as an exact match (3/3 real codes tried, each returning
+    exactly one result matching the requested code) -- an invalid code
+    doesn't error, it just returns unrelated fuzzy-matched results, so
+    each result is checked for an exact code match rather than trusting
+    "first result." One search call per code. Returns (products,
+    not_found_codes).
+
+    Not itself an @apps.tool() -- a plain helper shared by
+    interactive_product_search and _interactive_search_results below. It
+    must stay defined *before* either of those, not just before they're
+    called: a first version of this placed it between the @apps.tool(...)
+    decorator and interactive_product_search's `def`, which silently
+    rebound that decorator onto this helper instead (Python decorators
+    bind to the very next `def`, regardless of intent) -- caught by
+    MCPServer failing to even construct (a JSON-schema error on this
+    function's `api: PCExpressAPI` parameter), not a subtle bug.
+    """
+    products: list[dict] = []
+    not_found: list[str] = []
+    for code in product_codes:
+        raw = api.search_products(code, store_id, size=5)
+        match = next((p for p in raw.get("results", []) or [] if p.get("code") == code), None)
+        if match:
+            products.append(_simplify_product(match))
+        else:
+            not_found.append(code)
+    return products, not_found
+
+
 @apps.tool(
     resource_uri=_INTERACTIVE_SEARCH_RESOURCE_URI,
     annotations=ToolAnnotations(
         title="Interactive Product Search", read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False
     ),
 )
-def interactive_product_search(query: str, size: int = 20, ctx: Optional[Context] = None) -> dict:
-    """Search products and, on a client that renders MCP Apps UI, show them
-    as an interactive widget (photos, prices, per-item Add-to-Cart buttons)
-    instead of plain text.
+def interactive_product_search(
+    query: Optional[str] = None,
+    product_codes: Optional[list[str]] = None,
+    size: int = 20,
+    ctx: Optional[Context] = None,
+) -> dict:
+    """Search products, or show a specific hand-picked list of products, as
+    an interactive widget (photos, prices, per-item Add-to-Cart buttons) on
+    a client that renders MCP Apps UI -- instead of plain text.
+
+    Provide exactly one of:
+    - `query`: a normal search, same as search_products.
+    - `product_codes`: a curated list of specific products you already
+      know about (e.g. picked from earlier search_products/
+      interactive_product_search results after comparing price,
+      nutrition, or anything else) -- this is how you show the user
+      exactly what *you're* recommending, not just "here's a search."
+      This tool can't take full product details as an argument for this
+      -- only codes, which it looks up itself -- because accepting full
+      product data here would defeat the whole reason the widget's data
+      stays out of your context on a supporting client (see below): it
+      would all have to pass through your own output to get here.
 
     Requires an active store (see set_active_store). Confirmed live,
     including the full Add-to-Cart round trip: MCP Apps widgets render on
     Claude Desktop, claude.ai web, and the Claude mobile app -- see
     docs/RESEARCH.md "Interactive product search widget". On a client
-    that doesn't support MCP Apps, this degrades automatically
-    to the same full text/photo_markdown results as search_products, so
-    it's always safe to call regardless of client -- use this instead of
-    search_products whenever the user is meant to browse and pick items,
-    not just get information about them.
+    that doesn't support MCP Apps, this degrades automatically to the
+    same full text/photo_markdown results search_products would give
+    (for `product_codes`, the same shape but sourced by code lookup
+    instead of a search term), so it's always safe to call regardless of
+    client -- use this instead of search_products whenever the user is
+    meant to browse and pick items, not just get information about them.
 
     On a client that DOES support MCP Apps, this returns only a small
-    {query, size, store_id, banner, count} reference, not the actual
-    results -- by design, to keep the widget's data out of your context.
-    That small response is the *correct* outcome for a supporting
-    client, not a sign the widget failed to render. Whether it actually
-    rendered is not something you can see from here: the widget renders
-    client-side, in the user's own app, and you never receive its visual
-    output, only this JSON. Do not tell the user it did or didn't
-    render -- if that's in question, ask them what's on their screen.
+    reference, not the actual results -- by design, to keep the widget's
+    data out of your context. That small response is the *correct*
+    outcome for a supporting client, not a sign the widget failed to
+    render. Whether it actually rendered is not something you can see
+    from here: the widget renders client-side, in the user's own app,
+    and you never receive its visual output, only this JSON. Do not tell
+    the user it did or didn't render -- if that's in question, ask them
+    what's on their screen.
     """
+    if not query and not product_codes:
+        return {"error": "invalid_input", "message": "Provide either query or product_codes."}
+    if query and product_codes:
+        return {"error": "invalid_input", "message": "Provide only one of query or product_codes, not both."}
     session = _load_session()
     if not session.store_id:
         return {"error": "no_active_store", "message": "Call set_active_store first."}
     api = _get_api(session.banner)
-    try:
-        raw = api.search_products(query, session.store_id, cart_id=session.cart_id, size=size)
-    except (PcidAuthError, PcxApiError) as exc:
-        return _tool_error(exc)
-    results = [_simplify_product(p) for p in raw.get("results", []) or []]
+
+    not_found: list[str] = []
+    if product_codes:
+        try:
+            results, not_found = _lookup_products_by_code(api, session.store_id, product_codes)
+        except (PcidAuthError, PcxApiError) as exc:
+            return _tool_error(exc)
+        label = f"{len(product_codes)} selected product{'' if len(product_codes) == 1 else 's'}"
+    else:
+        try:
+            raw = api.search_products(query, session.store_id, cart_id=session.cart_id, size=size)
+        except (PcidAuthError, PcxApiError) as exc:
+            return _tool_error(exc)
+        results = [_simplify_product(p) for p in raw.get("results", []) or []]
+        label = f'Results for "{query}"'
 
     if ctx is not None and client_supports_apps(ctx):
-        return {
-            "query": query,
+        response: dict[str, Any] = {
+            "label": label,
             "size": size,
             "store_id": session.store_id,
             "banner": session.banner,
@@ -145,42 +213,64 @@ def interactive_product_search(query: str, size: int = 20, ctx: Optional[Context
                 "if that matters, ask the user what they see."
             ),
         }
+        response["query"] = query if query else None
+        response["product_codes"] = product_codes if product_codes else None
+        if not_found:
+            response["not_found"] = not_found
+        return response
 
-    return {"query": query, "count": len(results), "results": results}
+    response = {"label": label, "count": len(results), "results": results}
+    response["query"] = query if query else None
+    if not_found:
+        response["not_found"] = not_found
+    return response
 
 
 @apps.tool(
     resource_uri=_INTERACTIVE_SEARCH_RESOURCE_URI,
     visibility=["app"],
 )
-def _interactive_search_results(query: str, size: int, store_id: str, banner: str) -> dict:
+def _interactive_search_results(
+    size: int,
+    store_id: str,
+    banner: str,
+    query: Optional[str] = None,
+    product_codes: Optional[list[str]] = None,
+) -> dict:
     """App-only: not in the model's tool list (visibility=["app"]) -- the
     interactive_product_search widget calls this itself, over the
-    postMessage bridge, to fetch the actual product list for the search
-    the launcher tool ran.
+    postMessage bridge, to fetch the actual product list for whatever the
+    launcher tool ran (a search, or a specific product_codes lookup).
 
-    Deliberately re-runs the search live, from the exact query/size/
-    store/banner the launcher used, rather than reading cached results
-    back out by an opaque reference. An earlier version cached the
-    *results* behind a random result_ref -- simpler at the call site, but
-    that cache was an in-memory dict with no persistence, so a server
-    restart between the search and the widget re-fetching it (confirmed
-    live: this happens routinely during active development, but a crash
-    or redeploy at any time has the same effect) silently invalidated it,
-    and the widget had no way to recover except telling the user to
-    search again. Re-running the search is cheap, safe (read-only), and
-    idempotent enough that there's no real reason to cache it at all --
-    see docs/RESEARCH.md "Interactive product search widget".
+    Deliberately re-runs the search/lookup live, from the exact params
+    the launcher used, rather than reading cached results back out by an
+    opaque reference. An earlier version cached the *results* behind a
+    random result_ref -- simpler at the call site, but that cache was an
+    in-memory dict with no persistence, so a server restart between the
+    search and the widget re-fetching it (confirmed live: this happens
+    routinely during active development, but a crash or redeploy at any
+    time has the same effect) silently invalidated it, and the widget had
+    no way to recover except telling the user to search again. Re-running
+    is cheap, safe (read-only), and idempotent enough that there's no
+    real reason to cache it at all -- see docs/RESEARCH.md "Interactive
+    product search widget".
     """
     api = _get_api(banner)
     try:
-        raw = api.search_products(query, store_id, size=size)
+        if product_codes:
+            results, not_found = _lookup_products_by_code(api, store_id, product_codes)
+        else:
+            raw = api.search_products(query or "", store_id, size=size)
+            results = [_simplify_product(p) for p in raw.get("results", []) or []]
+            not_found = []
     except (PcidAuthError, PcxApiError) as exc:
         error = _tool_error(exc)
         error["results"] = []
         return error
-    results = [_simplify_product(p) for p in raw.get("results", []) or []]
-    return {"results": results}
+    response = {"results": results}
+    if not_found:
+        response["not_found"] = not_found
+    return response
 
 
 mcp = MCPServer("pc-express", extensions=[apps])

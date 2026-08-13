@@ -64,7 +64,15 @@ def test_launcher_returns_a_small_reproducible_reference_when_client_supports_ap
     result = server.interactive_product_search(query="cheese", size=5, ctx=object())
     assert "results" not in result
     note = result.pop("note")
-    assert result == {"query": "cheese", "size": 5, "store_id": "1024", "banner": "superstore", "count": 1}
+    assert result == {
+        "label": 'Results for "cheese"',
+        "query": "cheese",
+        "product_codes": None,
+        "size": 5,
+        "store_id": "1024",
+        "banner": "superstore",
+        "count": 1,
+    }
     # The small reference is the *correct* outcome, not a rendering
     # failure -- a real user report showed a model misreading this
     # terse shape as "the widget didn't render" and stating that as
@@ -84,6 +92,35 @@ def test_launcher_requires_active_store(monkeypatch):
     _patch(monkeypatch, store_id=None)
     result = server.interactive_product_search(query="cheese")
     assert result["error"] == "no_active_store"
+
+
+def test_launcher_requires_exactly_one_of_query_or_product_codes(monkeypatch):
+    _patch(monkeypatch)
+    assert server.interactive_product_search()["error"] == "invalid_input"
+    assert server.interactive_product_search(query="cheese", product_codes=["20700462_EA"])["error"] == "invalid_input"
+
+
+def test_launcher_with_product_codes_looks_up_each_one(monkeypatch):
+    _patch(monkeypatch)
+    monkeypatch.setattr(server, "client_supports_apps", lambda ctx: True)
+    result = server.interactive_product_search(product_codes=["20700462_EA"], ctx=object())
+    assert result["label"] == "1 selected product"
+    assert result["query"] is None
+    assert result["product_codes"] == ["20700462_EA"]
+    assert result["count"] == 1
+
+    fetched = server._interactive_search_results(
+        product_codes=["20700462_EA"], size=20, store_id="1024", banner="superstore"
+    )
+    assert fetched["results"][0]["code"] == "20700462_EA"
+
+
+def test_launcher_with_product_codes_reports_codes_not_found(monkeypatch):
+    _patch(monkeypatch)
+    result = server.interactive_product_search(product_codes=["20700462_EA", "NOT_REAL"], ctx=None)
+    assert result["count"] == 1
+    assert result["not_found"] == ["NOT_REAL"]
+    assert result["label"] == "2 selected products"
 
 
 def test_interactive_search_results_re_runs_the_search_live(monkeypatch):

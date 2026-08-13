@@ -6,12 +6,14 @@
  * project verified against before building this):
  *
  *   - In a host (claude.ai / Desktop): connects over the postMessage
- *     bridge, receives the launcher tool's small { result_ref, query,
- *     count } via ontoolresult, fetches the full product list itself via
- *     the app-only _interactive_search_results tool (keeps the payload
- *     out of the model's context -- see interactive_search.py), and calls
- *     the real add_to_cart tool directly when a card's Add button is
- *     tapped.
+ *     bridge, receives the launcher tool's small reference (label plus
+ *     either a query or a specific product_codes list, never the actual
+ *     results) via ontoolresult, fetches the full product list itself by
+ *     re-running that same search/lookup live via the app-only
+ *     _interactive_search_results tool (keeps the payload out of the
+ *     model's context -- see server.py's interactive_product_search), and
+ *     calls the real add_to_cart tool directly when a card's Add button
+ *     is tapped.
  *
  *   - Standalone (opened directly in a browser, no host): renders
  *     embedded mock data so the widget can be previewed without a
@@ -37,7 +39,11 @@ const inHost = window.parent && window.parent !== window;
 const root = document.getElementById("root");
 /** @type {import("@modelcontextprotocol/ext-apps").App | null} */
 let app = null;
-let query = "";
+// Server-provided header text -- covers both modes interactive_product_search
+// supports (a text search, or a specific hand-picked product_codes list);
+// the server decides what this says so the widget doesn't need its own
+// branching copy for "search" vs "selection."
+let label = "Product search";
 let results = MOCK_RESULTS;
 // Set when the widget's data fetch failed or its result_ref expired (the
 // server's search-results cache is in-memory and doesn't survive a
@@ -89,7 +95,7 @@ function render() {
   }
 
   const head = el("div", "head");
-  head.appendChild(el("h1", "", query ? `Results for "${query}"` : "Product search"));
+  head.appendChild(el("h1", "", label));
   head.appendChild(el("div", "count", `${results.length} item${results.length === 1 ? "" : "s"}`));
   root.appendChild(head);
 
@@ -121,18 +127,54 @@ function renderCard(product) {
   card.dataset.code = product.code;
 
   const photoWrap = el("div", "photo-wrap");
-  const imageUrl = (product.image_urls && product.image_urls[0]) || null;
-  if (imageUrl) {
+  // Search results carry every distinct product photo (image_urls), not
+  // just one -- cart items don't (PC Express's own cart data only ever
+  // has one photo per product; see _simplify_cart's docstring), but this
+  // widget only ever shows search-sourced products, so it's safe to
+  // assume the full array is available here.
+  const images = Array.isArray(product.image_urls) ? product.image_urls.filter(Boolean) : [];
+  if (images.length === 0) {
+    photoWrap.appendChild(el("div", "photo-fallback", "No photo"));
+  } else {
     const img = document.createElement("img");
-    img.src = imageUrl;
     img.alt = product.name || "product photo";
     img.onerror = () => {
       photoWrap.innerHTML = "";
       photoWrap.appendChild(el("div", "photo-fallback", "No photo"));
     };
     photoWrap.appendChild(img);
-  } else {
-    photoWrap.appendChild(el("div", "photo-fallback", "No photo"));
+
+    let index = 0;
+    let dotsEl = null;
+    function showImage() {
+      img.src = images[index];
+      if (dotsEl) {
+        Array.from(dotsEl.children).forEach((dot, i) => dot.classList.toggle("active", i === index));
+      }
+    }
+
+    if (images.length > 1) {
+      photoWrap.classList.add("cyclable");
+      photoWrap.setAttribute("role", "button");
+      photoWrap.setAttribute("aria-label", "Show next photo");
+      photoWrap.tabIndex = 0;
+      const cycle = () => {
+        index = (index + 1) % images.length;
+        showImage();
+      };
+      photoWrap.addEventListener("click", cycle);
+      photoWrap.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          cycle();
+        }
+      });
+      dotsEl = el("div", "photo-dots");
+      images.forEach(() => dotsEl.appendChild(el("span", "dot")));
+      photoWrap.appendChild(dotsEl);
+    }
+
+    showImage();
   }
   card.appendChild(photoWrap);
 
@@ -262,22 +304,24 @@ async function boot() {
   // fires immediately after the handshake.
   app.ontoolresult = async (res) => {
     const launch = extractToolData(res);
-    if (!launch?.query) {
+    if (!launch || (!launch.query && !launch.product_codes)) {
       log("warning", { event: "missing_launch_data", data: launch });
       return;
     }
-    query = launch.query || "";
+    label = launch.label || "Product search";
     resultsError = null;
     try {
-      // Re-runs the actual search live -- see interactive_search
+      // Re-runs the actual search/lookup live -- see interactive_search
       // (Python side) for why this isn't a cached-result lookup: a
       // cache entry can go stale or disappear (a server restart between
       // this search and the widget re-fetching it, confirmed to happen
-      // in practice), while re-running the same query/store/banner
-      // can't expire.
+      // in practice), while re-running the same params can't expire.
+      const fetchArgs = { size: launch.size, store_id: launch.store_id, banner: launch.banner };
+      if (launch.product_codes) fetchArgs.product_codes = launch.product_codes;
+      else fetchArgs.query = launch.query;
       const dataRes = await app.callServerTool({
         name: "_interactive_search_results",
-        arguments: { query: launch.query, size: launch.size, store_id: launch.store_id, banner: launch.banner },
+        arguments: fetchArgs,
       });
       const data = extractToolData(dataRes);
       results = Array.isArray(data?.results) ? data.results : [];

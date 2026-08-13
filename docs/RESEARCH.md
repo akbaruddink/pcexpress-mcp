@@ -917,6 +917,51 @@ of the model's context" above. The honest-messaging fix in this section
 is kept here as the real record of the first (reasonable, but not best)
 fix, not because it's still how this works.
 
+### Curated product picks and image cycling
+
+Two more direct requests, addressed together since both touch the same
+widget: (1) a way to show a specific, hand-picked set of products, not
+just raw search results -- "I'll be able to see the products Claude is
+recommending" -- and (2) cycling through a product's multiple photos in
+the card, which `search_products`/`_simplify_product` had carried
+(`image_urls`, plural, one per angle) since much earlier in this project,
+but the widget only ever rendered `image_urls[0]`.
+
+**Curated picks**: `interactive_product_search` now accepts
+`product_codes` (a list) as an alternative to `query` -- exactly one of
+the two, not both. There's no dedicated lookup-by-code endpoint
+(`api_client.get_product` is confirmed broken), so this reuses
+`products/search`: confirmed live that searching with the exact product
+code as the search term reliably returns that product as an exact match
+(3/3 real codes tried), and that an invalid code doesn't error, it just
+returns unrelated fuzzy-matched results -- so each result is checked for
+an exact code match rather than trusting "first result," and a
+`not_found` list is surfaced for any code that didn't resolve. One
+`products/search` call per code (`_lookup_products_by_code`), shared by
+both the launcher and the app-only re-fetch tool, same reproducible-
+reference design as the query path -- no caching, nothing to expire.
+
+A real structural bug caught immediately while wiring this in: a shared
+helper function (`_lookup_products_by_code`) was first placed *between*
+`interactive_product_search`'s `@apps.tool(...)` decorator and its `def`
+-- Python decorators bind to the very next `def` regardless of intent,
+so the decorator silently rebound onto the helper instead. Caught
+because `MCPServer(...)` failed to even construct (a Pydantic JSON-schema
+error trying to build a schema for the helper's `api: PCExpressAPI`
+parameter), not a subtle runtime bug -- fixed by moving the helper above
+the decorator entirely.
+
+**Image cycling**: the data (`image_urls`) was already flowing to the
+widget; only the widget's own rendering needed to change. Tapping a
+card's photo (or Enter/Space when focused, for keyboard access) advances
+to the next image, wrapping around, with small dot indicators showing
+position -- standard mobile carousel pattern, kept deliberately simple
+(no swipe gesture, no arrows eating into the card's tight 148px width)
+given the horizontal card-scroll layout already established. Products
+with only one photo (or none) render exactly as before -- no dots, no
+cyclable affordance, confirmed real products range from 1 to 9+ photos
+in practice.
+
 ## Cart discovery must be banner-scoped (a real, shipped bug)
 
 Found while directly fulfilling a user request to put items in two

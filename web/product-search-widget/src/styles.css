@@ -69,11 +69,34 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+.card .photo-wrap.cyclable {
+  cursor: pointer;
 }
 .card img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+.card .photo-dots {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  pointer-events: none;
+}
+.card .photo-dots .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+}
+.card .photo-dots .dot.active {
+  background: #fff;
 }
 .card .photo-fallback {
   font-size: 11px;

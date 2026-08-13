@@ -76,11 +76,34 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+.card .photo-wrap.cyclable {
+  cursor: pointer;
 }
 .card img {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+.card .photo-dots {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 4px;
+  pointer-events: none;
+}
+.card .photo-dots .dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.4);
+}
+.card .photo-dots .dot.active {
+  background: #fff;
 }
 .card .photo-fallback {
   font-size: 11px;
@@ -18606,7 +18629,7 @@ container holding the app. Specify either width or maxWidth, and either height o
   var inHost = window.parent && window.parent !== window;
   var root = document.getElementById("root");
   var app = null;
-  var query = "";
+  var label = "Product search";
   var results = MOCK_RESULTS;
   var resultsError = null;
   var addedCodes = /* @__PURE__ */ new Set();
@@ -18641,7 +18664,7 @@ container holding the app. Specify either width or maxWidth, and either height o
       root.appendChild(el("div", "standalone-note", "Standalone preview (no MCP host). Add buttons no-op."));
     }
     const head = el("div", "head");
-    head.appendChild(el("h1", "", query ? `Results for "${query}"` : "Product search"));
+    head.appendChild(el("h1", "", label));
     head.appendChild(el("div", "count", `${results.length} item${results.length === 1 ? "" : "s"}`));
     root.appendChild(head);
     if (results.length === 0) {
@@ -18668,18 +18691,46 @@ container holding the app. Specify either width or maxWidth, and either height o
     const card = el("div", "card");
     card.dataset.code = product.code;
     const photoWrap = el("div", "photo-wrap");
-    const imageUrl = product.image_urls && product.image_urls[0] || null;
-    if (imageUrl) {
+    const images = Array.isArray(product.image_urls) ? product.image_urls.filter(Boolean) : [];
+    if (images.length === 0) {
+      photoWrap.appendChild(el("div", "photo-fallback", "No photo"));
+    } else {
+      let showImage = function() {
+        img.src = images[index];
+        if (dotsEl) {
+          Array.from(dotsEl.children).forEach((dot, i2) => dot.classList.toggle("active", i2 === index));
+        }
+      };
       const img = document.createElement("img");
-      img.src = imageUrl;
       img.alt = product.name || "product photo";
       img.onerror = () => {
         photoWrap.innerHTML = "";
         photoWrap.appendChild(el("div", "photo-fallback", "No photo"));
       };
       photoWrap.appendChild(img);
-    } else {
-      photoWrap.appendChild(el("div", "photo-fallback", "No photo"));
+      let index = 0;
+      let dotsEl = null;
+      if (images.length > 1) {
+        photoWrap.classList.add("cyclable");
+        photoWrap.setAttribute("role", "button");
+        photoWrap.setAttribute("aria-label", "Show next photo");
+        photoWrap.tabIndex = 0;
+        const cycle = () => {
+          index = (index + 1) % images.length;
+          showImage();
+        };
+        photoWrap.addEventListener("click", cycle);
+        photoWrap.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            cycle();
+          }
+        });
+        dotsEl = el("div", "photo-dots");
+        images.forEach(() => dotsEl.appendChild(el("span", "dot")));
+        photoWrap.appendChild(dotsEl);
+      }
+      showImage();
     }
     card.appendChild(photoWrap);
     const body = el("div", "body");
@@ -18767,10 +18818,10 @@ container holding the app. Specify either width or maxWidth, and either height o
     if (text) node.textContent = text;
     return node;
   }
-  function btn(label, onClick, cls) {
+  function btn(label2, onClick, cls) {
     const b2 = document.createElement("button");
     if (cls) b2.className = cls;
-    b2.textContent = label;
+    b2.textContent = label2;
     b2.addEventListener("click", onClick);
     return b2;
   }
@@ -18782,16 +18833,19 @@ container holding the app. Specify either width or maxWidth, and either height o
     app = new i({ name: "PC Express Product Search", version: "1.0.0" });
     app.ontoolresult = async (res) => {
       const launch = extractToolData(res);
-      if (!launch?.query) {
+      if (!launch || !launch.query && !launch.product_codes) {
         log("warning", { event: "missing_launch_data", data: launch });
         return;
       }
-      query = launch.query || "";
+      label = launch.label || "Product search";
       resultsError = null;
       try {
+        const fetchArgs = { size: launch.size, store_id: launch.store_id, banner: launch.banner };
+        if (launch.product_codes) fetchArgs.product_codes = launch.product_codes;
+        else fetchArgs.query = launch.query;
         const dataRes = await app.callServerTool({
           name: "_interactive_search_results",
-          arguments: { query: launch.query, size: launch.size, store_id: launch.store_id, banner: launch.banner }
+          arguments: fetchArgs
         });
         const data = extractToolData(dataRes);
         results = Array.isArray(data?.results) ? data.results : [];
