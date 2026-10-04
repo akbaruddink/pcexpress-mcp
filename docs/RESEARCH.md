@@ -999,6 +999,18 @@ slice of years-old history.
 could still be something a *different* household member picked for
 themselves. It narrows the guess, not replaces asking.
 
+**The tool's own docstring, and the nudges added to `search_products`/
+`interactive_product_search`/`add_to_cart`, deliberately don't repeat
+the incident above or any other specific anecdote.** Asked directly to
+fix this: tool-facing text is instruction a model reads and acts on, not
+project history, so it should state the general principle (buying
+history makes for more relevant, better-catered picks) without biasing
+toward or against any particular food/category from one story. It also
+says plainly that one `get_purchase_history` call early in a session is
+enough to prime context -- not a call before every search or add --
+since the first version's wording didn't make that explicit and risked
+reading as "call this constantly."
+
 ## Cart discovery must be banner-scoped (a real, shipped bug)
 
 Found while directly fulfilling a user request to put items in two
