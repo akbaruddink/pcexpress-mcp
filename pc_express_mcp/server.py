@@ -139,10 +139,12 @@ def interactive_product_search(
     an interactive widget (photos, prices, per-item Add-to-Cart buttons) on
     a client that renders MCP Apps UI -- instead of plain text.
 
-    For more relevant results, call get_purchase_history once near the
-    start of a session (not before every search) to learn what this
-    household actually buys, then use that context when choosing a
-    query or picking products to recommend.
+    If you haven't already called get_purchase_history this session,
+    call it first -- once is enough (don't call it before every search),
+    but if you're ever unsure whether you already have, call it again
+    rather than skip it; it's cheap, and assuming you already know what
+    this household buys when you don't is the worse mistake. Use that
+    context when choosing a query or picking products to recommend.
 
     Provide exactly one of:
     - `query`: a normal search, same as search_products.
@@ -1221,10 +1223,12 @@ def _enrich_with_nutrition(results: list[dict], client: httpx.Client) -> dict[st
 def search_products(query: str, size: int = 20, offset: int = 0, include_nutrition: bool = False) -> dict:
     """Search the product catalog at the active store.
 
-    For more relevant results, call get_purchase_history once near the
-    start of a session (not before every search) to learn what this
-    household actually buys, then use that context when choosing a
-    query or ranking/recommending results.
+    If you haven't already called get_purchase_history this session,
+    call it first -- once is enough (don't call it before every search),
+    but if you're ever unsure whether you already have, call it again
+    rather than skip it; it's cheap, and assuming you already know what
+    this household buys when you don't is the worse mistake. Use that
+    context when choosing a query or ranking/recommending results.
 
     Requires an active store (see set_active_store). Each result carries
     everything this API actually exposes about a product -- name, brand,
@@ -1592,10 +1596,13 @@ def get_cart() -> dict:
 def add_to_cart(items: list[dict[str, Any]]) -> dict:
     """Add one or more products to the cart, or increase their quantity, in a single call.
 
-    When choosing or confirming what to add, especially on someone
-    else's behalf, it helps to already have context from
-    get_purchase_history (call it once near the start of a session, not
-    before every add) on what this household actually buys.
+    If you haven't already called get_purchase_history this session,
+    call it first -- once is enough (don't call it before every add),
+    but if you're ever unsure whether you already have, call it again
+    rather than skip it; it's cheap, and assuming you already know what
+    this household buys when you don't is the worse mistake. This
+    matters most when choosing or confirming what to add on someone
+    else's behalf.
 
     items: a list of {"product_code": str, "quantity": int (default 1),
     "fulfillment_method": "pickup"|"delivery" (default "pickup")}. All items
