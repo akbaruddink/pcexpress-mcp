@@ -962,6 +962,43 @@ with only one photo (or none) render exactly as before -- no dots, no
 cyclable affordance, confirmed real products range from 1 to 9+ photos
 in practice.
 
+## `get_purchase_history`: catering cart picks to what the household actually buys
+
+Reported directly, from a real incident: an agent filled a cart with
+items (ground chicken, a few bags of chips) nobody in the household
+wanted, and a family member ordered them assuming they'd been
+deliberately chosen -- real money spent on real unwanted groceries.
+`get_purchase_history` exists so an agent can cross-check a candidate
+pick against what this account actually, repeatedly buys before adding
+it, rather than guessing from a product name/description alone.
+
+**Store scoping is real-id-based, not name-string matching.** An export
+of this account's own order history for analysis (a separate, earlier
+ad hoc task) surfaced 17 distinct `store` name strings in
+`get_historical_orders`' summary list for what turned out to be far
+fewer actual stores -- "1024-Oakville" and "North Oakville" both
+resolved (confirmed via each order's own `orderDetails.booking.
+pickupLocation.storeId`) to the exact same physical store as "Real
+Canadian Superstore Oak Park Drive". Matching on the summary-level name
+string alone would have under-counted that store's real order history.
+`get_purchase_history` sidesteps this by checking each candidate order's
+*real* `pickupLocation.storeId` (available once its detail is fetched
+anyway) against the active store, not the name.
+
+**Bounded work, not a full-history scan.** The same ad hoc export needed
+153 individual order-detail calls (the only place line items live) and
+took a couple of minutes in the background -- fine for a one-off
+analysis, not for a single live tool call. `get_purchase_history` caps
+total work via `max_orders_scanned` (default 60) and stops early once
+`limit` *matching* orders are found (default 20), scanning newest-first
+so a small limit still reflects recent buying habits, not an arbitrary
+slice of years-old history.
+
+**What this doesn't do**: track dislikes, only purchases. A never-before
+-bought item isn't necessarily unwanted, and a repeatedly-bought one
+could still be something a *different* household member picked for
+themselves. It narrows the guess, not replaces asking.
+
 ## Cart discovery must be banner-scoped (a real, shipped bug)
 
 Found while directly fulfilling a user request to put items in two

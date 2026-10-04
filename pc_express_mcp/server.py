@@ -1850,6 +1850,103 @@ def get_order_status(order_id: Optional[str] = None, limit: int = 10) -> dict:
     }
 
 
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Get Purchase History", read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False
+    )
+)
+def get_purchase_history(limit: int = 20, max_orders_scanned: int = 60) -> dict:
+    """Real items this account has actually bought before, at the active
+    store -- aggregated per product, most-frequently-bought first.
+
+    Call this before filling a cart with new/unfamiliar items on someone
+    else's behalf, especially on a shared account -- reported directly:
+    an agent once added items (ground chicken, a few bags of chips)
+    nobody in the household wanted, and a family member ordered them
+    assuming they'd been deliberately chosen. Cross-check candidate picks
+    against this list first: an item this household buys repeatedly is a
+    much safer default than a similar-looking one it's never bought.
+    This only shows what was *bought*, not what was disliked -- still ask
+    if you're unsure, especially for anything non-staple.
+
+    Scoped to the currently active store (see set_active_store); orders
+    from other stores/banners on this account are excluded -- resolved
+    from each order's *real* store id (fetched per order), not the
+    human-readable store name alone, which has accumulated multiple
+    legacy variants over time on a real account (e.g. "1024-Oakville"
+    and "North Oakville" both turned out to be the same physical store
+    under old naming -- confirmed live, not assumed).
+
+    Real order history can run into the hundreds of orders, and most of
+    that volume is in fetching each order's full detail (the only place
+    line items and the real store id live) -- too slow to do for the
+    entire history on one tool call. This scans at most
+    `max_orders_scanned` recent orders (newest first) and stops once
+    `limit` *matching* (right-store) orders have been found; raise
+    `max_orders_scanned` if your store's orders are a small fraction of
+    total history and matches are coming up short.
+    """
+    session = _load_session()
+    if not session.store_id:
+        return {"error": "no_active_store", "message": "Call set_active_store first."}
+    api = _get_api(session.banner)
+    try:
+        raw = api.get_historical_orders()
+    except (PcidAuthError, PcxApiError) as exc:
+        return _tool_error(exc)
+
+    order_summaries = sorted(raw.get("orderHistory") or [], key=lambda o: o.get("placed") or "", reverse=True)
+
+    items_by_code: dict[str, dict] = {}
+    matched_orders = 0
+    scanned = 0
+    for summary in order_summaries:
+        if matched_orders >= limit or scanned >= max_orders_scanned:
+            break
+        scanned += 1
+        order_id = summary.get("id")
+        if not order_id:
+            continue
+        try:
+            detail = api.get_historical_order(order_id)
+        except (PcidAuthError, PcxApiError):
+            continue
+        od = detail.get("orderDetails") or {}
+        pickup = (od.get("booking") or {}).get("pickupLocation") or {}
+        if (pickup.get("storeId") or pickup.get("id")) != session.store_id:
+            continue
+        matched_orders += 1
+        for e in od.get("entries", []) or []:
+            product = e.get("product") or {}
+            code = product.get("articleNumber") or product.get("id")
+            if not code:
+                continue
+            # order_summaries is newest-first, so each code's first
+            # appearance here is already its most recent purchase.
+            entry = items_by_code.setdefault(
+                code,
+                {
+                    "code": code,
+                    "name": product.get("productName"),
+                    "brand": product.get("brand"),
+                    "times_purchased": 0,
+                    "total_quantity": 0.0,
+                    "last_purchased": summary.get("placed"),
+                },
+            )
+            entry["times_purchased"] += 1
+            entry["total_quantity"] += e.get("quantity") or 0
+
+    items = sorted(items_by_code.values(), key=lambda i: i["times_purchased"], reverse=True)
+    return {
+        "store_id": session.store_id,
+        "orders_scanned": scanned,
+        "orders_matched": matched_orders,
+        "distinct_items": len(items),
+        "items": items,
+    }
+
+
 async def _health(request):
     from starlette.responses import JSONResponse
 

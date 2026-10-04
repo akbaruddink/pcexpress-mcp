@@ -152,8 +152,9 @@ that support it — see below and [docs/RESEARCH.md](docs/RESEARCH.md#interactiv
 | `get_available_slots` | No | Least-verified endpoint in this server — treat as advisory |
 | `place_order(confirm)` | **No** | Requires `confirm=True`; only validates cart + returns a checkout handoff link. Never submits payment. |
 | `get_order_status(order_id?, limit?)` | No | Order history (capped by `limit`, default 10) / a specific past order |
+| `get_purchase_history(limit?, max_orders_scanned?)` | No | Real items this account has bought before at the active store, aggregated most-frequently-bought first — cross-check candidate cart picks against this before adding unfamiliar items on someone's behalf. See [docs/RESEARCH.md](docs/RESEARCH.md#get_purchase_history-catering-cart-picks-to-what-the-household-actually-buys) |
 
-All 15 tools carry proper MCP tool annotations (`readOnlyHint`/`destructiveHint`/
+All 16 tools carry proper MCP tool annotations (`readOnlyHint`/`destructiveHint`/
 `idempotentHint`/`openWorldHint`), so any MCP client can categorize them the
 way it would Gmail/other well-built MCP servers — `place_order` is flagged
 non-read-only *and* destructive on purpose, since it's the closest thing to
