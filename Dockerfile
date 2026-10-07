@@ -23,6 +23,8 @@ RUN uv sync --locked --extra http --no-install-project
 
 COPY pc_express_mcp/ ./pc_express_mcp/
 COPY scripts/ ./scripts/
+# server.py reads this at import time and refuses to start without it.
+COPY web/product-search-widget/dist/widget.html ./web/product-search-widget/dist/widget.html
 COPY README.md ./
 RUN uv sync --locked --extra http
 

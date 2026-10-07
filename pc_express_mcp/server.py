@@ -25,13 +25,14 @@ from __future__ import annotations
 import re
 import time
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Literal, Optional
 
 import httpx
 from mcp.server.apps import Apps, ResourceCsp, client_supports_apps
 from mcp.server.mcpserver import MCPServer
 from mcp.server.mcpserver.context import Context
 from mcp_types import ToolAnnotations
+from typing_extensions import NotRequired, TypedDict
 
 from . import config, nutrition_client, session_state
 from .api_client import PCExpressAPI, PcxApiError
@@ -453,7 +454,7 @@ def _rediscover_cart(api: PCExpressAPI, session: session_state.SessionState) -> 
     if session.customer_id:
         carts = api.list_carts(session.customer_id).get("carts") or []
         if carts:
-            session.cart_id = carts[0]["id"]
+            session.cart_id = carts[0].get("id")
     _save_session(session)
     if not session.cart_id:
         raise PcxApiError(
@@ -511,9 +512,9 @@ def _seller_id_for_removal(api: PCExpressAPI, session: session_state.SessionStat
     docs/RESEARCH.md "Cart is bound to a single store").
 
     Uses the cart's own real current binding (`_cart_bound_store`), not
-    the locally cached `session.store_id` -- those can disagree (e.g.
-    after `switch_cart_store` without also calling `set_active_store`),
-    and only the cart's own live value is guaranteed to pass validation.
+    the locally cached `session.store_id` -- those can disagree (e.g. the
+    cart was re-bound from the PC Express app), and only the cart's own
+    live value is guaranteed to pass validation.
     Falls back to `session.store_id` if the cart lookup itself fails or
     the cart has no fulfillment set yet; returns None (omit sellerId
     entirely, the old behavior) only if neither is available -- removal
@@ -559,6 +560,16 @@ def _markdown_image(name: Optional[str], url: Optional[str]) -> Optional[str]:
     return f"![{alt}]({url})"
 
 
+def _unit_price(prices: dict, value_key: str) -> Optional[dict]:
+    """`{"value", "per"}` from `prices.comparisonPrices[0]`. Search results
+    key the number as "value", cart entries as "price" (confirmed live)."""
+    comparison = (prices.get("comparisonPrices") or [{}])[0]
+    if comparison.get(value_key) is None:
+        return None
+    unit = comparison.get("unit")
+    return {"value": comparison[value_key], "per": f"{comparison.get('quantity')}{unit}" if unit else None}
+
+
 def _simplify_product(p: dict) -> dict:
     """Verified live against real search results (queries against a real
     store, real inventory). Two things worth knowing before relying on this
@@ -594,8 +605,6 @@ def _simplify_product(p: dict) -> dict:
     prices = p.get("prices") or {}
     price = prices.get("price") or {}
     was_price = prices.get("wasPrice") or {}
-    comparison_prices = prices.get("comparisonPrices") or []
-    comparison = comparison_prices[0] if comparison_prices else {}
     images = p.get("imageAssets") or []
     image_urls = [
         url
@@ -610,13 +619,6 @@ def _simplify_product(p: dict) -> dict:
     description = _strip_html(p.get("description"))
     if description and len(description) > 400:
         description = description[:400].rsplit(" ", 1)[0] + "…"
-
-    unit_price = None
-    if comparison.get("value") is not None:
-        unit_price = {
-            "value": comparison.get("value"),
-            "per": f"{comparison.get('quantity')}{comparison.get('unit')}" if comparison.get("unit") else None,
-        }
 
     return {
         "code": p.get("code"),
@@ -633,7 +635,7 @@ def _simplify_product(p: dict) -> dict:
         "price": price.get("value"),
         "regular_price": was_price.get("value"),
         "member_price": p.get("mopDealPrice"),
-        "unit_price": unit_price,
+        "unit_price": _unit_price(prices, "value"),
         "deal_text": deal_badge.get("text"),
         "loyalty_points": loyalty_badge.get("points"),
     }
@@ -661,13 +663,8 @@ def _simplify_cart(cart: dict) -> dict:
     `deal_text` -- real fields confirmed present on a real cart entry
     (`product.brand`, `product.sizeLabel`, `prices.comparisonPrices`,
     `prices.totalRegularPrice`, `offer.badges.dealBadge`/
-    `offer.promotionLabel`) that just weren't extracted before. One real
-    shape gotcha caught here: a cart entry's `comparisonPrices` items key
-    the number as `"price"` (e.g. `{"price": 0.36, "quantity": 100, "unit":
-    "g"}`), not `"value"` like a search result's `comparisonPrices` does
-    (`_simplify_product` above) -- same-looking field, different key name,
-    confirmed against a real cart fixture rather than assumed identical to
-    search's shape.
+    `offer.promotionLabel`) that just weren't extracted before (see
+    `_unit_price` for the "price"-vs-"value" key gotcha).
     """
     orders = cart.get("orders") or []
     entries: list[dict] = []
@@ -683,14 +680,6 @@ def _simplify_cart(cart: dict) -> dict:
             product = offer.get("product") or {}
             prices = entry.get("prices") or {}
             total_sale_price = prices.get("totalSalePrice")
-            comparison_prices = prices.get("comparisonPrices") or []
-            comparison = comparison_prices[0] if comparison_prices else {}
-            unit_price = None
-            if comparison.get("price") is not None:
-                unit_price = {
-                    "value": comparison.get("price"),
-                    "per": f"{comparison.get('quantity')}{comparison.get('unit')}" if comparison.get("unit") else None,
-                }
             deal_badge = (offer.get("badges") or {}).get("dealBadge") or {}
             entries.append(
                 {
@@ -701,7 +690,7 @@ def _simplify_cart(cart: dict) -> dict:
                     "quantity": entry.get("quantity"),
                     "total_price": total_sale_price if total_sale_price is not None else prices.get("totalRegularPrice"),
                     "regular_price": prices.get("totalRegularPrice"),
-                    "unit_price": unit_price,
+                    "unit_price": _unit_price(prices, "price"),
                     "deal_text": deal_badge.get("text") or offer.get("promotionLabel"),
                     "photo_markdown": _markdown_image(product.get("name"), product.get("primaryImage")),
                 }
@@ -1043,9 +1032,10 @@ def switch_cart_store(store_id: str, postal_code: str) -> dict:
     re-priced against the new store's catalog, not dropped.
 
     This changes the account's real cart, immediately -- there's no
-    separate confirm step, unlike place_order. Call set_active_store for
-    `store_id` too if you also want future search/add_to_cart calls to
-    default to this store.
+    separate confirm step, unlike place_order. It also makes `store_id`
+    the active store, since cart writes must use the store the cart is
+    bound to (a stale active store would just trigger SELLER_ID_MISMATCH
+    on the next add).
     """
     session = _load_session()
     api = _get_api(session.banner)
@@ -1079,6 +1069,8 @@ def switch_cart_store(store_id: str, postal_code: str) -> dict:
     except (PcidAuthError, PcxApiError) as exc:
         return _tool_error(exc)
 
+    session.store_id = store_id
+    _save_session(session)
     result = _simplify_cart(raw.get("cart", raw))
     result["switched_to_store"] = store_id
     if raw.get("errors"):
@@ -1581,6 +1573,17 @@ def get_cart() -> dict:
     return _simplify_cart(raw)
 
 
+class CartItem(TypedDict):
+    product_code: str
+    quantity: NotRequired[int]
+    fulfillment_method: NotRequired[Literal["pickup", "delivery"]]
+
+
+class QuantityUpdate(TypedDict):
+    product_code: str
+    quantity: int
+
+
 @mcp.tool(
     annotations=ToolAnnotations(
         title="Add to Cart",
@@ -1593,7 +1596,7 @@ def get_cart() -> dict:
         open_world_hint=False,
     )
 )
-def add_to_cart(items: list[dict[str, Any]]) -> dict:
+def add_to_cart(items: list[CartItem]) -> dict:
     """Add one or more products to the cart, or increase their quantity, in a single call.
 
     If you haven't already called get_purchase_history this session,
@@ -1604,14 +1607,9 @@ def add_to_cart(items: list[dict[str, Any]]) -> dict:
     matters most when choosing or confirming what to add on someone
     else's behalf.
 
-    items: a list of {"product_code": str, "quantity": int (default 1),
-    "fulfillment_method": "pickup"|"delivery" (default "pickup")}. All items
-    are sent as one cart update -- the underlying API already accepts
-    multiple product codes per call (it's a dict keyed by product code),
-    this tool just didn't expose that until a real user report about
-    excessive round-trips when adding several items at once. If the same
-    product_code appears more than once, the last entry for it wins.
-    Requires an active store.
+    quantity defaults to 1, fulfillment_method to "pickup". All items are
+    sent as one cart update; if a product_code repeats, the last entry
+    wins. Requires an active store.
 
     The returned cart's items carry `photo_markdown` -- include it in your
     reply when confirming what was added.
@@ -1689,11 +1687,9 @@ def remove_from_cart(product_codes: list[str]) -> dict:
         open_world_hint=False,
     )
 )
-def update_quantity(items: list[dict[str, Any]]) -> dict:
+def update_quantity(items: list[QuantityUpdate]) -> dict:
     """Set cart quantities for one or more products directly, in a single
     call (quantity=0 removes that item).
-
-    items: a list of {"product_code": str, "quantity": int}.
 
     The returned cart's items carry `photo_markdown` -- include it when
     confirming the cart's new contents.

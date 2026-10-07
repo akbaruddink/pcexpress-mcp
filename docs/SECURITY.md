@@ -109,6 +109,29 @@ configured remote this project didn't have at the time) covering
    resolves to IPv6 first. **Fixed**: added `"::1"` to the allowed hostname
    set.
 
+A later adversarial review (2026-10) confirmed and fixed:
+
+5. **An access token was accepted as a refresh token.** Both envelopes
+   carry `tenant` + `pc_refresh_token`, and Fernet's TTL check only reads
+   the mint timestamp, so a leaked ~1hr access token worked as a 90-day
+   refresh token. **Fixed**: the refresh grant rejects any payload carrying
+   `pc_access_token`.
+6. **Mid-request PC token refresh lost the rotated refresh token.** In the
+   last minute of an outer token's life, a tool call refreshed PC ID's
+   single-use refresh token in memory only; the outer refresh token Claude
+   held then carried a consumed one, forcing a reconnect. **Fixed**: outer
+   access tokens now expire with the PC token inside them (Claude refreshes
+   via `/token`, which re-embeds rotation), and `EphemeralTokenManager`
+   never refreshes proactively.
+7. **Expired authorization codes were never purged** (each holds PC
+   credentials). **Fixed**: swept on every new login.
+
+Rejected after checking: the PC ID `state` check being skipped for a
+pasted bare code is not a CSRF hole — the logged-in account must match the
+claimed `client_id`, so a planted code can only provision its own owner's
+account, never the victim's (and it should also fail PKCE, since it was
+minted for a different verifier).
+
 **Dependency vulnerabilities**: `pip-audit` against the full pinned
 dependency set (see [Dependency policy](../README.md#dependency-policy))
 found zero known vulnerabilities as of the last run recorded here. This
@@ -134,7 +157,8 @@ credentials and a real production deployment, not only unit tests:
   answering a real `initialize` call, HTTP mode passing its own healthcheck
   and answering `/health`/`/mcp` correctly, confirmed running as the
   unprivileged container user (`id` → `uid=1000(pcexpress)`), not just a
-  `Dockerfile` that looks plausible.
+  `Dockerfile` that looks plausible. (It later regressed when the widget
+  asset was added without a matching `COPY`; fixed and rebuilt 2026-10.)
 - The redesigned code was deployed to this project's actual live VPS
   (new `PCEXPRESS_TOKEN_SECRET` generated, `pc-express-mcp.service`
   restarted) and verified over real TLS: `/health` → `200`, an

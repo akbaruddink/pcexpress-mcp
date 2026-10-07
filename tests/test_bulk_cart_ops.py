@@ -166,3 +166,16 @@ def test_update_quantity_rejects_negative_quantity():
 def test_update_quantity_rejects_empty_list():
     result = server.update_quantity(items=[])
     assert result["error"] == "invalid_items"
+
+
+def test_cart_item_schema_types_quantity_as_integer():
+    """Typed items let the SDK coerce/reject a non-numeric quantity before
+    the tool runs, instead of a raw TypeError on `quantity <= 0`."""
+    from pc_express_mcp import server
+
+    tools = {t.name: t for t in server.mcp._tool_manager.list_tools()}
+    for name in ("add_to_cart", "update_quantity"):
+        schema = tools[name].parameters
+        item = schema["$defs"][schema["properties"]["items"]["items"]["$ref"].split("/")[-1]]
+        assert item["properties"]["quantity"]["type"] == "integer"
+        assert "product_code" in item["required"]

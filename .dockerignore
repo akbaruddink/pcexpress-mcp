@@ -23,6 +23,7 @@ dist/
 .coverage
 coverage.xml
 htmlcov/
+web/product-search-widget/node_modules/
 .DS_Store
 .vscode/
 .idea/

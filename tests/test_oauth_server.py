@@ -24,6 +24,7 @@ import base64
 import hashlib
 import secrets
 import sys
+import time
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
@@ -549,3 +550,41 @@ async def test_refresh_grant_when_pcid_rejects_it_is_invalid_grant_not_a_crash(c
     resp = await client.post("/token", data={"grant_type": "refresh_token", "refresh_token": refresh_token})
     assert resp.status_code == 400
     assert resp.json()["error"] == "invalid_grant"
+
+
+async def test_access_token_cannot_be_used_as_refresh_token(client, monkeypatch):
+    """Both envelopes carry tenant + pc_refresh_token; without a type check
+    a leaked 1h access token would work as a 90-day refresh token."""
+    verifier, challenge = _pkce_pair()
+    code = await _get_code(client, monkeypatch, challenge, client_id=ALICE)
+    tokens = (
+        await client.post("/token", data={"grant_type": "authorization_code", "code": code, "code_verifier": verifier})
+    ).json()
+    monkeypatch.setattr(auth, "raw_refresh_token", lambda client, rt: pytest.fail("must not reach PC ID"))
+    resp = await client.post("/token", data={"grant_type": "refresh_token", "refresh_token": tokens["access_token"]})
+    assert resp.status_code == 400
+    assert resp.json()["error"] == "invalid_grant"
+
+
+def test_access_token_expires_with_the_pc_token_inside_it():
+    """So Claude refreshes via /token (which re-embeds PC ID's rotated
+    single-use refresh token) instead of a tool call rotating it mid-request."""
+    tokens = oauth_server._issue_tokens(ALICE, "pc-at", "pc-rt", time.time() + 30)
+    assert tokens["expires_in"] == 0
+    assert oauth_server.decode_access_token(tokens["access_token"]) is None
+    fresh = oauth_server._issue_tokens(ALICE, "pc-at", "pc-rt", time.time() + 3600)
+    assert 0 < fresh["expires_in"] <= config.OAUTH_ACCESS_TOKEN_TTL_SECONDS
+    assert oauth_server.decode_access_token(fresh["access_token"]) is not None
+
+
+def test_ephemeral_token_manager_never_refreshes_proactively(monkeypatch):
+    monkeypatch.setattr(auth, "raw_refresh_token", lambda client, rt: pytest.fail("must not refresh proactively"))
+    manager = auth.EphemeralTokenManager(access_token="pc-at", refresh_token="pc-rt", expires_at=time.time() + 10)
+    assert manager.get_access_token(None) == "pc-at"
+
+
+async def test_expired_auth_codes_are_swept_on_new_login(client, monkeypatch):
+    oauth_server._AUTH_CODES["stale"] = {"expires_at": time.time() - 1}
+    _, challenge = _pkce_pair()
+    await _get_code(client, monkeypatch, challenge, client_id=ALICE)
+    assert "stale" not in oauth_server._AUTH_CODES

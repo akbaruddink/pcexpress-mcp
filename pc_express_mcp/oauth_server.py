@@ -46,33 +46,19 @@ login attempt is abandoned partway, and this process can restart (or run as
 several replicas behind a load balancer) without losing anyone's session --
 as long as they all share the same PCEXPRESS_TOKEN_SECRET.
 
-This buys real simplicity but is not a free lunch, and is not "credential
-theft-proof": whoever holds a token can still present it to *this server*
-and act as that tenant for as long as it's valid -- exactly like any other
-bearer/session token design (a Django session cookie, a plain API key).
-Encryption protects the PC Express credentials *inside* the token from
-being extracted and reused somewhere else if the token leaks (e.g. a proxy
-log); it does not make replaying the token against this server harmless.
-Mitigations are the same ones any bearer-token system relies on: TLS in
-transit (see README hosting docs), a short access-token TTL bounding the
-replay window (config.OAUTH_ACCESS_TOKEN_TTL_SECONDS, matched to PC ID's
-own ~1hr token lifetime), and, for a token known to be compromised,
-revocation deferred to PC ID's own account-security page -- revoking the
-app grant there kills refresh capability at the source regardless of what's
-cached in a stolen token. Rotating PCEXPRESS_TOKEN_SECRET is the nuclear
-option: it invalidates every currently-issued token at once (everyone has
-to reconnect), which is the only way this server can unilaterally revoke
-something it never stored a record of.
+Not theft-proof: a stolen token is still a working bearer credential
+against *this server* until it expires; encryption only stops the PC
+credentials inside it being reused elsewhere. Mitigations (short TTL, PC ID
+grant revocation, rotating PCEXPRESS_TOKEN_SECRET) are in docs/SECURITY.md.
 
 One more consequence worth naming: PC ID refresh tokens are single-use and
 rotate on every refresh (see auth.py) -- so a stolen *token* can't just be
 decrypted-and-refreshed silently by us without that showing up as an actual
-credential rotation the legitimate holder would also need to pick up. This
-is also why OAUTH_ACCESS_TOKEN_TTL_SECONDS is kept <= PC ID's own token
-lifetime: refresh should routinely happen through token_endpoint's
-refresh_token grant (the one place a freshly-rotated PC ID refresh token
-gets safely re-embedded in a new outer token), not opportunistically
-mid-request -- see auth.EphemeralTokenManager's docstring.
+credential rotation the legitimate holder would also need to pick up. It's
+also why an outer access token expires with the PC token inside it
+(decode_access_token): refresh must happen through token_endpoint's
+refresh_token grant, the one place a rotated PC ID refresh token gets
+re-embedded, never mid-request -- see auth.EphemeralTokenManager.
 
 Multi-tenant token flow: the SDK's native auth pipeline (TokenVerifier ->
 AuthenticationMiddleware -> AuthContextMiddleware -> get_access_token(),
@@ -88,9 +74,9 @@ through the SDK's internal task-group dispatch).
 
 Other state -- genuinely ephemeral, in-memory, and never persisted:
 - Authorization codes (ours, for the Claude<->us leg) live in _AUTH_CODES
-  below, a plain in-memory dict. Short-lived (config.OAUTH_CODE_TTL_SECONDS)
-  and single-use; losing them on a restart just means an in-flight login
-  has to be retried, not a security concern.
+  below, a plain in-memory dict. Short-lived (config.OAUTH_CODE_TTL_SECONDS),
+  single-use, expired ones swept on each new login; losing them on a
+  restart just means an in-flight login has to be retried.
 - The PC ID PKCE verifier/state (for the us<->PC ID leg) is round-tripped
   through hidden form fields on the /authorize page rather than server-side
   session storage, since the browser is about to navigate away to
@@ -161,10 +147,11 @@ def _issue_tokens(tenant: str, pc_access_token: str, pc_refresh_token: Optional[
         "pc_expires_at": pc_expires_at,
     }
     refresh_payload = {"tenant": tenant, "pc_refresh_token": pc_refresh_token}
+    usable_for = pc_expires_at - config.TOKEN_REFRESH_SKEW_SECONDS - time.time()
     return {
         "access_token": token_crypto.encode(access_payload),
         "token_type": "Bearer",
-        "expires_in": config.OAUTH_ACCESS_TOKEN_TTL_SECONDS,
+        "expires_in": max(0, int(min(config.OAUTH_ACCESS_TOKEN_TTL_SECONDS, usable_for))),
         "refresh_token": token_crypto.encode(refresh_payload),
         "scope": "mcp offline_access",
     }
@@ -179,6 +166,11 @@ def decode_access_token(token: str) -> Optional[dict[str, Any]]:
     """
     payload = token_crypto.decode(token, ttl_seconds=config.OAUTH_ACCESS_TOKEN_TTL_SECONDS)
     if not payload or "tenant" not in payload or "pc_access_token" not in payload:
+        return None
+    # Expire with the PC token inside, so Claude refreshes via /token (which
+    # re-embeds PC ID's rotated single-use refresh token) rather than a tool
+    # call refreshing mid-request and losing it -- see EphemeralTokenManager.
+    if time.time() >= float(payload.get("pc_expires_at") or 0) - config.TOKEN_REFRESH_SKEW_SECONDS:
         return None
     return payload
 
@@ -350,6 +342,9 @@ async def authorize_post(request: Request) -> Response:
     # PC Express credentials in the (in-memory, short-lived) auth code entry
     # -- token_endpoint embeds them directly into the outer tokens it mints
     # below, never onto disk. See module docstring "part 2".
+    # Sweep abandoned codes so their embedded PC credentials don't linger.
+    for stale in [c for c, e in _AUTH_CODES.items() if e["expires_at"] < time.time()]:
+        del _AUTH_CODES[stale]
     claude_code = secrets.token_urlsafe(32)
     _AUTH_CODES[claude_code] = {
         "redirect_uri": redirect_uri,
@@ -402,7 +397,9 @@ async def token_endpoint(request: Request) -> JSONResponse:
     if grant_type == "refresh_token":
         presented = str(form.get("refresh_token", ""))
         payload = token_crypto.decode(presented, ttl_seconds=config.OAUTH_REFRESH_TOKEN_TTL_SECONDS)
-        if not payload or "tenant" not in payload or not payload.get("pc_refresh_token"):
+        # Access tokens carry the same keys plus pc_access_token -- reject
+        # them, or a leaked 1h access token would work as a 90-day refresh token.
+        if not payload or "tenant" not in payload or not payload.get("pc_refresh_token") or "pc_access_token" in payload:
             return JSONResponse({"error": "invalid_grant"}, status_code=400)
 
         # PC ID refresh tokens are single-use and rotate on every refresh

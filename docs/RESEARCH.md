@@ -567,10 +567,11 @@ already been found once, ad hoc, while cleaning up test data during the
 the actual `remove_from_cart`/`update_quantity` tool code until this
 report. Fixed by always including `sellerId`, sourced from the cart's own
 real current binding (`_cart_bound_store`) rather than the locally cached
-`session.store_id` -- those two can disagree (e.g. after
-`switch_cart_store` without also calling `set_active_store`), and only
-the cart's own live value is guaranteed to pass validation. See
-`_seller_id_for_removal` in `server.py`.
+`session.store_id` -- those two can disagree (e.g. the cart was re-bound
+from the PC Express app), and only the cart's own live value is
+guaranteed to pass validation. See `_seller_id_for_removal` in
+`server.py`. (`switch_cart_store` itself now also sets the active store,
+so additions after a switch don't send a stale `sellerId`.)
 
 ### Correction: it's one cart per banner, not one per account
 

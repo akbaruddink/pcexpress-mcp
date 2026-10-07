@@ -9,9 +9,10 @@ stateless tenants -- see server.py's _get_token_manager() and
 token_crypto.py/oauth_server.py for why HTTP mode has no per-tenant file at
 all.
 
-PC ID refresh tokens are single-use and rotate on every refresh -- this
-module always persists (TokenManager) or re-embeds (EphemeralTokenManager)
-the *newest* refresh token returned. If a refresh call fails outright, that
+PC ID refresh tokens are single-use and rotate on every refresh --
+TokenManager always persists the *newest* one returned; HTTP mode leaves
+rotation to oauth_server's /token endpoint (see EphemeralTokenManager for
+why it must not refresh on its own). If a refresh call fails outright, that
 almost always means the presented refresh token was already consumed (e.g.
 two server instances running at once) or has expired from being idle; the
 fix is re-authenticating (scripts/login.py for stdio, reconnecting the
@@ -266,8 +267,10 @@ class TokenManager:
     config.AUTH_STATE_PATH). HTTP mode uses EphemeralTokenManager instead
     (below) -- see server.py's _get_token_manager(). api_client.py calls
     get_access_token() before every request and force_refresh() after a 401
-    against either class equally (same public interface, duck-typed).
+    against either class equally (same public interface).
     """
+
+    _REAUTH_HINT = "Run `python scripts/login.py` to re-authenticate, then restart the MCP server."
 
     def __init__(self, auth_state_path: Optional[str] = None) -> None:
         self._auth_state_path = auth_state_path or config.AUTH_STATE_PATH
@@ -284,25 +287,13 @@ class TokenManager:
         assert self._state.access_token is not None
         return self._state.access_token
 
-    def _require_client_credentials(self) -> None:
-        if not config.PCID_CLIENT_ID or not config.PCID_CLIENT_SECRET:
-            raise PcidAuthError(
-                "PCEXPRESS_CLIENT_ID / PCEXPRESS_CLIENT_SECRET are not set. "
-                "See README.md 'Authentication setup'."
-            )
-
     def _refresh(self, client: httpx.Client) -> None:
         if not self._state.refresh_token:
-            raise PcidAuthError(
-                "No PC Express refresh token on file. Run "
-                "`python scripts/login.py` once to authenticate, then "
-                "restart the MCP server."
-            )
-        self._require_client_credentials()
+            raise PcidAuthError(f"No PC Express refresh token available. {self._REAUTH_HINT}")
         try:
             payload = raw_refresh_token(client, self._state.refresh_token)
         except PcidAuthError as exc:
-            raise PcidAuthError(f"{exc} Run `python scripts/login.py` again to re-authenticate.") from exc
+            raise PcidAuthError(f"{exc} {self._REAUTH_HINT}") from exc
         self._apply_token_response(payload)
 
     def exchange_code(self, client: httpx.Client, code: str, code_verifier: str) -> None:
@@ -322,45 +313,29 @@ class TokenManager:
         save_auth_state(self._state, self._auth_state_path)
 
 
-class EphemeralTokenManager:
-    """Same public interface as TokenManager (get_access_token/force_refresh)
-    but holds PC ID credentials purely in memory, seeded from an already-
-    decrypted token payload rather than a file -- used for HTTP mode's
-    stateless tenants (see token_crypto.py/oauth_server.py).
+class EphemeralTokenManager(TokenManager):
+    """HTTP mode's per-request TokenManager: PC ID credentials held in
+    memory only, seeded from the request's decrypted outer token (see
+    token_crypto.py/oauth_server.py), never persisted.
 
-    A refresh here updates this instance's in-memory state for the
-    remainder of the current request only; it is never persisted anywhere,
-    since there is nowhere stateless to persist it to. That's fine: the
-    durable source of truth is the encrypted outer token itself, kept in
-    sync via oauth_server.token_endpoint's own refresh_token grant (which
-    mints a fresh outer token embedding the newly-rotated PC credentials)
-    -- not this class. This class only exists to cover the rare case where
-    PC ID's own access token happens to need a mid-request refresh (e.g.
-    clock skew) before that normal outer-token refresh cycle catches up.
-    See server.py's _get_token_manager().
+    Never refreshes proactively. A refresh here consumes PC ID's single-use
+    refresh token, and the rotated one would die with this request -- the
+    outer token Claude holds would still carry the consumed one, so its next
+    /token refresh fails and forces a full reconnect. Rotation belongs to
+    oauth_server.token_endpoint, which re-embeds the new token; that's why
+    oauth_server.decode_access_token rejects an outer token once its PC
+    token nears expiry (Claude then refreshes via /token). force_refresh,
+    only after PC Express actually returns 401, is the last-resort exception.
     """
+
+    _REAUTH_HINT = "Reconnect the connector (repeat the /authorize login) to get a fresh one."
 
     def __init__(self, access_token: str, refresh_token: Optional[str], expires_at: float) -> None:
         self._state = AuthState(access_token=access_token, refresh_token=refresh_token, expires_at=expires_at)
 
     def get_access_token(self, client: httpx.Client) -> str:
-        if not self._state.is_access_token_valid():
-            self._refresh(client)
         assert self._state.access_token is not None
         return self._state.access_token
 
-    def force_refresh(self, client: httpx.Client) -> str:
-        self._refresh(client)
-        assert self._state.access_token is not None
-        return self._state.access_token
-
-    def _refresh(self, client: httpx.Client) -> None:
-        if not self._state.refresh_token:
-            raise PcidAuthError(
-                "No PC Express refresh token available for this session. "
-                "Reconnect the connector (repeat the /authorize login) to get a fresh one."
-            )
-        if not config.PCID_CLIENT_ID or not config.PCID_CLIENT_SECRET:
-            raise PcidAuthError("PCEXPRESS_CLIENT_ID / PCEXPRESS_CLIENT_SECRET are not set.")
-        payload = raw_refresh_token(client, self._state.refresh_token)
+    def _apply_token_response(self, payload: dict) -> None:
         self._state = _auth_state_from_payload(payload, self._state.refresh_token)

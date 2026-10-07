@@ -103,15 +103,19 @@ def fetch_customer_id(client: httpx.Client, access_token: str, banner: str) -> O
     return resp.json().get("id")
 
 
+# One process-wide, thread-safe connection pool. server.py builds a fresh
+# PCExpressAPI per tool call; giving each its own pool meant a new TLS
+# handshake every call and sockets left for GC. Each instance still gets its
+# own Client, so cookies never cross tenants.
+_TRANSPORT = httpx.HTTPTransport()
+
+
 class PCExpressAPI:
     def __init__(self, token_manager: TokenManager, banner: str):
         self.token_manager = token_manager
         self.banner = banner
         self.banner_info = config.banner_info(banner)
-        self._client = httpx.Client(timeout=30.0)
-
-    def close(self) -> None:
-        self._client.close()
+        self._client = httpx.Client(timeout=30.0, transport=_TRANSPORT)
 
     # -- low-level request plumbing -----------------------------------
 
