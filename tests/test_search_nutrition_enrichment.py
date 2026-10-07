@@ -16,7 +16,6 @@ import pytest
 from pc_express_mcp import server  # noqa: E402
 from pc_express_mcp.server import (  # noqa: E402
     MAX_SIZE_WITH_NUTRITION,
-    _cap_results_for_nutrition,
     _cap_size_for_nutrition,
     _enrich_with_nutrition,
 )
@@ -38,29 +37,26 @@ def test_cap_size_exactly_at_max_is_not_flagged_as_capped():
     assert _cap_size_for_nutrition(MAX_SIZE_WITH_NUTRITION, True) == (MAX_SIZE_WITH_NUTRITION, False)
 
 
-def test_cap_results_leaves_results_alone_when_nutrition_disabled():
-    results = list(range(50))
-    capped, was_capped = _cap_results_for_nutrition(results, False)
-    assert capped == results
-    assert was_capped is False
+@pytest.fixture(autouse=True)
+def _empty_off_cache(monkeypatch):
+    monkeypatch.setattr(server, "_OFF_CACHE", {})
 
 
-def test_cap_results_truncates_to_exactly_max_when_over():
-    # Mirrors the exact real scenario this exists for: PC Express returned
-    # more results than requested (confirmed live: asked for 5, got 7) --
-    # capping the *request* size alone isn't enough, the actual results
-    # list needs its own truncation to reliably cap nutrition lookups.
-    results = list(range(20))
-    capped, was_capped = _cap_results_for_nutrition(results, True)
-    assert capped == list(range(MAX_SIZE_WITH_NUTRITION))
-    assert was_capped is True
+def test_search_returns_at_most_size_rows(monkeypatch):
+    """PC Express returns more rows than asked (seen: size 3 -> 11), which
+    also drove 11 nutrition lookups for size=3."""
+    from pc_express_mcp import session_state
 
+    class _FakeApi:
+        def search_products(self, query, store_id, **kw):
+            return {"results": [{"code": f"{i}_EA", "upcs": [f"0{i}"]} for i in range(11)], "pagination": {"totalResults": 76}}
 
-def test_cap_results_at_exactly_max_is_not_flagged_as_capped():
-    results = list(range(MAX_SIZE_WITH_NUTRITION))
-    capped, was_capped = _cap_results_for_nutrition(results, True)
-    assert capped == results
-    assert was_capped is False
+    monkeypatch.setattr(server, "_load_session", lambda: session_state.SessionState(store_id="1024"))
+    monkeypatch.setattr(server, "_get_api", lambda banner: _FakeApi())
+    result = server.search_products("kombucha", size=3)
+    assert [r["code"] for r in result["results"]] == ["0_EA", "1_EA", "2_EA"]
+    assert result["has_more"] is True
+    assert "image_urls" not in result["results"][0]
 
 
 def _mock_client(handler) -> httpx.Client:
@@ -81,7 +77,7 @@ def test_enrich_skips_items_without_barcode(monkeypatch):
 
     results = [{"code": "1", "barcode": None}, {"code": "2"}]
     summary = _enrich_with_nutrition(results, _mock_client(handler))
-    assert summary == {"enriched_count": 0, "rate_limited": False}
+    assert summary == {"with_data": 0, "with_ingredients": 0, "rate_limited": False}
     assert "nutrition" not in results[0]
     assert "nutrition" not in results[1]
 
@@ -99,7 +95,7 @@ def test_enrich_attaches_nutrition_and_marks_not_found(monkeypatch):
     results = [{"code": "1", "barcode": "06680000015"}, {"code": "2", "barcode": "06563313212"}]
     summary = _enrich_with_nutrition(results, _mock_client(handler))
 
-    assert summary == {"enriched_count": 1, "rate_limited": False}
+    assert summary == {"with_data": 1, "with_ingredients": 0, "rate_limited": False}
     assert results[0]["nutrition"]["product_name"] == "Milk"
     assert results[1]["nutrition"] == {"found": False}
     # Paced once between the two real lookups, not before the first.
@@ -134,7 +130,21 @@ def test_enrich_stops_on_rate_limit_leaving_remaining_results_unenriched(monkeyp
     ]
     summary = _enrich_with_nutrition(results, _mock_client(handler))
 
-    assert summary == {"enriched_count": 1, "rate_limited": True}
+    assert summary == {"with_data": 1, "with_ingredients": 0, "rate_limited": True}
     assert results[0]["nutrition"]["product_name"] == "Milk"
     assert "nutrition" not in results[2]  # loop stopped before reaching this one
     assert calls["n"] == 2  # did not keep trying after the 429
+
+
+def test_enrich_caches_lookups_per_barcode(monkeypatch):
+    _dont_actually_sleep(monkeypatch)
+    calls = {"n": 0}
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls["n"] += 1
+        return httpx.Response(200, json={"status": 1, "product": {"ingredients_text": "Water"}})
+
+    for _ in range(2):
+        summary = _enrich_with_nutrition([{"code": "1", "barcode": "06680000015"}], _mock_client(handler))
+    assert calls["n"] == 1
+    assert summary["with_ingredients"] == 1

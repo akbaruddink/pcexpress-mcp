@@ -86,16 +86,11 @@ history in one call regardless of any params sent. Verified:
   `searchVariation`/`modelVersion` fields suggest this is an ML-driven,
   personalized/variant search, not a static index -- treat `totalResults`
   as "roughly this many," not exact.
-- The actual number of items in `results` can run slightly over the
-  requested `size` (observed: asked for 5, got 7; asked for 20, got 22;
-  asked for 15, got 20) -- most likely sponsored/promoted items merged
-  into the array beyond the organic page size, not confirmed from
-  documentation (none exists). This isn't just a curiosity: it's why
-  `search_products(include_nutrition=True)` truncates the *actual results
-  list* to 15 after fetching, not just the requested `size` parameter --
-  capping the request alone would not have reliably kept Open Food Facts
-  lookups at or under 15 per call. See "Nutrition enrichment (Open Food
-  Facts)" below.
+- The actual number of items in `results` can run over the requested
+  `size` (observed: 5 -> 7, 20 -> 22, 3 -> 11, 5 -> 13), most likely
+  promoted items merged in beyond the organic page; not documented.
+  `search_products` now cuts to `size` (PC's first rows are its own
+  ranking), which also bounds `include_nutrition` lookups.
 
 This was missing from `search_products`'s original tool implementation --
 the underlying `api_client.py` method already accepted an offset parameter,
@@ -569,7 +564,7 @@ report. Fixed by always including `sellerId`, sourced from the cart's own
 real current binding (`_cart_bound_store`) rather than the locally cached
 `session.store_id` -- those two can disagree (e.g. the cart was re-bound
 from the PC Express app), and only the cart's own live value is
-guaranteed to pass validation. See `_seller_id_for_removal` in
+guaranteed to pass validation. See `update_quantity` in
 `server.py`. (`switch_cart_store` itself now also sets the active store,
 so additions after a switch don't send a stale `sellerId`.)
 
@@ -1087,3 +1082,53 @@ surfaces per result (`deal_text`/`loyalty_points`, sourced from each
 product's own `badges`/`promotions` fields) -- real, working, but scoped to
 one product at a time via search, not a browsable list of everything
 currently available to the account.
+
+
+## Field report fixes (2026-10-07)
+
+A live session (build a weekly cart from history, pick a slot, verify the
+placed order) filed 19 defects. Root causes, confirmed against live
+responses before fixing:
+
+- **Bare codes silently ignored.** Order and history lines used
+  `product.articleNumber` (`20028593001`); the cart only accepts the
+  suffixed `product.id` (`20028593001_EA`, `20852143_KG`) -- present on
+  every order line all along. PC Express returns a normal cart for codes it
+  can't use, so cart writes now re-read quantities and report
+  `applied`/`rejected` per code (with a `suggested_code` for a wrong
+  suffix), and bare codes are resolved via the cart or a catalog lookup.
+- **`add_to_cart` set quantities** (the API sets; the docstring said
+  "increase"). It now adds to the existing quantity.
+- **Fulfillment mode was write-only.** The cart has it all along:
+  `orders[0].fulfillment.type` is `"courier"` for delivery, and the same
+  block holds the bound `storeId`, booked `timeWindow` and a full `totals`
+  breakdown. `get_cart` returns them; writes default to the cart's mode.
+- **Tips and stamps as products.** `$N DRIVER TIP` / `EARN PHYSICAL STAMP`
+  are order lines with codes but no photo. They're split into
+  `adjustments` and kept out of history, which is what makes order totals
+  reconcile: products + tip + tax - points value (1,000 points = $1) =
+  `total_price`, to the cent on the reported order.
+- **Weighed items showed quantity 0 in history.** Their amount is in the
+  line's `weight` (kg); history now reports `total_weight_kg`.
+- **Unknown order ids return HTTP 500** from PC Express, not 404; mapped
+  to `order_not_found`, and cart UUIDs are recognized before any call.
+- **Lost active store.** HTTP mode holds it in memory, so a restart drops
+  it; store-scoped tools now fall back to the cart's bound store.
+- **`switch_cart_store` on a shared cart.** One login served two
+  households at different stores, so the cart is shared state; a non-empty
+  cart now needs `confirm=True`, and the response says what was repriced
+  or dropped.
+- **History scans were slow and huge** (77 s, 61.7 KB for 40 orders).
+  Detail fetches run 8 in parallel, settled orders (7+ days old) are
+  cached, and rows are capped (`top_n`): 22 s and 9.6 KB for the same scan.
+- **Open Food Facts records are sometimes internally inconsistent** (a
+  cracker at 466.67 kcal/100g with `fat_100g: 6`, i.e. per-serving
+  macros). The code was already reading `_100g` fields; it now flags these
+  with `per_100g_consistent: false` rather than guessing a correction.
+
+Not fixable from here: order `status` and line `availabilityStatus` are
+null upstream (no progress tracking, no reason for a dropped line); a
+newly placed order can be missing from the order list for hours; and the
+only known slot endpoint is unauthenticated and was serving a maintenance
+page. A real slot grid needs the app's own request captured, the way the
+`switch_cart_store` shape was.

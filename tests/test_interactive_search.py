@@ -90,6 +90,7 @@ def test_launcher_returns_a_small_reproducible_reference_when_client_supports_ap
 
 def test_launcher_requires_active_store(monkeypatch):
     _patch(monkeypatch, store_id=None)
+    monkeypatch.setattr(server, "_get_cart_healing", lambda api, s: {"orders": []})  # no cart binding to fall back to
     result = server.interactive_product_search(query="cheese")
     assert result["error"] == "no_active_store"
 

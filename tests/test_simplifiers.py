@@ -91,11 +91,9 @@ def test_simplify_product_full_shape_matches_real_search_result():
         # dropped, but every genuinely different angle is kept.
         "image_urls": ["https://x/front-medium.png", "https://x/side-medium.png"],
         "photo_markdown": "![Light Cocktail Bocconcini Cheese](https://x/front-medium.png)",
-        "aisle": "12A",
         "stock_status": "OK",
         "price": 5.5,
         "regular_price": 6.0,
-        "member_price": 5.25,
         "unit_price": {"value": 2.75, "per": "100g"},
         "deal_text": "SAVE $0.50",
         "loyalty_points": 500,
@@ -171,9 +169,14 @@ def test_simplify_cart_flattens_orders_and_entries():
         "id": "cart-abc",
         "status": "OPEN",
         "minCartValue": 30.0,
+        "modifiedTime": "2026-08-09T13:23:39.109Z",
         "orders": [
             {
-                "totals": {"subTotal": 17.69, "totalPrice": 18.19, "totalTax": 0.50},
+                "fulfillment": {
+                    "type": "courier",
+                    "courier": {"storeId": "1024", "timeWindow": {"startTime": "2026-08-09T13:30:00", "endTime": "2026-08-09T14:30:00"}},
+                },
+                "totals": {"subTotal": 17.69, "totalPrice": 18.19, "totalTax": 0.50, "totalDeliveryFee": 0.0},
                 "entries": [
                     {
                         "quantity": 2.0,
@@ -200,7 +203,7 @@ def test_simplify_cart_flattens_orders_and_entries():
                     },
                     {
                         "quantity": 1.0,
-                        "offer": {"id": "222_EA", "product": {"id": "222_EA", "name": "Cheese"}},
+                        "offer": {"id": "222_KG", "product": {"id": "222_KG", "name": "Cheese"}},
                         "prices": {"totalRegularPrice": 5.99},
                     },
                 ],
@@ -212,7 +215,20 @@ def test_simplify_cart_flattens_orders_and_entries():
     assert result["status"] == "OPEN"
     assert result["min_cart_value"] == 30.0
     assert result["item_count"] == 2
-    assert result["raw_total"] == 18.19
+    assert result["units"] == 3.0
+    assert result["store_id"] == "1024"
+    assert result["fulfillment_method"] == "delivery"
+    assert result["slot"] == {"start": "2026-08-09T13:30:00", "end": "2026-08-09T14:30:00"}
+    assert result["modified_time"] == "2026-08-09T13:23:39.109Z"
+    assert result["totals"] == {
+        "subtotal": 17.69,
+        "tax": 0.5,
+        "delivery_fee": 0.0,
+        "service_fee": None,
+        "tip": None,
+        "discounts": None,
+        "total": 18.19,
+    }
     assert result["items"] == [
         {
             "code": "111_EA",
@@ -224,21 +240,23 @@ def test_simplify_cart_flattens_orders_and_entries():
             "regular_price": 4.5,
             "unit_price": {"value": 0.33, "per": "1egg"},
             "deal_text": "SAVE $0.52",
+            "estimated": False,
             "photo_markdown": "![Eggs](https://x/eggs.png)",
         },
-        # totalSalePrice absent -> falls back to totalRegularPrice; no
-        # primaryImage/brand/sizeLabel/comparisonPrices/badges on this one
-        # -> everything enrichment-related is None, not omitted.
+        # totalSalePrice absent -> falls back to totalRegularPrice; no deal
+        # -> no regular_price (it disagreed with the charged price live);
+        # a _KG line's price is an estimate until it's weighed.
         {
-            "code": "222_EA",
+            "code": "222_KG",
             "name": "Cheese",
             "brand": None,
             "package_size": None,
             "quantity": 1.0,
             "total_price": 5.99,
-            "regular_price": 5.99,
+            "regular_price": None,
             "unit_price": None,
             "deal_text": None,
+            "estimated": True,
             "photo_markdown": None,
         },
     ]
@@ -248,7 +266,9 @@ def test_simplify_cart_handles_no_orders():
     result = _simplify_cart({"id": "cart-empty"})
     assert result["item_count"] == 0
     assert result["items"] == []
-    assert result["raw_total"] is None
+    assert result["totals"]["total"] is None
+    assert result["store_id"] is None
+    assert result["fulfillment_method"] is None
 
 
 def test_simplify_cart_handles_multiple_orders():
@@ -267,7 +287,7 @@ def test_simplify_cart_handles_multiple_orders():
     }
     result = _simplify_cart(cart)
     assert result["item_count"] == 2
-    assert result["raw_total"] == 15.0
+    assert result["totals"]["total"] == 15.0
 
 
 def test_simplify_slot_prefers_primary_field_names():
@@ -287,66 +307,69 @@ def test_simplify_slot_falls_back_to_alias_field_names():
 
 
 def test_simplify_order_detail_trims_line_items_and_totals():
+    """Real shape (plain floats; `product.id` is the suffixed cart code;
+    tips/stamps are lines without photos; weighed lines carry kg in
+    `weight`) -- confirmed against a live order."""
+
+    def entry(code, name, quantity, total, weight=0.0, image=True):
+        return {
+            "product": {
+                "id": code,
+                "articleNumber": code.split("_")[0],
+                "productName": name,
+                "brand": None,
+                "primaryImage": f"https://digital.loblaws.ca/PCX/{code}/en/1/x.png" if image else "",
+            },
+            "quantity": quantity,
+            "unitPrice": total / quantity,
+            "totalPrice": total,
+            "weight": weight,
+            "availabilityStatus": None,
+        }
+
     detail = {
         "orderDetails": {
-            "orderNumber": "CA123456789",
-            "orderType": "PICKUP",
-            "status": "COMPLETED",
-            "bannerName": "Real Canadian Superstore",
-            "subTotal": {"value": 50.0},
-            "totalPriceWithTax": {"value": 55.0},
-            "totalTax": {"value": 5.0},
-            "totalDiscounts": {"value": 2.0},
-            "totalItems": 2,
+            "orderNumber": "531900028644376",
+            "orderType": "Online",
+            "status": None,
+            "subTotal": 76.57,
+            "totalPriceWithTax": 58.39,
+            "totalTax": 1.82,
+            "totalDiscounts": 0.0,
             "booking": {
-                "pickupLocation": {
-                    "name": "Superstore Oakville South",
-                }
+                "pickupStartDate": "2026-10-07T14:19:40",
+                "pickupLocation": {"storeId": "1024", "name": "Real Canadian Superstore Oak Park Drive", "pickupType": "DELIVERY"},
             },
             "entries": [
-                {
-                    "product": {
-                        "articleNumber": "111",
-                        "productName": "Bananas",
-                        "brand": "No Name",
-                        "irrelevantField": "should be dropped",
-                    },
-                    "quantity": 3,
-                    "unitPrice": {"value": 0.69},
-                    "totalPrice": {"value": 2.07},
-                    "availabilityStatus": "FULLY_AVAILABLE",
-                },
-                {
-                    "product": {"id": "222", "productName": "Milk"},
-                    "quantity": 1,
-                    "unitPrice": {"value": 4.49},
-                    "totalPrice": {"value": 4.49},
-                    "availabilityStatus": "FULLY_AVAILABLE",
-                },
+                entry("20028593001_EA", "Lemon", 2, 1.5),
+                entry("20852143_KG", "Salmon Fillets", 1, 10.52, weight=0.434),
+                entry("21474169_EA", "$5 DRIVER TIP", 1, 5.0, image=False),
+                entry("21635250_EA", "EARN PHYSICAL STAMP", 3, 0.0, image=False),
             ],
         },
-        "pointsEarned": 55,
-        "pointsRedeemed": 0,
+        "pointsEarned": 0.0,
+        "pointsRedeemed": "20000.00",
     }
     result = _simplify_order_detail(detail)
-    assert result["order_number"] == "CA123456789"
-    assert result["status"] == "COMPLETED"
-    assert result["store_name"] == "Superstore Oakville South"
-    assert result["sub_total"] == {"value": 50.0}
-    assert result["total_price"] == {"value": 55.0}
-    assert result["total_items"] == 2
-    assert result["points_earned"] == 55
+    assert result["store_id"] == "1024"
+    assert result["fulfillment_type"] == "DELIVERY"
+    assert result["slot_start"] == "2026-10-07T14:19:40"
+    assert [i["code"] for i in result["items"]] == ["20028593001_EA", "20852143_KG"]
+    assert result["items"][1]["weight_kg"] == 0.434
+    assert [(a["kind"], a["code"]) for a in result["adjustments"]] == [("tip", "21474169_EA"), ("stamps", "21635250_EA")]
     assert result["item_count"] == 2
-    assert result["items"][0] == {
-        "code": "111",
-        "name": "Bananas",
-        "brand": "No Name",
-        "quantity": 3,
-        "unit_price": {"value": 0.69},
-        "total_price": {"value": 2.07},
-        "availability_status": "FULLY_AVAILABLE",
-    }
-    assert result["items"][1]["code"] == "222"
+    assert result["units"] == 3
+    assert result["products_total"] == 12.02
+    assert result["tip"] == 5.0
+    assert result["points_redeemed"] == 20000.0
+    assert result["points_value"] == 20.0
+    assert result["total_price"] == 58.39
+    assert "lines_available" not in result
+
+
+def test_simplify_order_detail_flags_missing_lines():
+    result = _simplify_order_detail({"orderDetails": {"subTotal": 89.43, "entries": []}})
+    assert result["lines_available"] is False
 
 
 def test_simplify_order_detail_falls_back_when_status_missing():
@@ -488,6 +511,7 @@ def test_simplify_nutrition_real_shape():
         "nova_group": 1,
         "ecoscore_grade": "c",
         "ingredients_text": "PARTLY SKIMMED MILK, VITAMIN A PALMITATE, VITAMIN D3.",
+        "ingredients_language": None,
         "allergens": "milk",
         "allergen_status": {"gluten": "not_declared", "milk": "contains", "soy": "not_declared", "sulfites": "not_declared"},
         "dietary_flags": {"vegan": "no", "vegetarian": "maybe", "palm_oil_free": "yes"},
@@ -503,7 +527,27 @@ def test_simplify_nutrition_real_shape():
             "fiber_g": 0,
             "salt_g": 0.12,
         },
+        "per_100g_consistent": True,
     }
+
+
+def test_simplify_nutrition_flags_per_serving_macros_and_cleans_up():
+    """Real OFF record (Crispers Chili Lime, 06672102959): 466.67 kcal/100g
+    beside per-30g-serving macros, parent+variant additive tags, and
+    unrounded floats."""
+    product = {
+        "ingredients_text": "Farine de blé",
+        "ingredients_text_en": "Wheat flour",
+        "ingredients_lc": "fr",
+        "additives_tags": ["en:e262", "en:e262ii", "en:e330"],
+        "nutriments": {"energy-kcal_100g": 466.666666666667, "proteins_100g": 2, "fat_100g": 6, "carbohydrates_100g": 20},
+    }
+    result = _simplify_nutrition(product)
+    assert result["per_100g"]["energy_kcal"] == 466.67
+    assert result["per_100g_consistent"] is False
+    assert result["additives"] == {"count": 2, "codes": ["en:e262ii", "en:e330"]}
+    assert result["ingredients_text"] == "Wheat flour"
+    assert result["ingredients_language"] == "en"
 
 
 def test_simplify_nutrition_handles_missing_data():
@@ -517,7 +561,8 @@ def test_simplify_nutrition_handles_missing_data():
         "soy": "not_declared",
         "sulfites": "not_declared",
     }
-    assert result["additives"] == {"count": None, "codes": []}
+    assert result["additives"] == {"count": 0, "codes": []}
+    assert result["per_100g_consistent"] is None
 
 
 def test_dietary_flags_palm_oil_contains_is_not_confused_with_palm_oil_free():

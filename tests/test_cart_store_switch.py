@@ -116,29 +116,66 @@ def test_set_cart_fulfillment_dry_run_hits_dry_run_suffix(monkeypatch):
     assert captured["url"] == f"{config.PCX_BFF_BASE}/carts/cart-123/dry-run"
 
 
-def test_switch_cart_store_makes_the_new_store_active(monkeypatch):
-    """Otherwise the next add_to_cart sends the old store as sellerId and
-    PC Express rejects it with SELLER_ID_MISMATCH."""
+def _patch_switch(monkeypatch, cart_entries, bound_store="1024"):
     from pc_express_mcp import server, session_state
 
+    def cart(store, entries):
+        return {
+            "id": "cart-1",
+            "orders": [{"fulfillment": {"type": "courier", "courier": {"storeId": store}}, "entries": entries}],
+        }
+
     class _FakeApi:
+        writes = []
+
         def get_profile(self):
             return {"id": "cust"}
 
         def list_carts(self, customer_id):
             return {"carts": [{"id": "cart-1"}]}
 
+        def get_cart(self, cart_id):
+            return cart(bound_store, cart_entries)
+
         def get_delivery_serviceability(self, postal_code):
             return REAL_SERVICEABILITY
 
         def set_cart_fulfillment(self, cart_id, location_id, postal_code):
-            return {"cart": {"id": cart_id, "orders": []}}
+            self.writes.append(location_id)
+            repriced = [{**e, "prices": {"totalSalePrice": 9.99}} for e in cart_entries[:1]]
+            return {"cart": cart(location_id[:4], repriced)}
 
-    session = session_state.SessionState(store_id="1024", banner="superstore")
+    api = _FakeApi()
+    session = session_state.SessionState(store_id=bound_store, banner="superstore")
     monkeypatch.setattr(server, "_load_session", lambda: session)
     monkeypatch.setattr(server, "_save_session", lambda s: None)
-    monkeypatch.setattr(server, "_get_api", lambda banner: _FakeApi())
+    monkeypatch.setattr(server, "_get_api", lambda banner: api)
+    return server, session, api
 
+
+def _line(code, price):
+    return {"quantity": 1, "offer": {"id": code, "product": {"name": code}}, "prices": {"totalSalePrice": price}}
+
+
+def test_switch_cart_store_makes_the_new_store_active(monkeypatch):
+    """Otherwise the next add_to_cart sends the old store as sellerId and
+    PC Express rejects it with SELLER_ID_MISMATCH."""
+    server, session, api = _patch_switch(monkeypatch, [])
     result = server.switch_cart_store("2841", "L6H0A1")
     assert result["switched_to_store"] == "2841"
+    assert result["previous_store_id"] == "1024"
     assert session.store_id == "2841"
+
+
+def test_switch_cart_store_with_items_needs_confirmation(monkeypatch):
+    """The cart is shared by everyone on the account; a non-empty one may be
+    another household's."""
+    server, session, api = _patch_switch(monkeypatch, [_line("A_EA", 5.0), _line("B_EA", 2.0)])
+    refused = server.switch_cart_store("2841", "L6H0A1")
+    assert refused["error"] == "confirmation_required"
+    assert refused["previous_store_id"] == "1024"
+    assert api.writes == []
+
+    result = server.switch_cart_store("2841", "L6H0A1", confirm=True)
+    assert result["items_repriced"] == ["A_EA"]
+    assert result["items_dropped"] == ["B_EA"]

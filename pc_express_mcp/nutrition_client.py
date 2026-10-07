@@ -101,8 +101,8 @@ def normalize_barcode(raw: str) -> Optional[str]:
 # to "is this food any good").
 _FIELDS = (
     "product_name,brands,quantity,nutriscore_grade,nova_group,ecoscore_grade,nutriments,"
-    "ingredients_text,allergens,allergens_tags,traces_tags,ingredients_analysis_tags,"
-    "nutrient_levels,additives_tags,additives_n"
+    "ingredients_text,ingredients_text_en,ingredients_lc,allergens,allergens_tags,traces_tags,"
+    "ingredients_analysis_tags,nutrient_levels,additives_tags"
 )
 
 

@@ -28,6 +28,7 @@ import hashlib
 import json
 import os
 import secrets
+import threading
 import time
 from dataclasses import asdict, dataclass
 from typing import Optional
@@ -276,14 +277,21 @@ class TokenManager:
         self._auth_state_path = auth_state_path or config.AUTH_STATE_PATH
         self._state = load_auth_state(self._auth_state_path)
 
+    # PC ID refresh tokens are single-use, so concurrent refreshes (parallel
+    # order fetches) would burn each other's token: serialize them.
+    _refresh_lock = threading.Lock()
+
     def get_access_token(self, client: httpx.Client) -> str:
         if not self._state.is_access_token_valid():
-            self._refresh(client)
+            with self._refresh_lock:
+                if not self._state.is_access_token_valid():
+                    self._refresh(client)
         assert self._state.access_token is not None
         return self._state.access_token
 
     def force_refresh(self, client: httpx.Client) -> str:
-        self._refresh(client)
+        with self._refresh_lock:
+            self._refresh(client)
         assert self._state.access_token is not None
         return self._state.access_token
 

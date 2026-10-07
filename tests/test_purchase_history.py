@@ -1,16 +1,13 @@
-"""Unit tests for get_purchase_history -- added after a real incident: an
-agent filled a cart with items (ground chicken, chips) nobody wanted, and
-a family member ordered them assuming they were deliberate picks. This
-tool lets an agent cross-check candidate items against what the
-household actually buys, scoped to the active store (resolved from each
-order's real store id, not the store name alone -- confirmed live that a
-real account accumulates legacy name variants for the same store).
-"""
+"""Unit tests for get_purchase_history: what the household actually buys
+at the active store, resolved from each order's real store id (a real
+account has legacy name variants for the same store)."""
 
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+
+import pytest  # noqa: E402
 
 from pc_express_mcp import server, session_state  # noqa: E402
 from pc_express_mcp.api_client import PcxApiError  # noqa: E402
@@ -42,14 +39,24 @@ def _order(order_id, placed, store_id, store_name, entries):
     )
 
 
-def _entry(code, name, brand, quantity):
-    return {"product": {"articleNumber": code, "productName": name, "brand": brand}, "quantity": quantity}
+def _entry(code, name, brand, quantity, weight=0.0, image="https://x.png"):
+    return {
+        "product": {"id": f"{code}_EA", "articleNumber": code, "productName": name, "brand": brand, "primaryImage": image},
+        "quantity": quantity,
+        "weight": weight,
+    }
+
+
+@pytest.fixture(autouse=True)
+def _empty_cache(monkeypatch):
+    monkeypatch.setattr(server, "_ORDER_LINES_CACHE", {})
 
 
 def _patch(monkeypatch, api, store_id="1024"):
     session = session_state.SessionState(store_id=store_id, banner="superstore")
     monkeypatch.setattr(server, "_load_session", lambda: session)
     monkeypatch.setattr(server, "_get_api", lambda banner: api)
+    monkeypatch.setattr(server, "_get_cart_healing", lambda api, s: {"orders": []})
 
 
 def test_aggregates_items_scoped_to_active_store_only(monkeypatch):
@@ -63,7 +70,7 @@ def test_aggregates_items_scoped_to_active_store_only(monkeypatch):
     assert result["orders_matched"] == 2  # A and C, not B (different store)
     assert result["distinct_items"] == 1
     item = result["items"][0]
-    assert item["code"] == "MILK"
+    assert item["code"] == "MILK_EA"  # suffixed: usable by the cart tools as-is
     assert item["times_purchased"] == 2
     assert item["total_quantity"] == 2
     # Newest-first scan means C (2026-08-10) is seen before A -> last_purchased is C's date.
@@ -77,7 +84,7 @@ def test_most_frequently_bought_sorts_first(monkeypatch):
     _patch(monkeypatch, api)
 
     result = server.get_purchase_history()
-    assert [i["code"] for i in result["items"]] == ["MILK", "EGGS"]
+    assert [i["code"] for i in result["items"]] == ["MILK_EA", "EGGS_EA"]
 
 
 def test_stops_once_limit_matching_orders_found(monkeypatch):
@@ -128,4 +135,40 @@ def test_skips_orders_whose_detail_fetch_fails(monkeypatch):
 
     result = server.get_purchase_history()
     assert result["orders_matched"] == 1
-    assert result["items"][0]["code"] == "MILK"
+    assert result["items"][0]["code"] == "MILK_EA"
+
+
+def test_excludes_tips_and_reports_weight_for_weighed_items(monkeypatch):
+    s1, d1 = _order(
+        "A",
+        "2026-08-01",
+        "1024",
+        "My Store",
+        [_entry("TIP", "$3 DRIVER TIP", None, 1, image=""), _entry("TOMATO", "Tomato", None, 1, weight=0.82)],
+    )
+    s2, d2 = _order("B", "2026-08-05", "1024", "My Store", [_entry("TOMATO", "Tomato", None, 0, weight=0.5)])
+    _patch(monkeypatch, _FakeApi([s2, s1], {"A": d1, "B": d2}))
+    result = server.get_purchase_history()
+    assert [i["code"] for i in result["items"]] == ["TOMATO_EA"]
+    assert result["items"][0]["total_weight_kg"] == 1.32
+    assert "total_quantity" not in result["items"][0]
+
+
+def test_top_n_bounds_the_rows(monkeypatch):
+    s1, d1 = _order("A", "2026-08-01", "1024", "My Store", [_entry(f"I{i}", f"Item {i}", None, 1) for i in range(5)])
+    _patch(monkeypatch, _FakeApi([s1], {"A": d1}))
+    result = server.get_purchase_history(top_n=2)
+    assert len(result["items"]) == 2
+    assert result["distinct_items"] == 5
+    assert result["truncated"] is True
+
+
+def test_settled_orders_are_cached_recent_ones_are_not(monkeypatch):
+    old, old_detail = _order("OLD", "2020-01-01", "1024", "My Store", [_entry("MILK", "Milk", None, 1)])
+    new, new_detail = _order("NEW", "2999-01-01", "1024", "My Store", [_entry("MILK", "Milk", None, 1)])
+    api = _FakeApi([new, old], {"OLD": old_detail, "NEW": new_detail})
+    _patch(monkeypatch, api)
+    server.get_purchase_history()
+    server.get_purchase_history()
+    assert api.detail_calls.count("OLD") == 1
+    assert api.detail_calls.count("NEW") == 2

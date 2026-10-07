@@ -24,6 +24,8 @@ from __future__ import annotations
 
 import re
 import time
+from concurrent.futures import ThreadPoolExecutor
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Literal, Optional
 
@@ -89,6 +91,11 @@ apps.add_html_resource(
 # though those aren't defined until later in this file -- Python resolves
 # names inside a function body at call time, long after the whole module
 # has finished importing, not at def time.
+def _base_code(code: Optional[str]) -> Optional[str]:
+    """`20028593001_EA` -> `20028593001` (PC's articleNumber)."""
+    return code.split("_")[0] if code else code
+
+
 def _lookup_products_by_code(api: PCExpressAPI, store_id: str, product_codes: list[str]) -> tuple[list[dict], list[str]]:
     """Resolve specific product codes to their real, current data.
 
@@ -111,12 +118,19 @@ def _lookup_products_by_code(api: PCExpressAPI, store_id: str, product_codes: li
     bind to the very next `def`, regardless of intent) -- caught by
     MCPServer failing to even construct (a JSON-schema error on this
     function's `api: PCExpressAPI` parameter), not a subtle bug.
+
+    A bare code (no `_EA`/`_KG`/`_C04` suffix, e.g. a raw articleNumber)
+    matches the product whose suffixed code starts with it -- the suffix
+    can't be derived (tomatoes need `_KG`, lemons `_EA`), only looked up.
     """
     products: list[dict] = []
     not_found: list[str] = []
     for code in product_codes:
-        raw = api.search_products(code, store_id, size=5)
-        match = next((p for p in raw.get("results", []) or [] if p.get("code") == code), None)
+        raw = api.search_products(code.split("_")[0], store_id, size=5)
+        match = next(
+            (p for p in raw.get("results", []) or [] if p.get("code") == code or ("_" not in code and _base_code(p.get("code")) == code)),
+            None,
+        )
         if match:
             products.append(_simplify_product(match))
         else:
@@ -186,9 +200,9 @@ def interactive_product_search(
     if query and product_codes:
         return {"error": "invalid_input", "message": "Provide only one of query or product_codes, not both."}
     session = _load_session()
-    if not session.store_id:
-        return {"error": "no_active_store", "message": "Call set_active_store first."}
     api = _get_api(session.banner)
+    if not _ensure_active_store(api, session):
+        return _no_active_store()
 
     not_found: list[str] = []
     if product_codes:
@@ -202,7 +216,7 @@ def interactive_product_search(
             raw = api.search_products(query, session.store_id, cart_id=session.cart_id, size=size)
         except (PcidAuthError, PcxApiError) as exc:
             return _tool_error(exc)
-        results = [_simplify_product(p) for p in raw.get("results", []) or []]
+        results = [_simplify_product(p) for p in (raw.get("results") or [])[:size]]
         label = f'Results for "{query}"'
 
     if ctx is not None and client_supports_apps(ctx):
@@ -269,7 +283,7 @@ def _interactive_search_results(
             results, not_found = _lookup_products_by_code(api, store_id, product_codes)
         else:
             raw = api.search_products(query or "", store_id, size=size)
-            results = [_simplify_product(p) for p in raw.get("results", []) or []]
+            results = [_simplify_product(p) for p in (raw.get("results") or [])[:size]]
             not_found = []
     except (PcidAuthError, PcxApiError) as exc:
         error = _tool_error(exc)
@@ -378,9 +392,15 @@ def _save_session(session: session_state.SessionState) -> None:
     _session_states[tenant] = session
 
 
+class NoCartError(PcxApiError):
+    """The active banner has no open cart (e.g. just after checkout)."""
+
+
 def _tool_error(exc: Exception) -> dict[str, Any]:
     if isinstance(exc, PcidAuthError):
         return {"error": "auth_required", "message": str(exc)}
+    if isinstance(exc, NoCartError):
+        return {"error": "no_cart", "message": str(exc)}
     if isinstance(exc, PcxApiError):
         pcx_error = exc.pcx_error
         if pcx_error and pcx_error.get("error_code") == "SELLER_ID_MISMATCH":
@@ -457,9 +477,10 @@ def _rediscover_cart(api: PCExpressAPI, session: session_state.SessionState) -> 
             session.cart_id = carts[0].get("id")
     _save_session(session)
     if not session.cart_id:
-        raise PcxApiError(
-            f"Could not discover a cart id for banner {session.banner!r} -- "
-            "add an item via the PC Express app/website (on this banner) once to create a cart, then retry."
+        raise NoCartError(
+            f"No open cart on banner {session.banner!r} -- normal right after checkout. PC Express creates a "
+            "new one when the app or website is next opened; no API to create one is known, so ask the user to "
+            "open the PC Express app once, then retry."
         )
 
 
@@ -501,30 +522,28 @@ def _update_cart_healing(
     return api.get_cart(session.cart_id)
 
 
-def _seller_id_for_removal(api: PCExpressAPI, session: session_state.SessionState) -> Optional[str]:
-    """sellerId to send when zeroing out a cart entry (remove_from_cart,
-    update_quantity(0)). Confirmed live: PC Express's API rejects a bare
-    `{"quantity": 0}` with SELLER_ID_MISMATCH (`expected`: the cart's real
-    store, `provided`: null) if sellerId is omitted entirely -- a real bug
-    in this project (a fix for this exact shape was already found once
-    during ad hoc cleanup while investigating switch_cart_store, but never
-    wired into remove_from_cart/update_quantity themselves; see
-    docs/RESEARCH.md "Cart is bound to a single store").
-
-    Uses the cart's own real current binding (`_cart_bound_store`), not
-    the locally cached `session.store_id` -- those can disagree (e.g. the
-    cart was re-bound from the PC Express app), and only the cart's own
-    live value is guaranteed to pass validation.
-    Falls back to `session.store_id` if the cart lookup itself fails or
-    the cart has no fulfillment set yet; returns None (omit sellerId
-    entirely, the old behavior) only if neither is available -- removal
-    shouldn't be blocked by this best-effort lookup failing.
+def _ensure_active_store(
+    api: PCExpressAPI, session: session_state.SessionState, cart_store_id: Optional[str] = None
+) -> Optional[str]:
+    """The active store, falling back to the store this banner's cart is
+    bound to (`cart_store_id` if the caller already has it). HTTP mode keeps
+    the active store in memory only, so a server restart drops it
+    mid-session (seen in a real session: gone hours later, while get_cart
+    still worked) -- the cart's binding is the right default and survives
+    restarts because it lives in PC Express itself.
     """
-    try:
-        cart_store = _cart_bound_store(_get_cart_healing(api, session))
-    except (PcidAuthError, PcxApiError):
-        cart_store = None
-    return cart_store or session.store_id
+    if not session.store_id:
+        try:
+            session.store_id = cart_store_id or _cart_bound_store(_get_cart_healing(api, session))
+        except (PcidAuthError, PcxApiError):
+            return None
+        if session.store_id:
+            _save_session(session)
+    return session.store_id
+
+
+def _no_active_store() -> dict:
+    return {"error": "no_active_store", "message": "No active store and no cart to infer it from -- call set_active_store."}
 
 
 def _strip_html(text: Optional[str]) -> Optional[str]:
@@ -571,36 +590,13 @@ def _unit_price(prices: dict, value_key: str) -> Optional[dict]:
 
 
 def _simplify_product(p: dict) -> dict:
-    """Verified live against real search results (queries against a real
-    store, real inventory). Two things worth knowing before relying on this
-    for automated deal-hunting:
-
-    - **No nutrition facts or ingredients list is available from this
-      endpoint.** `ingredients` was null on every real result seen (dozens
-      of products checked). The only per-product-detail endpoint this
-      client has (`api_client.get_product`) returned HTTP 400 against
-      every URL/param combination tried -- it's unverified/likely broken,
-      not wired to any tool. If nutrition data matters, pair `barcode`
-      below with an external source (e.g. Open Food Facts, which indexes
-      by UPC) rather than expecting this API to provide it.
-    - `unit_price` (from `prices.comparisonPrices[0]`) is what actually
-      enables apples-to-apples value comparison across different package
-      sizes -- e.g. two milks at different `price`s but comparable
-      `unit_price.value` per 100mL. Prefer it over raw `price` for
-      "which is the better deal" reasoning.
-
-    `description` is truncated to ~400 chars (full marketing copy can run
-    over 1500 chars per product; untruncated, that dominates a multi-result
-    response with more prose than a model needs to evaluate a product).
-    `image_urls` keeps one representative size *per distinct photo*
-    (`imageAssets` entries are genuinely different angles/shots -- front,
-    side, angled, sometimes a lifestyle or label close-up -- real products
-    carry anywhere from 3 to 9+ of these) but drops each photo's other
-    4-7 same-image size variants (thumbnail/small/medium/large/extraLarge/
-    retina -- all the same picture, just resized). An earlier version of
-    this returned only `imageAssets[0]`, a single URL, which silently
-    dropped every other angle -- caught from a direct user question about
-    why only one photo was coming back when the app clearly shows several.
+    """A search result, trimmed. Verified live: no nutrition/ingredients
+    exist here (`ingredients` always null; `api_client.get_product` is
+    broken) -- pair `barcode` with Open Food Facts instead. `unit_price`
+    is the field for value comparisons across package sizes. `description`
+    is cut to ~400 chars. `image_urls` keeps one size per distinct photo
+    (products carry 3-9+ angles). `aisle` and `mopDealPrice` were dropped:
+    null on every real result seen (91 of 91 in one session).
     """
     prices = p.get("prices") or {}
     price = prices.get("price") or {}
@@ -630,11 +626,9 @@ def _simplify_product(p: dict) -> dict:
         "package_size": p.get("packageSize"),
         "image_urls": image_urls,
         "photo_markdown": _markdown_image(p.get("name"), image_urls[0] if image_urls else None),
-        "aisle": p.get("aisle"),
         "stock_status": p.get("stockStatus"),
         "price": price.get("value"),
         "regular_price": was_price.get("value"),
-        "member_price": p.get("mopDealPrice"),
         "unit_price": _unit_price(prices, "value"),
         "deal_text": deal_badge.get("text"),
         "loyalty_points": loyalty_badge.get("points"),
@@ -665,44 +659,84 @@ def _simplify_cart(cart: dict) -> dict:
     `prices.totalRegularPrice`, `offer.badges.dealBadge`/
     `offer.promotionLabel`) that just weren't extracted before (see
     `_unit_price` for the "price"-vs-"value" key gotcha).
+
+    Cart-level `store_id` (the binding), `fulfillment_method`, booked
+    `slot` and the `totals` breakdown all come from the cart's own
+    `orders[].fulfillment`/`totals` (confirmed live). `regular_price` is
+    only reported alongside a `deal_text`: without a deal it was seen
+    disagreeing with the charged price, in both directions, for unknown
+    reasons. `_KG` lines are `estimated` -- the charged price is set when
+    the item is weighed at picking.
     """
     orders = cart.get("orders") or []
     entries: list[dict] = []
-    total_price = 0.0
-    have_total = False
+    totals: dict[str, Optional[float]] = {k: None for k in _CART_TOTAL_FIELDS}
     for order in orders:
-        totals = order.get("totals") or {}
-        if totals.get("totalPrice") is not None:
-            total_price += totals["totalPrice"]
-            have_total = True
+        for key, raw_key in _CART_TOTAL_FIELDS.items():
+            value = (order.get("totals") or {}).get(raw_key)
+            if value is not None:
+                totals[key] = round((totals[key] or 0) + value, 2)
         for entry in order.get("entries", []) or []:
             offer = entry.get("offer") or {}
             product = offer.get("product") or {}
             prices = entry.get("prices") or {}
             total_sale_price = prices.get("totalSalePrice")
             deal_badge = (offer.get("badges") or {}).get("dealBadge") or {}
+            deal_text = deal_badge.get("text") or offer.get("promotionLabel")
+            code = offer.get("id") or product.get("id")
             entries.append(
                 {
-                    "code": offer.get("id") or product.get("id"),
+                    "code": code,
                     "name": product.get("name"),
                     "brand": product.get("brand"),
                     "package_size": product.get("sizeLabel"),
                     "quantity": entry.get("quantity"),
                     "total_price": total_sale_price if total_sale_price is not None else prices.get("totalRegularPrice"),
-                    "regular_price": prices.get("totalRegularPrice"),
+                    "regular_price": prices.get("totalRegularPrice") if deal_text else None,
                     "unit_price": _unit_price(prices, "price"),
-                    "deal_text": deal_badge.get("text") or offer.get("promotionLabel"),
+                    "deal_text": deal_text,
+                    "estimated": bool(code and code.endswith("_KG")),
                     "photo_markdown": _markdown_image(product.get("name"), product.get("primaryImage")),
                 }
             )
+    fulfillment = (orders[0].get("fulfillment") or {}) if orders else {}
+    window = (fulfillment.get(fulfillment.get("type") or "") or {}).get("timeWindow") or {}
     return {
         "cart_id": cart.get("id"),
         "status": cart.get("status"),
+        "store_id": _cart_bound_store(cart),
+        "fulfillment_method": _cart_mode(cart),
+        "slot": {"start": window["startTime"], "end": window.get("endTime")} if window.get("startTime") else None,
         "min_cart_value": cart.get("minCartValue"),
+        "modified_time": cart.get("modifiedTime"),
         "item_count": len(entries),
+        "units": sum(e["quantity"] or 0 for e in entries),
         "items": entries,
-        "raw_total": total_price if have_total else None,
+        "totals": totals,
     }
+
+
+# Output key -> raw `orders[].totals` key (confirmed live on a real cart).
+_CART_TOTAL_FIELDS = {
+    "subtotal": "subTotal",
+    "tax": "totalTax",
+    "delivery_fee": "totalDeliveryFee",
+    "service_fee": "totalServiceFee",
+    "tip": "totalDeliveryTip",
+    "discounts": "totalDiscounts",
+    "total": "totalPrice",
+}
+
+
+def _cart_mode(cart: dict) -> Optional[str]:
+    """"delivery" or "pickup", from `orders[0].fulfillment.type` -- "courier"
+    for delivery (confirmed live); pickup's exact value is unconfirmed, so
+    anything mentioning pickup counts."""
+    orders = cart.get("orders") or []
+    ftype = (((orders[0].get("fulfillment") or {}).get("type") if orders else None) or "").lower()
+    if ftype in ("courier", "delivery"):
+        return "delivery"
+    return "pickup" if "pickup" in ftype else None
 
 
 def _simplify_slot(slot: dict) -> dict:
@@ -727,62 +761,103 @@ def _simplify_slot(slot: dict) -> dict:
 
 
 def _simplify_order_summary(order: dict) -> dict:
+    """A list row. `total_at_placement` stays at the placed amount: seen
+    unchanged after the order's own detail total dropped at fulfilment.
+    Fee fields are omitted -- null on every row of a 300-order history."""
     return {
         "order_id": order.get("id"),
         "placed": order.get("placed"),
         "store": order.get("store"),
         "order_type": order.get("orderType"),
         "fulfillment_type": order.get("fulfillmentType"),
-        "total": order.get("total"),
-        "delivery_fee": order.get("deliveryFee"),
-        "service_fee": order.get("serviceFee"),
+        "total_at_placement": order.get("total"),
     }
+
+
+def _adjustment_kind(product: dict) -> Optional[str]:
+    """Driver tips and loyalty stamps arrive as order lines with product
+    codes but no photo (confirmed live); they aren't groceries."""
+    name = (product.get("productName") or "").upper()
+    if "DRIVER TIP" in name:
+        return "tip"
+    if "STAMP" in name and not product.get("primaryImage"):
+        return "stamps"
+    return None
+
+
+def _order_line_code(product: dict) -> Optional[str]:
+    """`product.id` is the suffixed code cart tools need (`20852143_KG`),
+    confirmed live; `articleNumber` is the bare one they silently ignore."""
+    return product.get("id") or product.get("articleNumber")
 
 
 def _simplify_order_detail(detail: dict) -> dict:
-    """Trim a single historical-order response to what's actually useful.
+    """A single order, trimmed (the raw response is ~85% embedded product
+    and store objects).
 
-    Verified live against a real order: the raw response is ~85% one thing
-    -- each of the 13 line items embeds a full ~60-field product object
-    (promo badges, loyalty program fields, comparison prices, image URLs)
-    on top of a separately-nested booking.pickupLocation store object
-    (full address, departments, geofence, hours) that duplicates store
-    identity already available from bannerName/session context. None of
-    that is useful for "what did I order and how much did it cost" -- this
-    keeps the order-level totals/status and, per item, just the product
-    identity, quantity, and price.
+    Confirmed live on real orders, so don't expect more than this:
+    `status` and every line's availability are null upstream, so there's
+    no progress tracking and no reason for a missing line (out of stock vs
+    removed at review). For an in-flight order PC Express can return the
+    totals with no lines at all (`lines_available: false`). Totals can
+    change after fulfilment (weighed items, removed lines). Tips and stamp
+    lines go in `adjustments`, not `items`. `points_value` assumes PC
+    Optimum's 1,000 points = $1.
     """
     od = detail.get("orderDetails") or {}
-    entries: list[dict] = []
+    booking = od.get("booking") or {}
+    pickup_location = booking.get("pickupLocation") or {}
+    items: list[dict] = []
+    adjustments: list[dict] = []
     for e in od.get("entries", []) or []:
         product = e.get("product") or {}
-        entries.append(
-            {
-                "code": product.get("articleNumber") or product.get("id"),
-                "name": product.get("productName"),
-                "brand": product.get("brand"),
-                "quantity": e.get("quantity"),
-                "unit_price": e.get("unitPrice"),
-                "total_price": e.get("totalPrice"),
-                "availability_status": e.get("availabilityStatus"),
-            }
-        )
-    pickup_location = ((od.get("booking") or {}).get("pickupLocation") or {})
-    return {
+        line = {
+            "code": _order_line_code(product),
+            "name": product.get("productName"),
+            "brand": product.get("brand"),
+            "quantity": e.get("quantity"),
+            "unit_price": e.get("unitPrice"),
+            "total_price": e.get("totalPrice"),
+        }
+        kind = _adjustment_kind(product)
+        if kind:
+            adjustments.append({"kind": kind, **line})
+            continue
+        if e.get("weight"):
+            line["weight_kg"] = e["weight"]
+        items.append(line)
+    try:
+        points_redeemed = float(detail.get("pointsRedeemed") or 0)
+    except (TypeError, ValueError):
+        points_redeemed = None
+    result = {
         "order_number": od.get("orderNumber"),
         "order_type": od.get("orderType"),
         "status": od.get("status") or detail.get("statusDisplay") or od.get("deliveryStatus"),
+        "store_id": pickup_location.get("storeId"),
         "store_name": pickup_location.get("name") or od.get("bannerName"),
+        "fulfillment_type": pickup_location.get("pickupType"),
+        "slot_start": booking.get("pickupStartDate"),
+        "slot_end": booking.get("pickupEndDate"),
+        "products_total": round(sum(i["total_price"] or 0 for i in items), 2),
         "sub_total": od.get("subTotal"),
-        "total_price": od.get("totalPriceWithTax") or od.get("totalPrice"),
-        "total_tax": od.get("totalTax"),
-        "total_discounts": od.get("totalDiscounts"),
-        "total_items": od.get("totalItems"),
+        "tip": round(sum(a["total_price"] or 0 for a in adjustments if a["kind"] == "tip"), 2),
+        "delivery_fee": booking.get("deliveryFee"),
+        "service_fee": booking.get("serviceFee"),
+        "tax": od.get("totalTax"),
+        "discounts": od.get("totalDiscounts"),
+        "points_redeemed": points_redeemed,
+        "points_value": round(points_redeemed / 1000, 2) if points_redeemed else 0.0,
         "points_earned": detail.get("pointsEarned"),
-        "points_redeemed": detail.get("pointsRedeemed"),
-        "item_count": len(entries),
-        "items": entries,
+        "total_price": od.get("totalPriceWithTax") or od.get("totalPrice"),
+        "item_count": len(items),
+        "units": sum(i["quantity"] or 0 for i in items),
+        "items": items,
+        "adjustments": adjustments,
     }
+    if not items and not adjustments:
+        result["lines_available"] = False
+    return result
 
 
 def _simplify_store(loc: dict) -> dict:
@@ -1005,65 +1080,64 @@ def _find_fulfillment_location_id(serviceability: dict, banner: str, store_id: s
     annotations=ToolAnnotations(
         title="Switch Cart to a Different Store",
         read_only_hint=False,
-        destructive_hint=False,
+        destructive_hint=True,  # re-prices or drops items in a cart other people may share
         idempotent_hint=True,
         open_world_hint=False,
     )
 )
-def switch_cart_store(store_id: str, postal_code: str) -> dict:
-    """Re-bind the account's existing cart to a different store -- the
-    real, confirmed-live fix for a `cart_store_mismatch`/SELLER_ID_MISMATCH
-    error, no PC Express app needed.
+def switch_cart_store(store_id: str, postal_code: str, confirm: bool = False) -> dict:
+    """Re-bind this banner's cart to a different store -- the fix for a
+    `cart_store_mismatch` error. Also makes `store_id` the active store.
 
-    PC Express only has one active cart per banner (Superstore, No
-    Frills, etc. each have their own -- confirmed live, this is not
-    account-wide), bound to whichever store it was last used at within
-    that banner (see set_active_store's docstring). This tool re-binds
-    the *active banner's* cart, the same one every other cart tool in
-    this session uses. An earlier version of this project concluded
-    there was no API-level way to change that -- wrong, corrected after
-    a user-supplied real curl capture showed the actual working shape
-    (see docs/RESEARCH.md "Cart is bound to a single store"): this
-    looks up the real delivery
-    fulfillment-location id for `store_id` from `postal_code` (a delivery
-    address that store can actually service -- its own store address is a
-    reasonable default if you don't have a specific one), then re-binds
-    the cart's fulfillment to it. Existing cart items carry over,
-    re-priced against the new store's catalog, not dropped.
+    The cart is one per banner and shared by everyone using this account
+    (e.g. two households at different stores), so this changes their cart
+    too: items carry over, re-priced at the new store (or dropped if it
+    doesn't stock them). If the cart has items, this refuses without
+    `confirm=True` and names the store it's bound to -- check with the user
+    first. The response lists `previous_store_id`, `items_repriced` and
+    `items_dropped`.
 
-    This changes the account's real cart, immediately -- there's no
-    separate confirm step, unlike place_order. It also makes `store_id`
-    the active store, since cart writes must use the store the cart is
-    bound to (a stale active store would just trigger SELLER_ID_MISMATCH
-    on the next add).
+    `postal_code` must be a delivery address the store serves; the store's
+    own postal code works. (Shape from a real app request capture -- see
+    docs/RESEARCH.md "Cart is bound to a single store".)
     """
     session = _load_session()
     api = _get_api(session.banner)
     try:
-        # Always re-discover the cart id fresh here, never trust a cached
-        # one (_ensure_customer_and_cart would skip this if session.cart_id
-        # is already set, even if stale) -- confirmed live that a stale
-        # cached cart_id makes set_cart_fulfillment fail with a 503/422
-        # from PC Express's own backend, not a clean 404 the usual
-        # self-healing (_get_cart_healing/_update_cart_healing) would
-        # catch. This tool exists specifically to fix broken cart state,
-        # so it should never propagate that same kind of staleness itself.
+        # Always fresh: a stale cached cart_id makes set_cart_fulfillment
+        # fail with a 503/422 rather than a 404 the healing helpers catch.
         _rediscover_cart(api, session)
+        before = _simplify_cart(api.get_cart(session.cart_id))
+    except (PcidAuthError, PcxApiError) as exc:
+        return _tool_error(exc)
+    if before["store_id"] == store_id:
+        session.store_id = store_id
+        _save_session(session)
+        return {**before, "message": f"The cart is already bound to store {store_id}; nothing changed."}
+    if before["item_count"] and not confirm:
+        return {
+            "error": "confirmation_required",
+            "message": (
+                f"This banner's cart is bound to store {before['store_id']} and holds {before['item_count']} "
+                f"items, possibly someone else's on this account. Switching re-prices them at store {store_id} "
+                "for everyone. Confirm with the user, then call again with confirm=True."
+            ),
+            "previous_store_id": before["store_id"],
+            "items": [{"code": i["code"], "name": i["name"]} for i in before["items"]],
+        }
+    try:
         serviceability = api.get_delivery_serviceability(postal_code)
     except (PcidAuthError, PcxApiError) as exc:
         return _tool_error(exc)
-
     location_id = _find_fulfillment_location_id(serviceability, session.banner, store_id)
     if not location_id:
         return {
             "error": "store_not_serviceable",
             "message": (
-                f"No delivery fulfillment location found for store {store_id!r} on banner "
-                f"{session.banner!r} from postal code {postal_code!r}. Double-check the store_id, "
-                "and that this postal code is actually within that store's delivery area."
+                f"No delivery fulfillment location for store {store_id!r} on banner {session.banner!r} from "
+                f"postal code {postal_code!r} -- check the store id and that it delivers to that postal code."
             ),
         }
-
     try:
         raw = api.set_cart_fulfillment(session.cart_id, location_id, postal_code)
     except (PcidAuthError, PcxApiError) as exc:
@@ -1072,7 +1146,11 @@ def switch_cart_store(store_id: str, postal_code: str) -> dict:
     session.store_id = store_id
     _save_session(session)
     result = _simplify_cart(raw.get("cart", raw))
+    after = {i["code"]: i["total_price"] for i in result["items"]}
+    result["previous_store_id"] = before["store_id"]
     result["switched_to_store"] = store_id
+    result["items_repriced"] = [i["code"] for i in before["items"] if i["code"] in after and after[i["code"]] != i["total_price"]]
+    result["items_dropped"] = [i["code"] for i in before["items"] if i["code"] not in after]
     if raw.get("errors"):
         result["warnings"] = raw["errors"]
     return result
@@ -1163,48 +1241,41 @@ def _cap_size_for_nutrition(size: int, include_nutrition: bool) -> tuple[int, bo
     return size, False
 
 
-def _cap_results_for_nutrition(results: list, include_nutrition: bool) -> tuple[list, bool]:
-    """Returns (capped_results, was_capped). Separate from
-    _cap_size_for_nutrition because capping the *requested* size isn't
-    sufficient on its own -- PC Express can itself return more results
-    than requested (confirmed live: asked for 5, got 7), so the actual
-    results list needs its own truncation to reliably keep nutrition
-    lookups at or under 15 per call.
-    """
-    if include_nutrition and len(results) > MAX_SIZE_WITH_NUTRITION:
-        return results[:MAX_SIZE_WITH_NUTRITION], True
-    return results, False
+_OFF_CACHE: dict[str, Optional[dict]] = {}
 
 
 def _enrich_with_nutrition(results: list[dict], client: httpx.Client) -> dict[str, Any]:
-    """Attach Open Food Facts nutrition data (see `_simplify_nutrition`) to
-    each result that has a `barcode`, in place. Paced ~1 second apart
-    between actual lookups (not counting skipped no-barcode results) to
-    stay well clear of Open Food Facts' documented 15 req/min/IP limit --
-    see search_products' docstring. Stops early, without raising, if the
-    limit is hit anyway; already-enriched results are left as they are.
+    """Attach Open Food Facts data (see `_simplify_nutrition`) to each
+    result with a `barcode`, in place. Lookups are cached per barcode for
+    the life of the process and paced ~1s apart (OFF allows 15/min/IP).
+    Stops early, without raising, if rate-limited anyway. `with_data`/
+    `with_ingredients` count useful answers, not requests -- most OFF
+    records found for these products have no ingredient list.
     """
-    enriched_count = 0
+    with_data = with_ingredients = 0
     rate_limited = False
     made_a_request = False
     for product in results:
         barcode = product.get("barcode")
         if not barcode:
             continue
-        if made_a_request:
-            time.sleep(1)
-        made_a_request = True
-        try:
-            off_product = nutrition_client.fetch_nutrition(barcode, client=client)
-        except nutrition_client.OpenFoodFactsRateLimited:
-            rate_limited = True
-            break
-        if off_product is not None:
-            product["nutrition"] = _simplify_nutrition(off_product)
-            enriched_count += 1
-        else:
+        if barcode not in _OFF_CACHE:
+            if made_a_request:
+                time.sleep(1)
+            made_a_request = True
+            try:
+                _OFF_CACHE[barcode] = nutrition_client.fetch_nutrition(barcode, client=client)
+            except nutrition_client.OpenFoodFactsRateLimited:
+                rate_limited = True
+                break
+        off_product = _OFF_CACHE[barcode]
+        if off_product is None:
             product["nutrition"] = {"found": False}
-    return {"enriched_count": enriched_count, "rate_limited": rate_limited}
+            continue
+        product["nutrition"] = _simplify_nutrition(off_product)
+        with_data += 1
+        with_ingredients += bool(product["nutrition"].get("ingredients_text"))
+    return {"with_data": with_data, "with_ingredients": with_ingredients, "rate_limited": rate_limited}
 
 
 @mcp.tool(
@@ -1222,98 +1293,43 @@ def search_products(query: str, size: int = 20, offset: int = 0, include_nutriti
     this household buys when you don't is the worse mistake. Use that
     context when choosing a query or ranking/recommending results.
 
-    Requires an active store (see set_active_store). Each result carries
-    everything this API actually exposes about a product -- name, brand,
-    truncated description, every distinct product photo (`image_urls`,
-    one URL per angle), package size, barcode, aisle, current/regular/
-    member price, per-unit price (for value comparisons across package
-    sizes), and any active deal/loyalty offer. **No nutrition facts or
-    ingredients are available from PC Express's own API** -- set
-    `include_nutrition=True` to attach Open Food Facts data per result
-    (see below), or call `get_nutrition_info(barcode)` separately for one
-    product at a time. `code` is the product identifier needed by
-    add_to_cart/remove_from_cart; `sku` (bare article number) and
-    `barcode` (UPC) are what you'd use to cross-reference this product
-    elsewhere.
+    Returns at most `size` results, in PC Express's own ranking. `code` is
+    what the cart tools take; `sku` (bare article number) and `barcode`
+    (UPC) are for cross-referencing. Each result's `photo_markdown` is a
+    ready-to-paste `![name](url)` -- include it in your reply so the photo
+    renders. `offset` pages for real; `total_results` is an estimate.
+    Ranking is noisy for vague queries: if the obvious product isn't there,
+    try a more specific query or the next page.
 
-    Each result also carries `photo_markdown` -- a ready-to-paste
-    `![name](url)` tag for its main photo. Include it directly in your own
-    reply text (not just the raw `image_urls`) when showing products to
-    the user, so the photo actually renders inline in the chat instead of
-    staying invisible in tool output.
+    No filter/sort parameters exist -- every attempt to make the API's
+    advertised facets work failed (docs/RESEARCH.md "Search filters/sort");
+    filter the results yourself.
 
-    This endpoint is genuinely paginated -- `offset` is a real, working
-    item offset (verified live: `offset=5` returns different products than
-    `offset=0`, not a repeat). `total_results` in the response is this
-    account's real count of matching products, not just how many came back
-    in `results` -- if it's larger than `len(results)`, call again with
-    `offset` advanced by however many you just got to see more. Treat
-    `total_results` as an estimate, not exact -- PC Express's search
-    appears to be personalized/model-driven and the count can shift a few
-    percent between otherwise-identical calls.
-
-    **No filter or sort parameters (brand, price range, dietary/lifestyle,
-    category, price/name sort) are exposed here, on purpose**: the raw
-    response advertises real filter/sort facets, but applying one could
-    not be made to work against the real API after trying roughly a dozen
-    plausible request shapes for both sort and brand filtering -- every
-    attempt was either rejected outright or silently had zero effect on
-    the actual results (see docs/RESEARCH.md "Search filters/sort"). Do
-    your own filtering/sorting over the returned results (or across
-    multiple paginated calls) using the fields above -- don't try passing
-    an undocumented filter/sort kwarg here, it doesn't exist and won't do
-    anything.
-
-    **`include_nutrition=True` limits (read before using):** Open Food
-    Facts documents a hard limit of 15 requests/minute/IP for product
-    lookups (https://openfoodfacts.github.io/openfoodfacts-server/api/),
-    and this option makes one such request per result, sequentially, with
-    a ~1 second pace between them to stay well clear of that limit within
-    a single call. Consequences:
-    - **At most 15 results total whenever this is enabled** -- a larger
-      `size` is silently reduced, not rejected, and (since PC Express can
-      itself return more results than requested -- confirmed live: asked
-      for 5, got 7) the results list is *also* truncated to 15 after the
-      fact if PC Express handed back more than that. Either way,
-      `nutrition_enrichment.size_capped` in the response tells you if
-      truncation happened, and `returned` always reflects the real,
-      final count.
-    - The call takes noticeably longer (up to ~15 seconds for 15 results
-      with barcodes) -- this is expected, not a hang.
-    - If the rate limit is hit partway through anyway,
-      `nutrition_enrichment.rate_limited` will be true and remaining
-      results simply won't have a `nutrition` field -- not an error, and
-      the results themselves are still complete and valid.
-    - Per-item "not found" (`result["nutrition"] = {"found": false, ...}`)
-      is common and expected -- coverage varies by product, and
-      weight-priced items (deli/meat/produce) never have a real barcode.
-    Only turn this on when you actually need nutrition data to answer the
-    request -- for a plain product search, leave it off (the default) and
-    it costs nothing extra.
+    PC Express has no nutrition or ingredient data. `include_nutrition=True`
+    attaches Open Food Facts data per result: at most 15 results (OFF
+    allows 15 lookups/min/IP), ~1s per uncached lookup, and coverage is
+    patchy (`nutrition_enrichment.with_data`/`with_ingredients` say how
+    patchy; weighed items never have a barcode). Leave it off unless the
+    request needs nutrition.
     """
     session = _load_session()
-    if not session.store_id:
-        return {"error": "no_active_store", "message": "Call set_active_store first."}
-
-    size, _ = _cap_size_for_nutrition(size, include_nutrition)
-
     api = _get_api(session.banner)
+    if not _ensure_active_store(api, session):
+        return _no_active_store()
+
+    size, size_capped = _cap_size_for_nutrition(size, include_nutrition)
     try:
         raw = api.search_products(query, session.store_id, cart_id=session.cart_id, size=size, from_=offset)
     except (PcidAuthError, PcxApiError) as exc:
         return _tool_error(exc)
-    results = [_simplify_product(p) for p in raw.get("results", [])]
-    pagination = raw.get("pagination") or {}
-    total_results = pagination.get("totalResults")
-
-    # PC Express can return MORE results than the requested `size` -- see
-    # search_products' docstring/docs/RESEARCH.md ("asked for 5, got 7").
-    # Requesting size<=15 above is not sufficient on its own to guarantee
-    # at most 15 nutrition lookups; the actual results list has to be
-    # truncated too. Confirmed live: a size=3 request once came back with
-    # 11 results, which would have made 11 sequential Open Food Facts
-    # calls if this truncation weren't here.
-    results, results_capped = _cap_results_for_nutrition(results, include_nutrition)
+    # PC Express often returns more rows than `size` (seen: 3 -> 11, 5 ->
+    # 13), which inflated payloads and nutrition lookups. Its first rows are
+    # its own ranking, so cut there. image_urls is dropped here (the
+    # widget keeps it): photo_markdown already carries the first photo.
+    results = [_simplify_product(p) for p in (raw.get("results") or [])[:size]]
+    for r in results:
+        r.pop("image_urls")
+    total_results = (raw.get("pagination") or {}).get("totalResults")
 
     response: dict[str, Any] = {
         "query": query,
@@ -1329,10 +1345,8 @@ def search_products(query: str, size: int = 20, offset: int = 0, include_nutriti
         with httpx.Client(timeout=10.0) as off_client:
             summary = _enrich_with_nutrition(results, off_client)
         response["nutrition_enrichment"] = {
-            "enabled": True,
-            "size_capped": results_capped,
-            "enriched_count": summary["enriched_count"],
-            "rate_limited": summary["rate_limited"],
+            "size_capped": size_capped,
+            **summary,
             "data_source": "Open Food Facts (openfoodfacts.org, ODbL-licensed) -- not affiliated with PC Express or Loblaw",
         }
 
@@ -1418,35 +1432,22 @@ def _dietary_flags(ingredients_analysis_tags: list) -> dict:
 
 
 def _simplify_nutrition(product: dict) -> dict:
-    """Trim an Open Food Facts product to what's useful for a food-quality
-    decision -- verified live against real products from this store's own
-    catalog (see `nutrition_client.py`). Kept intentionally narrow: OFF's
-    raw response carries dozens of contributor/internal-tracking fields
-    (keyword lists, correction history, per-language variants) that don't
-    help "should I buy this."
-
-    `nutriscore_grade` (a-e) and `nova_group` (1-4, processing level) are
-    the two headline signals -- closest thing this has to a Yuka-style
-    single-glance grade. **There is deliberately no fabricated single
-    0-100 "score" here** the way Yuka shows one -- that number is Yuka's
-    own proprietary weighting of Nutri-Score/additives/organic-status/etc,
-    not something Open Food Facts' API provides, and guessing at their
-    formula isn't something this project is going to do. Everything real
-    that goes into a judgment like that is exposed individually below
-    instead (grades, nutrient_levels, additives, dietary flags) --
-    reasoning over structured signals in natural language is something an
-    LLM caller can do directly, and honestly, better than trusting an
-    opaque single number.
-
-    `nutrient_levels` (low/moderate/high per fat/saturated fat/sugars/salt)
-    is OFF's own real qualitative traffic-light rating, not derived here.
-    `additives` is a real E-number list/count with no risk classification
-    attached -- OFF's API doesn't provide per-additive risk levels (Yuka's
-    "limited risk" style labels are Yuka's own separate analysis, not
-    available from this data source). `dietary_flags` and `allergen_status`
-    are explained in `_dietary_flags`/`_allergen_status` above.
+    """An Open Food Facts product, trimmed to what helps "should I buy
+    this". `nutriscore_grade` (a-e) and `nova_group` (1-4, processing) are
+    the headline signals; deliberately no invented 0-100 Yuka-style score
+    (that's Yuka's proprietary weighting, not OFF data). `nutrient_levels`
+    is OFF's own traffic-light rating; `additives` has no risk levels (OFF
+    doesn't provide them). Values are as contributed to OFF, rounded:
+    `per_100g_consistent: false` marks records whose energy doesn't match
+    their macros, so the macros probably aren't really per 100 g.
+    `ingredients_language` says what language the ingredient list is in.
     """
     nutriments = product.get("nutriments") or {}
+    per_100g = {key: _round2(nutriments.get(raw)) for key, raw in _PER_100G_FIELDS.items()}
+    additive_codes = product.get("additives_tags") or []
+    # OFF tags both a parent and its variant (en:e262 + en:e262ii); keep the specific one.
+    additive_codes = [c for c in additive_codes if not any(o != c and o.startswith(c) for o in additive_codes)]
+    ingredients_en = product.get("ingredients_text_en")
     return {
         "product_name": product.get("product_name"),
         "brands": product.get("brands"),
@@ -1454,26 +1455,44 @@ def _simplify_nutrition(product: dict) -> dict:
         "nutriscore_grade": product.get("nutriscore_grade"),
         "nova_group": product.get("nova_group"),
         "ecoscore_grade": product.get("ecoscore_grade"),
-        "ingredients_text": product.get("ingredients_text"),
+        "ingredients_text": ingredients_en or product.get("ingredients_text"),
+        "ingredients_language": "en" if ingredients_en else product.get("ingredients_lc"),
         "allergens": product.get("allergens"),
         "allergen_status": _allergen_status(product.get("allergens_tags") or [], product.get("traces_tags") or []),
         "dietary_flags": _dietary_flags(product.get("ingredients_analysis_tags") or []),
         "nutrient_levels": {k.replace("-", "_"): v for k, v in (product.get("nutrient_levels") or {}).items()},
-        "additives": {
-            "count": product.get("additives_n"),
-            "codes": product.get("additives_tags") or [],
-        },
-        "per_100g": {
-            "energy_kcal": nutriments.get("energy-kcal_100g"),
-            "protein_g": nutriments.get("proteins_100g"),
-            "fat_g": nutriments.get("fat_100g"),
-            "saturated_fat_g": nutriments.get("saturated-fat_100g"),
-            "carbohydrates_g": nutriments.get("carbohydrates_100g"),
-            "sugars_g": nutriments.get("sugars_100g"),
-            "fiber_g": nutriments.get("fiber_100g"),
-            "salt_g": nutriments.get("salt_100g"),
-        },
+        "additives": {"count": len(additive_codes), "codes": additive_codes},
+        "per_100g": per_100g,
+        "per_100g_consistent": _energy_matches_macros(per_100g),
     }
+
+
+_PER_100G_FIELDS = {
+    "energy_kcal": "energy-kcal_100g",
+    "protein_g": "proteins_100g",
+    "fat_g": "fat_100g",
+    "saturated_fat_g": "saturated-fat_100g",
+    "carbohydrates_g": "carbohydrates_100g",
+    "sugars_g": "sugars_100g",
+    "fiber_g": "fiber_100g",
+    "salt_g": "salt_100g",
+}
+
+
+def _round2(value: Any) -> Any:
+    return round(value, 2) if isinstance(value, (int, float)) else value
+
+
+def _energy_matches_macros(per_100g: dict) -> Optional[bool]:
+    """False when stated energy is >25% off 4p+4c+9f -- OFF contributors
+    sometimes enter per-serving macros beside per-100g energy (seen: a
+    cracker at 467 kcal/100g with fat_100g 6, i.e. per 30g serving). None
+    if anything needed is missing."""
+    values = [per_100g.get(k) for k in ("energy_kcal", "protein_g", "carbohydrates_g", "fat_g")]
+    if any(not isinstance(v, (int, float)) for v in values) or not values[0]:
+        return None
+    energy, protein, carbs, fat = values
+    return abs(4 * protein + 4 * carbs + 9 * fat - energy) <= 0.25 * energy
 
 
 @mcp.tool(
@@ -1559,15 +1578,19 @@ def get_nutrition_info(barcode: str) -> dict:
     )
 )
 def get_cart() -> dict:
-    """View the current cart contents and total.
+    """View the current cart: items, the store it's bound to, fulfillment
+    method, booked slot (if any) and a totals breakdown.
 
-    Each item carries `photo_markdown` -- paste it directly into your
-    reply (not just the item name) so the cart actually looks like a cart.
+    `status: "NO_CART"` means this banner has no open cart -- normal right
+    after checkout, not an error. Each item carries `photo_markdown` --
+    paste it directly into your reply so the cart actually looks like a cart.
     """
     session = _load_session()
     api = _get_api(session.banner)
     try:
         raw = _get_cart_healing(api, session)
+    except NoCartError as exc:
+        return {"status": "NO_CART", "item_count": 0, "items": [], "message": str(exc)}
     except (PcidAuthError, PcxApiError) as exc:
         return _tool_error(exc)
     return _simplify_cart(raw)
@@ -1584,20 +1607,100 @@ class QuantityUpdate(TypedDict):
     quantity: int
 
 
+def _resolve_codes(
+    api: PCExpressAPI, store_id: Optional[str], codes: list[str], cart_codes: list[str]
+) -> tuple[dict[str, str], list[dict]]:
+    """Map requested codes to the suffixed form cart writes need
+    (`20028593001` -> `20028593001_EA`). PC Express silently ignores a bare
+    code (confirmed live), so a bare code is matched against the cart
+    first, then looked up in the catalog. Returns ({requested: resolved},
+    rejected)."""
+    in_cart = {_base_code(c): c for c in cart_codes}
+    resolved: dict[str, str] = {}
+    to_lookup: list[str] = []
+    for code in codes:
+        if "_" in code:
+            resolved[code] = code
+        elif code in in_cart:
+            resolved[code] = in_cart[code]
+        else:
+            to_lookup.append(code)
+    rejected: list[dict] = []
+    if to_lookup:
+        found, not_found = _lookup_products_by_code(api, store_id, to_lookup) if store_id else ([], to_lookup)
+        by_base = {_base_code(p["code"]): p["code"] for p in found}
+        for code in to_lookup:
+            if code in by_base:
+                resolved[code] = by_base[code]
+        rejected = [
+            {"code": c, "reason": "unknown_code", "detail": "No product with this code at the active store -- use a code from search_products."}
+            for c in not_found
+        ]
+    return resolved, rejected
+
+
+def _apply_cart_entries(
+    api: PCExpressAPI, session: session_state.SessionState, entries: dict[str, dict[str, Any]], rejected: list[dict]
+) -> dict:
+    """Send `entries`, then report per code whether the cart actually
+    changed: PC Express returns a normal cart for codes it ignores (bare or
+    wrong-suffix codes, unknown products), so the only proof of a write is
+    re-reading the quantity. Errors if nothing applied."""
+    if not entries:
+        return {"error": "nothing_applied", "message": "None of the product codes could be used -- see `rejected`.", "rejected": rejected}
+    try:
+        raw = _update_cart_healing(api, session, entries)
+    except (PcidAuthError, PcxApiError) as exc:
+        return _tool_error(exc)
+    result = _simplify_cart(raw)
+    quantities = {i["code"]: i["quantity"] or 0 for i in result["items"]}
+    applied: list[str] = []
+    for code, entry in entries.items():
+        got = quantities.get(code, 0)
+        if got == entry["quantity"]:
+            applied.append(code)
+            continue
+        rejection = {
+            "code": code,
+            "reason": "not_applied",
+            "detail": f"cart quantity is {got}, expected {entry['quantity']} -- wrong suffix (_EA/_KG/_C01...) or out of stock.",
+        }
+        if entry["quantity"] and session.store_id:
+            try:
+                found, _ = _lookup_products_by_code(api, session.store_id, [_base_code(code)])
+            except (PcidAuthError, PcxApiError):
+                found = []
+            if found and found[0]["code"] != code:
+                rejection["suggested_code"] = found[0]["code"]
+        rejected.append(rejection)
+    result["applied"] = applied
+    result["rejected"] = rejected
+    if not applied:
+        result["error"] = "nothing_applied"
+        result["message"] = "The cart did not change -- see `rejected`."
+    return result
+
+
+def _load_cart_for_write(api: PCExpressAPI, session: session_state.SessionState) -> dict:
+    """Current cart, simplified -- every write reads it first for quantities,
+    mode and the bound store. Raises like _get_cart_healing."""
+    return _simplify_cart(_get_cart_healing(api, session))
+
+
 @mcp.tool(
     annotations=ToolAnnotations(
         title="Add to Cart",
         read_only_hint=False,
         destructive_hint=False,
-        # The underlying API sets an entry's quantity rather than
-        # incrementing it, so calling this again with the same args is a
-        # no-op against an unchanged cart.
-        idempotent_hint=True,
+        # Increments: calling it twice adds twice.
+        idempotent_hint=False,
         open_world_hint=False,
     )
 )
 def add_to_cart(items: list[CartItem]) -> dict:
-    """Add one or more products to the cart, or increase their quantity, in a single call.
+    """Add products to the cart. `quantity` (default 1) is added on top of
+    whatever is already in the cart; use update_quantity to set an exact
+    quantity.
 
     If you haven't already called get_purchase_history this session,
     call it first -- once is enough (don't call it before every add),
@@ -1607,43 +1710,47 @@ def add_to_cart(items: list[CartItem]) -> dict:
     matters most when choosing or confirming what to add on someone
     else's behalf.
 
-    quantity defaults to 1, fulfillment_method to "pickup". All items are
-    sent as one cart update; if a product_code repeats, the last entry
-    wins. Requires an active store.
+    Bare codes from purchase history or orders (no `_EA`/`_KG` suffix) are
+    resolved automatically. `fulfillment_method` defaults to the cart's
+    current one. Check `rejected` in the response: codes PC Express
+    ignored are listed there, and the call errors if nothing was added.
 
     The returned cart's items carry `photo_markdown` -- include it in your
     reply when confirming what was added.
     """
     if not items:
         return {"error": "invalid_items", "message": "items must be a non-empty list."}
-    session = _load_session()
-    if not session.store_id:
-        return {"error": "no_active_store", "message": "Call set_active_store first."}
-    entries: dict[str, dict[str, Any]] = {}
     for item in items:
-        product_code = item.get("product_code")
-        if not product_code:
+        if not item.get("product_code"):
             return {"error": "invalid_items", "message": "Each item needs a product_code."}
-        quantity = item.get("quantity", 1)
-        if quantity <= 0:
+        if item.get("quantity", 1) <= 0:
             return {
                 "error": "invalid_quantity",
-                "message": f"quantity for {product_code!r} must be >= 1 (use remove_from_cart to remove).",
+                "message": f"quantity for {item['product_code']!r} must be >= 1 (use remove_from_cart to remove).",
             }
-        fulfillment_method = item.get("fulfillment_method", "pickup")
-        entries[product_code] = {
-            "quantity": quantity,
-            "fulfillmentMethod": fulfillment_method,
-            "sellerId": session.store_id,
-        }
+    session = _load_session()
     api = _get_api(session.banner)
     try:
-        raw = _update_cart_healing(api, session, entries)
+        cart = _load_cart_for_write(api, session)
+        store_id = _ensure_active_store(api, session, cart["store_id"])
+        if not store_id:
+            return _no_active_store()
+        resolved, rejected = _resolve_codes(api, store_id, [i["product_code"] for i in items], [c["code"] for c in cart["items"]])
     except (PcidAuthError, PcxApiError) as exc:
         return _tool_error(exc)
-    result = _simplify_cart(raw)
-    result["items_requested"] = len(entries)
-    return result
+    current = {i["code"]: i["quantity"] or 0 for i in cart["items"]}
+    entries: dict[str, dict[str, Any]] = {}
+    for item in items:
+        code = resolved.get(item["product_code"])
+        if not code:
+            continue
+        quantity = (entries[code]["quantity"] if code in entries else current.get(code, 0)) + item.get("quantity", 1)
+        entries[code] = {
+            "quantity": int(quantity) if float(quantity).is_integer() else quantity,
+            "fulfillmentMethod": item.get("fulfillment_method") or cart["fulfillment_method"] or "pickup",
+            "sellerId": store_id,
+        }
+    return _apply_cart_entries(api, session, entries, rejected)
 
 
 @mcp.tool(
@@ -1654,28 +1761,13 @@ def add_to_cart(items: list[CartItem]) -> dict:
 def remove_from_cart(product_codes: list[str]) -> dict:
     """Remove one or more products from the cart entirely, in a single call.
 
-    The returned cart's remaining items carry `photo_markdown` -- include
-    it when confirming the cart's new contents.
+    Bare codes match the cart's suffixed ones. Codes not in the cart come
+    back in `rejected`. The returned cart's remaining items carry
+    `photo_markdown` -- include it when confirming the cart's new contents.
     """
     if not product_codes:
         return {"error": "invalid_items", "message": "product_codes must be a non-empty list."}
-    session = _load_session()
-    api = _get_api(session.banner)
-    # One lookup, reused for every item -- not per product code.
-    seller_id = _seller_id_for_removal(api, session)
-    entries: dict[str, dict[str, Any]] = {}
-    for product_code in product_codes:
-        entry: dict[str, Any] = {"quantity": 0}
-        if seller_id:
-            entry.update({"fulfillmentMethod": "pickup", "sellerId": seller_id})
-        entries[product_code] = entry
-    try:
-        raw = _update_cart_healing(api, session, entries)
-    except (PcidAuthError, PcxApiError) as exc:
-        return _tool_error(exc)
-    result = _simplify_cart(raw)
-    result["items_requested"] = len(entries)
-    return result
+    return update_quantity([{"product_code": c, "quantity": 0} for c in product_codes])
 
 
 @mcp.tool(
@@ -1688,10 +1780,11 @@ def remove_from_cart(product_codes: list[str]) -> dict:
     )
 )
 def update_quantity(items: list[QuantityUpdate]) -> dict:
-    """Set cart quantities for one or more products directly, in a single
-    call (quantity=0 removes that item).
+    """Set exact cart quantities for one or more products in a single call
+    (quantity=0 removes that item).
 
-    The returned cart's items carry `photo_markdown` -- include it when
+    Bare codes are resolved like add_to_cart's; check `rejected`. The
+    returned cart's items carry `photo_markdown` -- include it when
     confirming the cart's new contents.
     """
     if not items:
@@ -1700,39 +1793,38 @@ def update_quantity(items: list[QuantityUpdate]) -> dict:
         if not item.get("product_code") or item.get("quantity") is None:
             return {"error": "invalid_items", "message": "Each item needs product_code and quantity."}
         if item["quantity"] < 0:
-            return {
-                "error": "invalid_quantity",
-                "message": f"quantity for {item['product_code']!r} must be >= 0.",
-            }
+            return {"error": "invalid_quantity", "message": f"quantity for {item['product_code']!r} must be >= 0."}
     session = _load_session()
-    needs_active_store = any(item["quantity"] > 0 for item in items)
-    if needs_active_store and not session.store_id:
-        return {"error": "no_active_store", "message": "Call set_active_store first."}
     api = _get_api(session.banner)
-    # Lazy, computed at most once, only if some item is actually a removal.
-    removal_seller_id: Optional[str] = None
-    removal_seller_id_computed = False
-    entries: dict[str, dict[str, Any]] = {}
-    for item in items:
-        product_code = item["product_code"]
-        quantity = item["quantity"]
-        entry: dict[str, Any] = {"quantity": quantity}
-        if quantity > 0:
-            entry.update({"fulfillmentMethod": "pickup", "sellerId": session.store_id})
-        else:
-            if not removal_seller_id_computed:
-                removal_seller_id = _seller_id_for_removal(api, session)
-                removal_seller_id_computed = True
-            if removal_seller_id:
-                entry.update({"fulfillmentMethod": "pickup", "sellerId": removal_seller_id})
-        entries[product_code] = entry
     try:
-        raw = _update_cart_healing(api, session, entries)
+        cart = _load_cart_for_write(api, session)
+        in_cart = {_base_code(c["code"]): c["code"] for c in cart["items"]}
+        adds = [i["product_code"] for i in items if i["quantity"] > 0]
+        store_id = _ensure_active_store(api, session, cart["store_id"]) if adds else session.store_id
+        if adds and not store_id:
+            return _no_active_store()
+        resolved, rejected = _resolve_codes(api, store_id, adds, list(in_cart.values()))
     except (PcidAuthError, PcxApiError) as exc:
         return _tool_error(exc)
-    result = _simplify_cart(raw)
-    result["items_requested"] = len(entries)
-    return result
+    entries: dict[str, dict[str, Any]] = {}
+    for item in items:
+        requested = item["product_code"]
+        if item["quantity"] > 0:
+            code, seller_id = resolved.get(requested), store_id
+        else:
+            # Confirmed live: PC Express rejects even a removal with
+            # SELLER_ID_MISMATCH unless sellerId is the cart's real binding.
+            code, seller_id = in_cart.get(_base_code(requested)), cart["store_id"] or session.store_id
+            if code is None or ("_" in requested and code != requested):
+                rejected.append({"code": requested, "reason": "not_in_cart"})
+                continue
+        if not code:
+            continue
+        entry: dict[str, Any] = {"quantity": item["quantity"], "fulfillmentMethod": cart["fulfillment_method"] or "pickup"}
+        if seller_id:
+            entry["sellerId"] = seller_id
+        entries[code] = entry
+    return _apply_cart_entries(api, session, entries, rejected)
 
 
 # --- fulfillment slots -----------------------------------------------------------
@@ -1748,21 +1840,28 @@ def update_quantity(items: list[QuantityUpdate]) -> dict:
     )
 )
 def get_available_slots() -> dict:
-    """List pickup/delivery time slots for the active store, if any are available.
+    """List pickup/delivery time slots for the active store -- usually
+    unavailable.
 
-    The least-verified tool in this server: it calls a different,
-    unauthenticated public endpoint from an unrelated (archived) project,
-    not pcx-bff -- no pcx-bff timeslot endpoint has been confirmed by
-    anyone publicly. Treat results as advisory and double-check in the app
-    before relying on a specific slot. See api_client.get_time_slots.
+    Uses an unauthenticated public endpoint from an unrelated archived
+    project, not pcx-bff (no pcx-bff slot endpoint is known). In a real
+    session it returned a "Site Under Maintenance" page for 14+ hours while
+    everything else worked, and it's keyed on a pickup location, so even a
+    working answer may not describe delivery slots. On `slots_unavailable`,
+    don't retry: have the user pick a slot in the PC Express app; get_cart
+    shows the booked `slot` afterwards.
     """
     session = _load_session()
-    if not session.store_id:
-        return {"error": "no_active_store", "message": "Call set_active_store first."}
     api = _get_api(session.banner)
+    if not _ensure_active_store(api, session):
+        return _no_active_store()
     try:
         raw = api.get_time_slots(session.store_id)
-    except (PcidAuthError, PcxApiError) as exc:
+    except PcxApiError as exc:
+        if exc.status_code == 200:  # an HTML page instead of JSON
+            return {"error": "slots_unavailable", "reason": "The slot endpoint returned a web page, not slot data. Don't retry."}
+        return _tool_error(exc)
+    except PcidAuthError as exc:
         return _tool_error(exc)
     slots_raw = raw.get("timeSlots", raw if isinstance(raw, list) else [])
     slots = [_simplify_slot(s) for s in slots_raw if isinstance(s, dict)]
@@ -1797,7 +1896,7 @@ def place_order(confirm: bool = False) -> dict:
 
     Before presenting `checkout_url`, show a full visual receipt in your
     reply: every item's `photo_markdown` from `cart_summary.items`,
-    quantity, and price, plus `cart_summary.raw_total`. The goal is that
+    quantity, and price, plus `cart_summary.totals.total`. The goal is that
     the only reason left to open the PC Express app is the actual payment
     tap -- everything worth reviewing (what's in the cart, what it costs)
     should already be visible right here, not require switching apps to
@@ -1840,26 +1939,36 @@ def place_order(confirm: bool = False) -> dict:
     )
 )
 def get_order_status(order_id: Optional[str] = None, limit: int = 10) -> dict:
-    """Get a specific past order's details, or list recent order history if order_id is omitted.
+    """List recent orders (newest first, `limit` of them), or one order's
+    detail by its order number.
 
-    `limit` caps how many orders are returned when listing (most recent
-    first; this account had 284 total in testing) -- ignored when order_id
-    is given. Both the list and single-order responses are trimmed of
-    per-item product bloat (promo/loyalty/image metadata) and duplicated
-    store metadata; see _simplify_order_summary/_simplify_order_detail.
+    A just-placed order can be missing from the list for hours (seen: 5+
+    hours while it was being shopped) -- look it up by order number
+    instead. Its detail may have no lines until fulfilment, and totals can
+    change after (weighed items, removed lines); `status` is never
+    populated by PC Express. Line `code`s work directly with the cart tools.
     """
+    if order_id is not None:
+        order_id = order_id.strip()
+        if not order_id.isdigit():
+            if re.fullmatch(r"[0-9a-fA-F]{8}(-[0-9a-fA-F]{4}){3}-[0-9a-fA-F]{12}", order_id):
+                return {"error": "looks_like_cart_id", "message": "That's a cart id, not an order number -- order numbers are digits only."}
+            return {"error": "invalid_order_id", "message": "Order numbers are digits only."}
     session = _load_session()
     api = _get_api(session.banner)
     try:
         if order_id:
-            raw = api.get_historical_order(order_id)
-            return _simplify_order_detail(raw)
+            return _simplify_order_detail(api.get_historical_order(order_id))
         raw = api.get_historical_orders()
-    except (PcidAuthError, PcxApiError) as exc:
+    except PcxApiError as exc:
+        if order_id and exc.status_code == 500:
+            # PC Express answers an unknown order id with HTTP 500, not 404.
+            return {"error": "order_not_found", "message": f"No order {order_id} on this account."}
+        return _tool_error(exc)
+    except PcidAuthError as exc:
         return _tool_error(exc)
 
-    all_orders = raw.get("orderHistory", []) or []
-    orders = [_simplify_order_summary(o) for o in all_orders[:limit]]
+    orders = [_simplify_order_summary(o) for o in (raw.get("orderHistory") or [])[:limit]]
     return {
         "total_online_orders": raw.get("onlineOrdersCount"),
         "total_offline_orders": raw.get("offlineOrdersCount"),
@@ -1868,101 +1977,125 @@ def get_order_status(order_id: Optional[str] = None, limit: int = 10) -> dict:
     }
 
 
+# order id -> (store id, product lines). Only settled orders: a recent one
+# keeps changing after placement (lines dropped, totals updated).
+_ORDER_LINES_CACHE: dict[str, tuple[Optional[str], list[dict]]] = {}
+_ORDER_SETTLED_AFTER = timedelta(days=7)
+
+
+def _order_store_and_lines(api: PCExpressAPI, summary: dict) -> Optional[tuple[Optional[str], list[dict]]]:
+    """(real store id, product lines) for one order, or None if its detail
+    fetch fails. The store id comes from the detail, not the summary's
+    store name, which has legacy variants for the same store on a real
+    account ("1024-Oakville", "North Oakville")."""
+    order_id = summary["id"]
+    if order_id in _ORDER_LINES_CACHE:
+        return _ORDER_LINES_CACHE[order_id]
+    try:
+        detail = api.get_historical_order(order_id)
+    except (PcidAuthError, PcxApiError):
+        return None
+    od = detail.get("orderDetails") or {}
+    pickup = (od.get("booking") or {}).get("pickupLocation") or {}
+    lines = []
+    for e in od.get("entries", []) or []:
+        product = e.get("product") or {}
+        code = _order_line_code(product)
+        if code and not _adjustment_kind(product):
+            lines.append(
+                {
+                    "code": code,
+                    "name": product.get("productName"),
+                    "brand": product.get("brand"),
+                    "quantity": e.get("quantity") or 0,
+                    "weight": e.get("weight") or 0,
+                }
+            )
+    result = (pickup.get("storeId") or pickup.get("id"), lines)
+    settled_before = (datetime.now(timezone.utc) - _ORDER_SETTLED_AFTER).strftime("%Y-%m-%dT%H:%M:%S")
+    if (summary.get("placed") or "9") < settled_before:
+        _ORDER_LINES_CACHE[order_id] = result
+    return result
+
+
 @mcp.tool(
     annotations=ToolAnnotations(
         title="Get Purchase History", read_only_hint=True, destructive_hint=False, idempotent_hint=True, open_world_hint=False
     )
 )
-def get_purchase_history(limit: int = 20, max_orders_scanned: int = 60) -> dict:
-    """Real items this account has actually bought before, at the active
-    store -- aggregated per product, most-frequently-bought first.
+def get_purchase_history(limit: int = 20, max_orders_scanned: int = 60, top_n: int = 60) -> dict:
+    """Products this household has actually bought at the active store,
+    most-frequently-bought first.
 
-    Call this once, early in a session, before searching or adding
-    items -- not before every subsequent tool call. One call is enough
-    to prime your context with what this household actually buys; reuse
-    that context for every search/recommendation/cart action in the rest
-    of the session rather than re-fetching it. An item this household
-    buys repeatedly is a safer, better-catered default than a
-    similar-looking one it's never bought. This only shows what was
-    *bought*, not what was liked or disliked -- still ask when unsure,
-    especially for anything non-staple or when buying on someone else's
-    behalf.
+    Call this once, early in a session, before searching or adding items
+    -- not before every subsequent tool call -- and reuse it for the rest
+    of the session. A product bought repeatedly is a safer, better-catered
+    default than a similar-looking one never bought. It shows what was
+    *bought*, not what was liked: still ask when unsure, especially for
+    anything non-staple or when buying on someone else's behalf.
 
-    Scoped to the currently active store (see set_active_store); orders
-    from other stores/banners on this account are excluded -- resolved
-    from each order's *real* store id (fetched per order), not the
-    human-readable store name alone, which has accumulated multiple
-    legacy variants over time on a real account (e.g. "1024-Oakville"
-    and "North Oakville" both turned out to be the same physical store
-    under old naming -- confirmed live, not assumed).
-
-    Real order history can run into the hundreds of orders, and most of
-    that volume is in fetching each order's full detail (the only place
-    line items and the real store id live) -- too slow to do for the
-    entire history on one tool call. This scans at most
-    `max_orders_scanned` recent orders (newest first) and stops once
-    `limit` *matching* (right-store) orders have been found; raise
-    `max_orders_scanned` if your store's orders are a small fraction of
-    total history and matches are coming up short.
+    Scans up to `max_orders_scanned` recent orders (newest first) until
+    `limit` orders from the active store are found; orders from other
+    stores on the account are excluded by real store id. Returns the
+    `top_n` most-bought rows (`truncated` says if more exist). `code`s work
+    directly with the cart tools. Weighed items report `total_weight_kg`
+    instead of a quantity. Tips and stamps are excluded.
+    `fulfillment_types` counts how matched orders were fulfilled -- the
+    household's usual delivery/pickup choice.
     """
     session = _load_session()
-    if not session.store_id:
-        return {"error": "no_active_store", "message": "Call set_active_store first."}
     api = _get_api(session.banner)
+    if not _ensure_active_store(api, session):
+        return _no_active_store()
     try:
         raw = api.get_historical_orders()
     except (PcidAuthError, PcxApiError) as exc:
         return _tool_error(exc)
-
-    order_summaries = sorted(raw.get("orderHistory") or [], key=lambda o: o.get("placed") or "", reverse=True)
+    summaries = sorted(
+        (o for o in raw.get("orderHistory") or [] if o.get("id")), key=lambda o: o.get("placed") or "", reverse=True
+    )[:max_orders_scanned]
 
     items_by_code: dict[str, dict] = {}
-    matched_orders = 0
-    scanned = 0
-    for summary in order_summaries:
-        if matched_orders >= limit or scanned >= max_orders_scanned:
-            break
-        scanned += 1
-        order_id = summary.get("id")
-        if not order_id:
-            continue
-        try:
-            detail = api.get_historical_order(order_id)
-        except (PcidAuthError, PcxApiError):
-            continue
-        od = detail.get("orderDetails") or {}
-        pickup = (od.get("booking") or {}).get("pickupLocation") or {}
-        if (pickup.get("storeId") or pickup.get("id")) != session.store_id:
-            continue
-        matched_orders += 1
-        for e in od.get("entries", []) or []:
-            product = e.get("product") or {}
-            code = product.get("articleNumber") or product.get("id")
-            if not code:
-                continue
-            # order_summaries is newest-first, so each code's first
-            # appearance here is already its most recent purchase.
-            entry = items_by_code.setdefault(
-                code,
-                {
-                    "code": code,
-                    "name": product.get("productName"),
-                    "brand": product.get("brand"),
-                    "times_purchased": 0,
-                    "total_quantity": 0.0,
-                    "last_purchased": summary.get("placed"),
-                },
-            )
-            entry["times_purchased"] += 1
-            entry["total_quantity"] += e.get("quantity") or 0
+    fulfillment_types: dict[str, int] = {}
+    matched = scanned = 0
+    # Detail fetches are the slow part (~1s each; a 93-order scan took 77s
+    # sequentially), so fetch in parallel, never more than still needed.
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        while scanned < len(summaries) and matched < limit:
+            batch = summaries[scanned : scanned + min(8, limit - matched)]
+            for summary, fetched in zip(batch, pool.map(lambda s: _order_store_and_lines(api, s), batch)):
+                scanned += 1
+                if not fetched or fetched[0] != session.store_id:
+                    continue
+                matched += 1
+                kind = summary.get("fulfillmentType") or "UNKNOWN"
+                fulfillment_types[kind] = fulfillment_types.get(kind, 0) + 1
+                for line in fetched[1]:
+                    entry = items_by_code.setdefault(
+                        line["code"],
+                        {
+                            "code": line["code"],
+                            "name": line["name"],
+                            "brand": line["brand"],
+                            "times_purchased": 0,
+                            "last_purchased": (summary.get("placed") or "")[:10],
+                        },
+                    )
+                    entry["times_purchased"] += 1
+                    if line["weight"]:
+                        entry["total_weight_kg"] = round(entry.get("total_weight_kg", 0) + line["weight"], 3)
+                    else:
+                        entry["total_quantity"] = entry.get("total_quantity", 0) + line["quantity"]
 
     items = sorted(items_by_code.values(), key=lambda i: i["times_purchased"], reverse=True)
     return {
         "store_id": session.store_id,
         "orders_scanned": scanned,
-        "orders_matched": matched_orders,
+        "orders_matched": matched,
+        "fulfillment_types": fulfillment_types,
         "distinct_items": len(items),
-        "items": items,
+        "truncated": len(items) > top_n,
+        "items": items[:top_n],
     }
 
 
