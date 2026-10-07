@@ -149,12 +149,13 @@ that support it — see below and [docs/RESEARCH.md](docs/RESEARCH.md#interactiv
 | `remove_from_cart(product_codes)` | No | Remove several products in one call; codes not in the cart come back in `rejected` |
 | `update_quantity(items)` | No | `items`: list of `{product_code, quantity}` — set exact quantities; `quantity=0` removes |
 | `switch_cart_store(store_id, postal_code, confirm?)` | No | Re-binds this banner's cart to another store (the fix for `cart_store_mismatch`) and makes it the active store. The cart is shared account-wide, so a non-empty one needs `confirm=True`; reports `previous_store_id`, `items_repriced`, `items_dropped`. See [docs/RESEARCH.md](docs/RESEARCH.md#cart-is-bound-to-a-single-store) |
-| `get_available_slots` | No | Usually returns `slots_unavailable`: the only known slot endpoint is unauthenticated and was serving a maintenance page for 14+ hours. Pick slots in the app |
-| `place_order(confirm)` | **No** | Requires `confirm=True`; only validates cart + returns a checkout handoff link. Never submits payment. |
+| `get_available_slots(date?, days?)` | No | Available delivery slots for the cart's store and delivery address, with this account's own fees, from the website's checkout service. See [docs/RESEARCH.md](docs/RESEARCH.md#delivery-slots-and-checkout-the-websites-checkout-service) |
+| `book_delivery_slot(date, start_time)` | No | Holds a slot on the cart (expires ~1 hour later unless checkout completes). Superstore only so far |
+| `place_order(confirm)` | **No** | Requires `confirm=True`. Validates the cart and returns the checkout page's real totals (tax, fees, tip, held slot) plus the checkout link. Never submits payment. |
 | `get_order_status(order_id?, limit?)` | No | Recent orders, or one order by number: suffixed line `code`s, tips/stamps split into `adjustments`, totals that reconcile. New orders can take hours to reach the list; `status` is never populated upstream |
 | `get_purchase_history(limit?, max_orders_scanned?, top_n?)` | No | What this household buys at the active store, most-bought first: cart-ready codes, weight for weighed items, tips excluded, usual `fulfillment_types`. Cross-check cart picks against this. See [docs/RESEARCH.md](docs/RESEARCH.md#get_purchase_history-catering-cart-picks-to-what-the-household-actually-buys) |
 
-All 16 tools carry proper MCP tool annotations (`readOnlyHint`/`destructiveHint`/
+All 17 tools carry proper MCP tool annotations (`readOnlyHint`/`destructiveHint`/
 `idempotentHint`/`openWorldHint`), so any MCP client can categorize them the
 way it would Gmail/other well-built MCP servers — `place_order` is flagged
 non-read-only *and* destructive on purpose, since it's the closest thing to

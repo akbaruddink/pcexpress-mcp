@@ -1,13 +1,13 @@
-"""Thin HTTP client for the pcx-bff API and the public time-slots endpoint.
+"""Thin HTTP client for the pcx-bff API and the website's checkout service.
 
 Most of this (headers, customer/cart/orders/search/add-to-cart endpoints)
-was cross-checked directly against the prior-art project's actual working
-Python source, not just its docs -- see config.py's module docstring. A
-handful of methods (list_carts, cart_heartbeat, type_ahead,
-get_pickup_location) are only documented as "verified" in that project's
-own API_REFERENCE.md but aren't exercised by its shipped tool code, and
-get_time_slots comes from an entirely different, unrelated project against
-a different host. Treat those four accordingly -- see their docstrings.
+was cross-checked against the prior-art project's working Python source,
+not just its docs -- see config.py's module docstring. A handful of
+methods (list_carts, cart_heartbeat, type_ahead, get_pickup_location) are
+only documented as "verified" in that project's API_REFERENCE.md; see their
+docstrings. Slots, booking and the checkout summary come from the
+website's own checkout service (one-checkout.<banner domain>), captured
+from a real web checkout session -- see get_delivery_slots.
 
 Every request goes through `_request`, which attaches the standard headers,
 retries exactly once on HTTP 401 after forcing a token refresh, and raises
@@ -123,6 +123,27 @@ class PCExpressAPI:
         token = self.token_manager.get_access_token(self._client)
         return _build_pcx_headers(token, self.banner)
 
+    def _checkout_auth_headers(self) -> dict[str, str]:
+        """The website's checkout service (one-checkout.<banner domain>)
+        takes the same PC ID token, but as an `authToken` cookie: a bearer
+        header alone 401s on checkout and booking, and on the slot list it
+        loses the account's own fees ($5.99 instead of $0). Confirmed live."""
+        token = self.token_manager.get_access_token(self._client)
+        cookie = f"authToken={token}"
+        if self.banner_info.get("checkout_lob"):
+            cookie += f"; lob={self.banner_info['checkout_lob']}"
+        return {"Cookie": cookie, "Content-Type": "application/json", "Accept": "application/json"}
+
+    def _checkout_host(self) -> str:
+        return f"https://{self.banner_info['domain'].replace('www.', 'one-checkout.', 1)}"
+
+    def _checkout_url(self, path: str) -> str:
+        return f"{self._checkout_host()}/api/{path}"
+
+    def checkout_page_url(self) -> str:
+        """Where the user finishes checkout (and pays) in a browser."""
+        return f"{self._checkout_host()}/en/pre-checkout"
+
     def _request(
         self,
         method: str,
@@ -131,16 +152,14 @@ class PCExpressAPI:
         json_body: Any = None,
         params: Optional[dict[str, Any]] = None,
         retried: bool = False,
+        checkout: bool = False,
     ) -> httpx.Response:
-        try:
-            headers = self._auth_headers()
-        except PcidAuthError:
-            raise
+        headers = self._checkout_auth_headers() if checkout else self._auth_headers()
         resp = self._client.request(method, url, headers=headers, json=json_body, params=params)
 
         if resp.status_code == 401 and not retried:
             self.token_manager.force_refresh(self._client)
-            return self._request(method, url, json_body=json_body, params=params, retried=True)
+            return self._request(method, url, json_body=json_body, params=params, retried=True, checkout=checkout)
 
         if resp.status_code >= 400:
             raise PcxApiError(
@@ -333,38 +352,34 @@ class PCExpressAPI:
         url = f"{config.PCX_BFF_BASE}/pickup-locations/{store_id}"
         return self._request("GET", url, params={"bannerId": self.banner}).json()
 
-    def get_time_slots(self, store_id: str) -> dict:
-        """Pickup time slots -- the least-verified call in this whole client.
+    # -- checkout service (slots, booking, checkout summary) ---------------
+    # Shapes from a real web checkout session (user-supplied captures),
+    # replayed live from this server before being wired in.
 
-        This does NOT hit pcx-bff. It's a different, unauthenticated
-        endpoint on the banner's own public website
-        (shmick/pcexpress-pickup, archived), which that project called with
-        no auth at all. There is no confirmed pcx-bff timeslot endpoint:
-        FireBall1725/pcexpress-mcp-server's own API_REFERENCE.md explicitly
-        lists timeslot/checkout/delivery-serviceability routes as things
-        they saw referenced in the app but never implemented or verified
-        ("would enable order placement, which the MCP server intentionally
-        does not do today"). Treat any result from this method as
-        advisory only.
+    def get_delivery_slots(self, cart_id: str, location_id: str, postal_code: str) -> dict:
+        """{location_id: {"timeslots": [{date, startTime, endTime, available,
+        charge, slotType, ...}]}} -- local store times, ~2 weeks out."""
+        params = {"locationIds": location_id, "banner": self.banner, "postalCode": postal_code}
+        return self._request("POST", self._checkout_url("timeslots"), params=params, json_body={"cartId": cart_id}, checkout=True).json()
 
-        Confirmed live (multiple independent calls, not a one-off blip):
-        this endpoint can return HTTP 200 with an HTML "Site Under
-        Maintenance" page instead of JSON. Raises PcxApiError in that case
-        instead of letting the raw JSONDecodeError reach the caller
-        uncaught -- see server.py's `get_available_slots`, which already
-        catches PcxApiError and turns it into a normal `{"error": ...}`
-        tool result via `_tool_error`.
-        """
-        url = f"https://{self.banner_info['domain']}/api/pickup-locations/{store_id}/time-slots"
-        resp = self._request("GET", url)
-        try:
-            return resp.json()
-        except ValueError as exc:
-            raise PcxApiError(
-                f"GET {url} -> HTTP {resp.status_code} but non-JSON body (endpoint appears to be down)",
-                status_code=resp.status_code,
-                body=resp.text[:1000],
-            ) from exc
+    def book_delivery_slot(self, cart_id: str, date: str, start: str, end: str, location_id: str, postal_code: str) -> dict:
+        """Hold a slot on the cart. The web client sends the store's *local*
+        wall time with a literal "Z" (08:30 local -> "...T08:30:00.000Z"),
+        and the service books 08:30 local -- confirmed live, so this
+        replicates it rather than converting to real UTC."""
+        body = {
+            "deliveryTimeslot": {
+                "startTime": f"{date}T{start}:00.000Z",
+                "endTime": f"{date}T{end}:00.000Z",
+                "locationId": location_id,
+                "postalCode": postal_code,
+            }
+        }
+        return self._request("PATCH", self._checkout_url(f"carts/{cart_id}/fulfillment"), json_body=body, checkout=True).json()
+
+    def get_checkout(self, cart_id: str) -> dict:
+        """The checkout page's own summary: real tax, fees, tip, booked slot."""
+        return self._request("GET", self._checkout_url(f"checkout/{cart_id}"), params={"refresh": "true"}, checkout=True).json()
 
     # -- orders ---------------------------------------------------------------
 

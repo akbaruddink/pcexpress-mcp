@@ -1,10 +1,7 @@
 """Unit tests for the response-simplifier functions in server.py.
 
-Fixture shapes below are reconstructed from the real (scrubbed) response
-shapes confirmed live during development -- see the docstrings on each
-_simplify_* function in server.py for what was actually verified vs.
-speculative (e.g. _simplify_slot's field names are unconfirmed since that
-endpoint's real shape has never been publicly documented).
+Fixture shapes below are reconstructed from real (scrubbed) responses
+confirmed live during development -- see each _simplify_* docstring.
 """
 
 import sys
@@ -21,7 +18,6 @@ from pc_express_mcp.server import (  # noqa: E402
     _simplify_nutrition,
     _simplify_order_detail,
     _simplify_product,
-    _simplify_slot,
     _simplify_store,
     _strip_html,
 )
@@ -218,7 +214,7 @@ def test_simplify_cart_flattens_orders_and_entries():
     assert result["units"] == 3.0
     assert result["store_id"] == "1024"
     assert result["fulfillment_method"] == "delivery"
-    assert result["slot"] == {"start": "2026-08-09T13:30:00", "end": "2026-08-09T14:30:00"}
+    assert result["slot"] == {"start": "2026-08-09T13:30:00", "end": "2026-08-09T14:30:00", "hold_expires_at": None}
     assert result["modified_time"] == "2026-08-09T13:23:39.109Z"
     assert result["totals"] == {
         "subtotal": 17.69,
@@ -288,22 +284,6 @@ def test_simplify_cart_handles_multiple_orders():
     result = _simplify_cart(cart)
     assert result["item_count"] == 2
     assert result["totals"]["total"] == 15.0
-
-
-def test_simplify_slot_prefers_primary_field_names():
-    slot = {"startTime": "2026-08-10T09:00:00", "available": True, "fee": {"value": 5.0}}
-    result = _simplify_slot(slot)
-    assert result["start_time"] == "2026-08-10T09:00:00"
-    assert result["available"] is True
-    assert result["fee"] == {"value": 5.0}
-
-
-def test_simplify_slot_falls_back_to_alias_field_names():
-    slot = {"slotFee": {"value": 3.5}, "type": "PICKUP"}
-    result = _simplify_slot(slot)
-    assert result["fee"] == {"value": 3.5}
-    assert result["slot_type"] == "PICKUP"
-    assert result["start_time"] is None
 
 
 def test_simplify_order_detail_trims_line_items_and_totals():

@@ -128,21 +128,36 @@ identically to the by-each case. See
 `_simplify_product`'s test for `test_simplify_product_handles_weighted_item`
 in `tests/test_simplifiers.py`.
 
-## Time slots endpoint now returns a maintenance page, not JSON
+## Delivery slots and checkout: the website's checkout service
 
-`get_time_slots` was already the least-verified call in this client (see
-"Research summary" above -- it's not even a pcx-bff endpoint). Reported
-live: `get_available_slots` started crashing with a raw
-`json.JSONDecodeError` instead of a normal tool error. Confirmed directly
-(multiple independent calls, not a one-off): the endpoint now returns
-HTTP 200 with an HTML "Site Under Maintenance" page instead of JSON, for
-every store tried. Whether this is temporary or the endpoint has been
-retired outright isn't known -- either way, the fix here is defensive,
-not a workaround for the underlying endpoint: `get_time_slots` now
-catches the non-JSON response and raises a normal `PcxApiError` (which
-`get_available_slots` already knew how to turn into a clean `{"error":
-...}` result), so a real outage/retirement on Loblaw's side surfaces as a
-clear error instead of an unhandled crash.
+The first slot endpoint (an unauthenticated `/api/pickup-locations/{store}/
+time-slots` on the banner's site, borrowed from an archived project) never
+returned real data here: every call got a "Site Under Maintenance" page.
+The working calls came from a user-supplied capture of a real web checkout
+session, replayed from this server before being wired in. They live on
+`one-checkout.<banner domain>` (every banner has one):
+
+- `POST /api/timeslots?locationIds=<fulfillmentLocationId>&banner=<banner>&postalCode=<postal>`
+  with body `{"cartId": ...}` (required) lists ~2 weeks of slots in store
+  local time, with `available`, `charge` and `slotType`. The location id
+  and postal code come from the cart's `fulfillment.courier`.
+- `PATCH /api/carts/{cartId}/fulfillment` with `{"deliveryTimeslot":
+  {startTime, endTime, locationId, postalCode}}` holds a slot. The web
+  client sends local wall time with a literal `Z` (08:30 local ->
+  `...T08:30:00.000Z`) and the service books 08:30 local; the hold
+  expires about an hour later unless checkout completes.
+- `GET /api/checkout/{cartId}?refresh=true` is the checkout page's summary:
+  tax, fees, tip, held slot, in cents (plus address, phone, email and card
+  digits, which this project drops).
+
+Auth is the same PC ID token pcx-bff takes (same issuer, audience and
+scope; only the client differs), but sent as an `authToken` cookie. A
+bearer header alone gets 401 on checkout and booking, and on the slot list
+it silently loses the account's own fees ($5.99 instead of $0 with a
+delivery pass). Booking also needs a `lob` cookie (`PCXSUPER` for
+superstore; other banners' values aren't captured yet, so booking refuses
+there). The rest of the capture's headers and bot-manager cookies weren't
+needed.
 
 ## Product detail endpoint (confirmed non-functional)
 
@@ -216,7 +231,7 @@ working pagination/filter mechanism above, on a different endpoint than
 the one this project uses (`products/search`, POST, on `pcx-bff`).
 
 Two direct guesses at the host (the banner's own public domain, matching
-the pattern `get_time_slots` already uses for its own public endpoint)
+the pattern the old public slot endpoint used)
 came back 404 and an unrelated maintenance page -- not itself conclusive,
 since the real host still wasn't confirmed. What settled it: the prior-art
 project's own `API_REFERENCE.md` documents having found and then abandoned
@@ -1127,8 +1142,7 @@ responses before fixing:
   with `per_100g_consistent: false` rather than guessing a correction.
 
 Not fixable from here: order `status` and line `availabilityStatus` are
-null upstream (no progress tracking, no reason for a dropped line); a
-newly placed order can be missing from the order list for hours; and the
-only known slot endpoint is unauthenticated and was serving a maintenance
-page. A real slot grid needs the app's own request captured, the way the
-`switch_cart_store` shape was.
+null upstream (no progress tracking, no reason for a dropped line), and a
+newly placed order can be missing from the order list for hours. Slots
+were fixed afterwards from a captured web checkout session -- see
+"Delivery slots and checkout" above.

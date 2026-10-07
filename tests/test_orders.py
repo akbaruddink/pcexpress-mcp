@@ -1,4 +1,4 @@
-"""get_order_status input handling and get_available_slots' unavailable state."""
+"""get_order_status input handling."""
 
 import sys
 from pathlib import Path
@@ -13,9 +13,6 @@ class _FakeApi:
     def get_historical_order(self, order_id):
         # Real behaviour: PC Express answers an unknown order id with HTTP 500.
         raise PcxApiError("HTTP 500", status_code=500, body="")
-
-    def get_time_slots(self, store_id):
-        raise PcxApiError("HTTP 200 but non-JSON body", status_code=200, body="<!DOCTYPE html>")
 
 
 def _patch(monkeypatch):
@@ -34,10 +31,3 @@ def test_order_status_maps_upstream_500_to_not_found(monkeypatch):
     result = server.get_order_status(order_id="0000000000")
     assert result["error"] == "order_not_found"
     assert "http" not in result["message"].lower()
-
-
-def test_slots_maintenance_page_is_reported_as_unavailable(monkeypatch):
-    _patch(monkeypatch)
-    result = server.get_available_slots()
-    assert result["error"] == "slots_unavailable"
-    assert "<" not in str(result)

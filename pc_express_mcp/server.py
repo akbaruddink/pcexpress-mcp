@@ -706,7 +706,11 @@ def _simplify_cart(cart: dict) -> dict:
         "status": cart.get("status"),
         "store_id": _cart_bound_store(cart),
         "fulfillment_method": _cart_mode(cart),
-        "slot": {"start": window["startTime"], "end": window.get("endTime")} if window.get("startTime") else None,
+        "slot": (
+            {"start": window["startTime"], "end": window.get("endTime"), "hold_expires_at": window.get("slotExpiryDateTime")}
+            if window.get("startTime")
+            else None
+        ),
         "min_cart_value": cart.get("minCartValue"),
         "modified_time": cart.get("modifiedTime"),
         "item_count": len(entries),
@@ -737,27 +741,6 @@ def _cart_mode(cart: dict) -> Optional[str]:
     if ftype in ("courier", "delivery"):
         return "delivery"
     return "pickup" if "pickup" in ftype else None
-
-
-def _simplify_slot(slot: dict) -> dict:
-    """Best-effort trim of a raw time-slot entry.
-
-    Unlike the other simplifiers here, this one's field names are NOT
-    verified against a live response -- get_time_slots hits a different,
-    unauthenticated endpoint from an unrelated project (see its docstring
-    in api_client.py), and no one has publicly confirmed its exact shape.
-    `startTime`/`available` come from that project's own field names;
-    endTime/fee/slotType are speculative aliases in case they exist. If
-    the real shape differs, expect nulls here rather than an error -- that
-    should make a shape mismatch obvious rather than silent.
-    """
-    return {
-        "start_time": slot.get("startTime"),
-        "end_time": slot.get("endTime"),
-        "available": slot.get("available"),
-        "fee": slot.get("fee") or slot.get("slotFee"),
-        "slot_type": slot.get("slotType") or slot.get("type"),
-    }
 
 
 def _simplify_order_summary(order: dict) -> dict:
@@ -1830,42 +1813,131 @@ def update_quantity(items: list[QuantityUpdate]) -> dict:
 # --- fulfillment slots -----------------------------------------------------------
 
 
+def _cart_delivery_target(cart: dict) -> tuple[Optional[str], Optional[str]]:
+    """(fulfillmentLocationId, delivery postal code) from a delivery cart's
+    `orders[0].fulfillment.courier` -- what the slot and booking calls take."""
+    orders = cart.get("orders") or []
+    courier = ((orders[0].get("fulfillment") or {}).get("courier") if orders else None) or {}
+    return courier.get("fulfillmentLocationId"), (courier.get("deliveryAddress") or {}).get("postalCode")
+
+
+def _load_slots(api: PCExpressAPI, session: session_state.SessionState) -> tuple[dict, str, str, list[dict]]:
+    """(raw cart, location id, postal code, raw timeslots). Raises
+    PcxApiError (incl. NoCartError) like the cart helpers; ValueError if
+    the cart has no delivery location/address to ask about."""
+    cart = _get_cart_healing(api, session)
+    location_id, postal_code = _cart_delivery_target(cart)
+    if not location_id or not postal_code:
+        raise ValueError(
+            "This cart has no delivery location and address set (only delivery slots are supported). "
+            "Set a delivery address in the PC Express app, or bind the cart with switch_cart_store."
+        )
+    raw = api.get_delivery_slots(session.cart_id, location_id, postal_code)
+    return cart, location_id, postal_code, (raw.get(location_id) or {}).get("timeslots") or []
+
+
 @mcp.tool(
     annotations=ToolAnnotations(
-        title="Get Available Pickup/Delivery Slots",
+        title="Get Available Delivery Slots",
         read_only_hint=True,
         destructive_hint=False,
         idempotent_hint=True,
         open_world_hint=False,
     )
 )
-def get_available_slots() -> dict:
-    """List pickup/delivery time slots for the active store -- usually
-    unavailable.
+def get_available_slots(date: Optional[str] = None, days: int = 2) -> dict:
+    """Available delivery slots for the cart's store and delivery address,
+    with this account's own fees (e.g. $0 with a delivery pass).
 
-    Uses an unauthenticated public endpoint from an unrelated archived
-    project, not pcx-bff (no pcx-bff slot endpoint is known). In a real
-    session it returned a "Site Under Maintenance" page for 14+ hours while
-    everything else worked, and it's keyed on a pickup location, so even a
-    working answer may not describe delivery slots. On `slots_unavailable`,
-    don't retry: have the user pick a slot in the PC Express app; get_cart
-    shows the booked `slot` afterwards.
+    Returns the first `days` dates that have availability, or just `date`
+    (YYYY-MM-DD) if given; `dates_available` lists every bookable date
+    (~2 weeks out). Times are the store's local time. `booked` is the
+    slot currently held on the cart, if any. Book one with
+    book_delivery_slot.
     """
     session = _load_session()
     api = _get_api(session.banner)
-    if not _ensure_active_store(api, session):
-        return _no_active_store()
     try:
-        raw = api.get_time_slots(session.store_id)
-    except PcxApiError as exc:
-        if exc.status_code == 200:  # an HTML page instead of JSON
-            return {"error": "slots_unavailable", "reason": "The slot endpoint returned a web page, not slot data. Don't retry."}
+        cart, location_id, _, timeslots = _load_slots(api, session)
+    except ValueError as exc:
+        return {"error": "slots_unavailable", "reason": str(exc)}
+    except (PcidAuthError, PcxApiError) as exc:
         return _tool_error(exc)
-    except PcidAuthError as exc:
+    by_date: dict[str, list[dict]] = {}
+    for s in timeslots:
+        if s.get("available"):
+            by_date.setdefault(s["date"], []).append(
+                {"start": s.get("startTime"), "end": s.get("endTime"), "fee": s.get("charge"), "type": (s.get("slotType") or "").removeprefix("DELIVERY_")}
+            )
+    dates = sorted(by_date)
+    return {
+        "location_id": location_id,
+        "booked": _simplify_cart(cart)["slot"],
+        "dates_available": dates,
+        "slots": {d: by_date.get(d, []) for d in ([date] if date else dates[:days])},
+    }
+
+
+@mcp.tool(
+    annotations=ToolAnnotations(
+        title="Book Delivery Slot",
+        read_only_hint=False,
+        destructive_hint=False,  # replaces the cart's held slot; re-book to change it back
+        idempotent_hint=True,
+        open_world_hint=False,
+    )
+)
+def book_delivery_slot(date: str, start_time: str) -> dict:
+    """Hold a delivery slot on the cart: `date` (YYYY-MM-DD) and
+    `start_time` (HH:MM, store local) from get_available_slots.
+
+    This is a hold, not an order: it expires (about an hour after booking,
+    seen live -- `hold_expires_at`, UTC) unless checkout is completed in the
+    PC Express app or website. It replaces any slot already held on this
+    banner's cart, which other people on the account may share
+    (`previous` shows what was there). Confirm the slot with the user
+    first. `warnings` carries cart problems the checkout service reports,
+    e.g. a low-stock item.
+    """
+    session = _load_session()
+    api = _get_api(session.banner)
+    if not api.banner_info.get("checkout_lob"):
+        return {
+            "error": "booking_unsupported",
+            "message": f"Slot booking isn't verified for banner {session.banner!r} yet -- book in the PC Express app.",
+        }
+    try:
+        cart, location_id, postal_code, timeslots = _load_slots(api, session)
+    except ValueError as exc:
+        return {"error": "slots_unavailable", "reason": str(exc)}
+    except (PcidAuthError, PcxApiError) as exc:
         return _tool_error(exc)
-    slots_raw = raw.get("timeSlots", raw if isinstance(raw, list) else [])
-    slots = [_simplify_slot(s) for s in slots_raw if isinstance(s, dict)]
-    return {"store_id": session.store_id, "slot_count": len(slots), "slots": slots}
+    slot = next((s for s in timeslots if s.get("date") == date and s.get("startTime") == start_time), None)
+    if not slot or not slot.get("available"):
+        return {
+            "error": "slot_unavailable" if slot else "slot_not_found",
+            "message": f"No bookable slot at {date} {start_time} -- pick one from get_available_slots.",
+        }
+    try:
+        raw = api.book_delivery_slot(session.cart_id, date, start_time, slot["endTime"], location_id, postal_code)
+    except (PcidAuthError, PcxApiError) as exc:
+        return _tool_error(exc)
+    store_carts = ((raw.get("cart") or {}).get("cart_data") or {}).get("store_carts") or [{}]
+    held = ((store_carts[0].get("fulfillment") or {}).get("delivery") or {}).get("time_slot") or {}
+    return {
+        "booked": {"date": date, "start": start_time, "end": slot["endTime"], "fee": slot.get("charge"), "hold_expires_at": held.get("expiry_time")},
+        "previous": _simplify_cart(cart)["slot"],
+        "warnings": _checkout_warnings(raw),
+    }
+
+
+def _checkout_warnings(raw: dict) -> list[dict]:
+    """The checkout service's `errors` (e.g. LOW_STOCK) as short warnings."""
+    warnings = []
+    for e in raw.get("errors") or []:
+        detail = e.get("error_detail") or e.get("details") or {}
+        warnings.append({"code": detail.get("error_code") or detail.get("code") or e.get("code"), "message": detail.get("message") or e.get("message")})
+    return warnings
 
 
 # --- checkout handoff / orders -----------------------------------------------------
@@ -1888,19 +1960,16 @@ def get_available_slots() -> dict:
 def place_order(confirm: bool = False) -> dict:
     """Validate the cart and hand off to the real checkout -- does NOT submit payment.
 
-    No PC Express payment/checkout-submission API is known or implemented
-    here on purpose. This tool checks the cart is non-empty, then returns a
-    checkout URL/summary for you to finish yourself in the PC Express app
-    or a browser (where you're already logged in). Requires confirm=True so
-    it can never fire as a side effect of a model just "trying things."
+    No payment-submission API is used here, on purpose. This checks the cart
+    and returns the checkout page's own summary (`checkout`: real subtotal,
+    tax, fees, tip, total and the held slot, with any `warnings` such as a
+    low-stock item) plus `checkout_url` for the user to pay. Requires
+    confirm=True so it never fires as a side effect.
 
-    Before presenting `checkout_url`, show a full visual receipt in your
-    reply: every item's `photo_markdown` from `cart_summary.items`,
-    quantity, and price, plus `cart_summary.totals.total`. The goal is that
-    the only reason left to open the PC Express app is the actual payment
-    tap -- everything worth reviewing (what's in the cart, what it costs)
-    should already be visible right here, not require switching apps to
-    go check.
+    Before presenting `checkout_url`, show a full visual receipt: every
+    item's `photo_markdown` from `cart_summary.items`, quantity and price,
+    and the `checkout` total. If no slot is held, book one first with
+    book_delivery_slot.
     """
     if not confirm:
         return {
@@ -1919,17 +1988,45 @@ def place_order(confirm: bool = False) -> dict:
     if cart["item_count"] == 0:
         return {"error": "empty_cart", "message": "Cart is empty -- add items before checking out."}
 
-    domain = config.banner_info(session.banner)["domain"]
-    return {
+    result: dict[str, Any] = {
         "status": "ready_for_manual_checkout",
         "message": (
-            "Cart is ready. This tool does not submit payment -- show the user a full visual receipt "
-            "(each item's photo_markdown, quantity, price, and the total) right here before mentioning "
-            "the checkout link, so the only thing left to do in the PC Express app is pick a slot, "
-            "confirm substitutions, and pay."
+            "This tool does not submit payment. Show the user a full visual receipt (each item's "
+            "photo_markdown, quantity, price, and the checkout total) before the checkout link."
         ),
-        "checkout_url": f"https://{domain}/checkout",
+        "checkout_url": api.checkout_page_url(),
         "cart_summary": cart,
+    }
+    try:
+        result["checkout"] = _simplify_checkout(api.get_checkout(session.cart_id))
+    except (PcidAuthError, PcxApiError) as exc:
+        result["checkout"] = {"error": "checkout_summary_unavailable", "message": str(exc)}
+    return result
+
+
+def _simplify_checkout(raw: dict) -> dict:
+    """The checkout page's summary, in dollars (the service uses cents).
+    Personal details it carries (address, phone, email, card) are dropped."""
+    data = (raw.get("checkout") or {}).get("checkout_data") or {}
+    charges = data.get("charges") or {}
+    fees = {f.get("fee_component_type"): f.get("calculated_amount_in_cents") for f in charges.get("fulfillment_fee_components") or []}
+    slot = (data.get("fulfillment") or {}).get("time_slot") or {}
+
+    def dollars(cents: Any) -> Optional[float]:
+        return round(cents / 100, 2) if isinstance(cents, (int, float)) else None
+
+    return {
+        "fulfillment_type": (data.get("fulfillment") or {}).get("fulfillment_type"),
+        "slot": {"start": slot.get("start_time"), "end": slot.get("end_time"), "hold_expires_at": slot.get("expiry_time")} if slot.get("start_time") else None,
+        "subtotal": dollars(charges.get("subtotal")),
+        "delivery_fee": dollars(fees.get("DELIVERY_FEE")),
+        "service_fee": dollars(fees.get("SERVICE_FEE")),
+        "tip": dollars(charges.get("tip")),
+        "tax": dollars(charges.get("total_tax")),
+        "discount": dollars(charges.get("total_discount")),
+        "total": dollars(charges.get("total")),
+        "max_redeemable_points": charges.get("max_redeemable_points"),
+        "warnings": _checkout_warnings(raw),
     }
 
 

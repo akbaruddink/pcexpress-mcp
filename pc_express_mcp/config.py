@@ -12,8 +12,8 @@ decompile anything ourselves. Primary sources:
     for why the rest of this is still "believed correct, not independently
     verified against a live account by us".)
   - https://github.com/shmick/pcexpress-pickup (archived)
-    (a *different* public, unauthenticated pickup time-slots endpoint --
-    NOT part of pcx-bff; see get_time_slots in api_client.py)
+    (an unauthenticated pickup time-slots endpoint, now replaced by the
+    website's checkout service -- see get_delivery_slots in api_client.py)
 
 These are undocumented and unofficial. Loblaw can change endpoints, response
 shapes, or rotate the Android app's client secret at any time without
@@ -89,8 +89,12 @@ PCX_APIKEY = os.environ.get("PCEXPRESS_APIKEY", "C1xujSegT5j3ap3yexJjqhOfELwGKYv
 # *headers* sent on every pcx-bff request are the raw banner key itself
 # (e.g. "loblaws", not "loblaw") -- confirmed against the working source,
 # not just docs. See api_client.py.
+# `checkout_lob` is the `lob` cookie the checkout service requires to book a
+# slot -- confirmed only for superstore; other banners can list slots
+# (their one-checkout hosts answer the same way) but not book until their
+# value is captured.
 BANNERS: dict[str, dict[str, str]] = {
-    "superstore": {"domain": "www.realcanadiansuperstore.ca"},
+    "superstore": {"domain": "www.realcanadiansuperstore.ca", "checkout_lob": "PCXSUPER"},
     "loblaws": {"domain": "www.loblaws.ca"},
     "nofrills": {"domain": "www.nofrills.ca"},
     "zehrs": {"domain": "www.zehrs.ca"},

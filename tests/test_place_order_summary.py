@@ -14,10 +14,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from pc_express_mcp import server, session_state  # noqa: E402
 
 
+class _FakeApi:
+    def checkout_page_url(self):
+        return "https://one-checkout.example/en/pre-checkout"
+
+    def get_checkout(self, cart_id):
+        return {"checkout": {"checkout_data": {"charges": {"subtotal": 1250, "total_tax": 0, "total": 1250}}}}
+
+
 def test_place_order_message_instructs_full_visual_receipt_before_checkout_link(monkeypatch):
     session = session_state.SessionState(store_id="1024", cart_id="cart-1")
     monkeypatch.setattr(server, "_load_session", lambda: session)
-    monkeypatch.setattr(server, "_get_api", lambda banner: object())
+    monkeypatch.setattr(server, "_get_api", lambda banner: _FakeApi())
     cart = {
         "orders": [
             {
@@ -38,7 +46,8 @@ def test_place_order_message_instructs_full_visual_receipt_before_checkout_link(
     assert result["status"] == "ready_for_manual_checkout"
     assert "photo_markdown" in result["message"] or "visual receipt" in result["message"]
     assert result["cart_summary"]["items"][0]["photo_markdown"] == "![Bread](https://x/bread.png)"
-    assert "checkout_url" in result
+    assert result["checkout_url"] == "https://one-checkout.example/en/pre-checkout"
+    assert result["checkout"]["total"] == 12.5
 
 
 def test_place_order_still_requires_confirm():
