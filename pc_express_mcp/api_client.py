@@ -134,15 +134,16 @@ class PCExpressAPI:
             cookie += f"; lob={self.banner_info['checkout_lob']}"
         return {"Cookie": cookie, "Content-Type": "application/json", "Accept": "application/json"}
 
-    def _checkout_host(self) -> str:
-        return f"https://{self.banner_info['domain'].replace('www.', 'one-checkout.', 1)}"
-
     def _checkout_url(self, path: str) -> str:
-        return f"{self._checkout_host()}/api/{path}"
+        host = self.banner_info.get("checkout_host")
+        if not host:
+            raise PcxApiError(f"No checkout service is known for banner {self.banner!r}.")
+        return f"https://{host}/api/{path}"
 
     def checkout_page_url(self) -> str:
         """Where the user finishes checkout (and pays) in a browser."""
-        return f"{self._checkout_host()}/en/pre-checkout"
+        host = self.banner_info.get("checkout_host")
+        return f"https://{host}/en/pre-checkout" if host else f"https://{self.banner_info['domain']}/"
 
     def _request(
         self,
@@ -155,11 +156,17 @@ class PCExpressAPI:
         checkout: bool = False,
     ) -> httpx.Response:
         headers = self._checkout_auth_headers() if checkout else self._auth_headers()
-        resp = self._client.request(method, url, headers=headers, json=json_body, params=params)
+        try:
+            resp = self._client.request(method, url, headers=headers, json=json_body, params=params)
+        except httpx.HTTPError as exc:
+            raise PcxApiError(f"{method} {url} -> {type(exc).__name__}: {exc}") from exc
 
-        if resp.status_code == 401 and not retried:
+        # The checkout service also answers 401 for a missing banner cookie,
+        # and a forced refresh in HTTP mode burns PC ID's single-use refresh
+        # token (see auth.EphemeralTokenManager) -- so only retry pcx-bff.
+        if resp.status_code == 401 and not retried and not checkout:
             self.token_manager.force_refresh(self._client)
-            return self._request(method, url, json_body=json_body, params=params, retried=True, checkout=checkout)
+            return self._request(method, url, json_body=json_body, params=params, retried=True)
 
         if resp.status_code >= 400:
             raise PcxApiError(
@@ -169,11 +176,22 @@ class PCExpressAPI:
             )
         return resp
 
+    def _request_json(self, method: str, url: str, **kwargs: Any) -> Any:
+        """_request, parsed. A non-JSON body (seen: HTTP 200 with an HTML
+        maintenance or bot-check page) becomes a PcxApiError, not a crash."""
+        resp = self._request(method, url, **kwargs)
+        try:
+            return resp.json()
+        except ValueError as exc:
+            raise PcxApiError(
+                f"{method} {url} -> HTTP {resp.status_code} but non-JSON body", status_code=resp.status_code, body=resp.text[:1000]
+            ) from exc
+
     # -- profile / cart discovery ---------------------------------------
 
     def get_profile(self) -> dict:
         url = f"{config.PCX_BFF_BASE}/ecommerce/v2/{self.banner}/customers"
-        return self._request("GET", url).json()
+        return self._request_json("GET", url)
 
     def get_customer_promotions(self) -> dict:
         """PC Optimum loyalty stamp-card program status -- real, working
@@ -187,7 +205,7 @@ class PCExpressAPI:
         inferred, not verified against a populated example.
         """
         url = f"{config.PCX_BFF_BASE}/ecommerce/v2/{self.banner}/customers/promotions"
-        return self._request("GET", url).json()
+        return self._request_json("GET", url)
 
     # -- products ---------------------------------------------------------
 
@@ -225,7 +243,7 @@ class PCExpressAPI:
         }
         if cart_id:
             body["cartId"] = cart_id
-        return self._request("POST", url, json_body=body).json()
+        return self._request_json("POST", url, json_body=body)
 
     def type_ahead(self, term: str, store_id: str) -> Any:
         """Search-suggestion endpoint. Documented as working but not wired to any tool here."""
@@ -236,7 +254,7 @@ class PCExpressAPI:
             "storeId": store_id,
             "banner": self.banner,
         }
-        return self._request("POST", url, json_body=body).json()
+        return self._request_json("POST", url, json_body=body)
 
     def get_product(self, product_code: str) -> dict:
         """Confirmed broken, not just unverified: every plausible URL/query-param
@@ -253,7 +271,7 @@ class PCExpressAPI:
         guessing), the fix belongs here.
         """
         url = f"{config.PCX_BFF_BASE}/products/{product_code}"
-        return self._request("GET", url).json()
+        return self._request_json("GET", url)
 
     # -- cart ---------------------------------------------------------------
 
@@ -271,16 +289,16 @@ class PCExpressAPI:
         must be banner-scoped".
         """
         url = f"{config.PCX_BFF_BASE}/customers/{customer_id}/carts"
-        return self._request("GET", url, params={"banner": self.banner}).json()
+        return self._request_json("GET", url, params={"banner": self.banner})
 
     def get_cart(self, cart_id: str, with_inventory: bool = True) -> dict:
         url = f"{config.PCX_BFF_BASE}/carts/{cart_id}"
         params = {"inventory": "true"} if with_inventory else None
-        return self._request("GET", url, params=params).json()
+        return self._request_json("GET", url, params=params)
 
     def cart_heartbeat(self, cart_id: str) -> dict:
         url = f"{config.PCX_BFF_BASE}/carts/{cart_id}/heartbeat"
-        return self._request("GET", url).json()
+        return self._request_json("GET", url)
 
     def update_cart_entries(
         self,
@@ -308,7 +326,7 @@ class PCExpressAPI:
         server.py, the only caller.
         """
         body = {"deliveryAddress": {"postalCode": postal_code}, "isB2b": False}
-        return self._request("POST", config.PCX_DELIVERY_SERVICEABILITY_URL, json_body=body).json()
+        return self._request_json("POST", config.PCX_DELIVERY_SERVICEABILITY_URL, json_body=body)
 
     def set_cart_fulfillment(
         self,
@@ -346,11 +364,11 @@ class PCExpressAPI:
             },
             "fulfillmentType": "COURIER",
         }
-        return self._request("POST", url, json_body=body).json()
+        return self._request_json("POST", url, json_body=body)
 
     def get_pickup_location(self, store_id: str) -> dict:
         url = f"{config.PCX_BFF_BASE}/pickup-locations/{store_id}"
-        return self._request("GET", url, params={"bannerId": self.banner}).json()
+        return self._request_json("GET", url, params={"bannerId": self.banner})
 
     # -- checkout service (slots, booking, checkout summary) ---------------
     # Shapes from a real web checkout session (user-supplied captures),
@@ -360,7 +378,7 @@ class PCExpressAPI:
         """{location_id: {"timeslots": [{date, startTime, endTime, available,
         charge, slotType, ...}]}} -- local store times, ~2 weeks out."""
         params = {"locationIds": location_id, "banner": self.banner, "postalCode": postal_code}
-        return self._request("POST", self._checkout_url("timeslots"), params=params, json_body={"cartId": cart_id}, checkout=True).json()
+        return self._request_json("POST", self._checkout_url("timeslots"), params=params, json_body={"cartId": cart_id}, checkout=True)
 
     def book_delivery_slot(self, cart_id: str, date: str, start: str, end: str, location_id: str, postal_code: str) -> dict:
         """Hold a slot on the cart. The web client sends the store's *local*
@@ -375,18 +393,18 @@ class PCExpressAPI:
                 "postalCode": postal_code,
             }
         }
-        return self._request("PATCH", self._checkout_url(f"carts/{cart_id}/fulfillment"), json_body=body, checkout=True).json()
+        return self._request_json("PATCH", self._checkout_url(f"carts/{cart_id}/fulfillment"), json_body=body, checkout=True)
 
     def get_checkout(self, cart_id: str) -> dict:
         """The checkout page's own summary: real tax, fees, tip, booked slot."""
-        return self._request("GET", self._checkout_url(f"checkout/{cart_id}"), params={"refresh": "true"}, checkout=True).json()
+        return self._request_json("GET", self._checkout_url(f"checkout/{cart_id}"), params={"refresh": "true"}, checkout=True)
 
     # -- orders ---------------------------------------------------------------
 
     def get_historical_orders(self) -> dict:
         url = f"{config.PCX_BFF_BASE}/ecommerce/v2/{self.banner}/customers/historical-orders"
-        return self._request("GET", url).json()
+        return self._request_json("GET", url)
 
     def get_historical_order(self, order_id: str) -> dict:
         url = f"{config.PCX_BFF_BASE}/ecommerce/v2/{self.banner}/customers/historical-orders/{order_id}"
-        return self._request("GET", url).json()
+        return self._request_json("GET", url)

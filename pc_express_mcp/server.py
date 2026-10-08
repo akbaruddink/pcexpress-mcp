@@ -707,7 +707,12 @@ def _simplify_cart(cart: dict) -> dict:
         "store_id": _cart_bound_store(cart),
         "fulfillment_method": _cart_mode(cart),
         "slot": (
-            {"start": window["startTime"], "end": window.get("endTime"), "hold_expires_at": window.get("slotExpiryDateTime")}
+            {
+                "start": window["startTime"],
+                "end": window.get("endTime"),
+                "hold_expires_at": window.get("slotExpiryDateTime"),
+                "hold_active": _hold_active(window.get("slotExpiryDateTime")),
+            }
             if window.get("startTime")
             else None
         ),
@@ -730,6 +735,16 @@ _CART_TOTAL_FIELDS = {
     "discounts": "totalDiscounts",
     "total": "totalPrice",
 }
+
+
+def _hold_active(expires_at: Optional[str]) -> Optional[bool]:
+    """Whether a slot hold is still live. An expired hold stays on the cart
+    (seen live: the next morning, still listed), so it can't be trusted by
+    presence alone."""
+    try:
+        return datetime.fromisoformat(expires_at.replace("Z", "+00:00")) > datetime.now(timezone.utc) if expires_at else None
+    except ValueError:
+        return None
 
 
 def _cart_mode(cart: dict) -> Optional[str]:
@@ -1813,24 +1828,30 @@ def update_quantity(items: list[QuantityUpdate]) -> dict:
 # --- fulfillment slots -----------------------------------------------------------
 
 
+class NoDeliveryTarget(Exception):
+    """The cart isn't a delivery cart with a location and address set."""
+
+
 def _cart_delivery_target(cart: dict) -> tuple[Optional[str], Optional[str]]:
-    """(fulfillmentLocationId, delivery postal code) from a delivery cart's
-    `orders[0].fulfillment.courier` -- what the slot and booking calls take."""
-    orders = cart.get("orders") or []
-    courier = ((orders[0].get("fulfillment") or {}).get("courier") if orders else None) or {}
+    """(fulfillmentLocationId, delivery postal code) of a *delivery* cart,
+    from `orders[0].fulfillment.courier`; (None, None) for anything else --
+    a pickup cart can carry a stale courier block."""
+    if _cart_mode(cart) != "delivery":
+        return None, None
+    courier = (cart["orders"][0].get("fulfillment") or {}).get("courier") or {}
     return courier.get("fulfillmentLocationId"), (courier.get("deliveryAddress") or {}).get("postalCode")
 
 
 def _load_slots(api: PCExpressAPI, session: session_state.SessionState) -> tuple[dict, str, str, list[dict]]:
     """(raw cart, location id, postal code, raw timeslots). Raises
-    PcxApiError (incl. NoCartError) like the cart helpers; ValueError if
-    the cart has no delivery location/address to ask about."""
+    PcxApiError (incl. NoCartError) like the cart helpers, or
+    NoDeliveryTarget."""
     cart = _get_cart_healing(api, session)
     location_id, postal_code = _cart_delivery_target(cart)
     if not location_id or not postal_code:
-        raise ValueError(
-            "This cart has no delivery location and address set (only delivery slots are supported). "
-            "Set a delivery address in the PC Express app, or bind the cart with switch_cart_store."
+        raise NoDeliveryTarget(
+            "Only delivery slots are supported, and this cart isn't set up for delivery (no delivery "
+            "location and address). Pickup slots have to be picked in the PC Express app."
         )
     raw = api.get_delivery_slots(session.cart_id, location_id, postal_code)
     return cart, location_id, postal_code, (raw.get(location_id) or {}).get("timeslots") or []
@@ -1852,14 +1873,14 @@ def get_available_slots(date: Optional[str] = None, days: int = 2) -> dict:
     Returns the first `days` dates that have availability, or just `date`
     (YYYY-MM-DD) if given; `dates_available` lists every bookable date
     (~2 weeks out). Times are the store's local time. `booked` is the
-    slot currently held on the cart, if any. Book one with
-    book_delivery_slot.
+    slot on the cart, if any -- check `hold_active`: an expired hold stays
+    listed. Book one with book_delivery_slot.
     """
     session = _load_session()
     api = _get_api(session.banner)
     try:
         cart, location_id, _, timeslots = _load_slots(api, session)
-    except ValueError as exc:
+    except NoDeliveryTarget as exc:
         return {"error": "slots_unavailable", "reason": str(exc)}
     except (PcidAuthError, PcxApiError) as exc:
         return _tool_error(exc)
@@ -1874,7 +1895,7 @@ def get_available_slots(date: Optional[str] = None, days: int = 2) -> dict:
         "location_id": location_id,
         "booked": _simplify_cart(cart)["slot"],
         "dates_available": dates,
-        "slots": {d: by_date.get(d, []) for d in ([date] if date else dates[:days])},
+        "slots": {d: by_date.get(d, []) for d in ([date] if date else dates[: max(days, 1)])},
     }
 
 
@@ -1882,7 +1903,7 @@ def get_available_slots(date: Optional[str] = None, days: int = 2) -> dict:
     annotations=ToolAnnotations(
         title="Book Delivery Slot",
         read_only_hint=False,
-        destructive_hint=False,  # replaces the cart's held slot; re-book to change it back
+        destructive_hint=True,  # releases any slot already held, which someone else may take
         idempotent_hint=True,
         open_world_hint=False,
     )
@@ -1908,11 +1929,12 @@ def book_delivery_slot(date: str, start_time: str) -> dict:
         }
     try:
         cart, location_id, postal_code, timeslots = _load_slots(api, session)
-    except ValueError as exc:
+    except NoDeliveryTarget as exc:
         return {"error": "slots_unavailable", "reason": str(exc)}
     except (PcidAuthError, PcxApiError) as exc:
         return _tool_error(exc)
-    slot = next((s for s in timeslots if s.get("date") == date and s.get("startTime") == start_time), None)
+    matches = [s for s in timeslots if s.get("date") == date and s.get("startTime") == start_time]
+    slot = next((s for s in matches if s.get("available")), matches[0] if matches else None)
     if not slot or not slot.get("available"):
         return {
             "error": "slot_unavailable" if slot else "slot_not_found",
@@ -1924,6 +1946,9 @@ def book_delivery_slot(date: str, start_time: str) -> dict:
         return _tool_error(exc)
     store_carts = ((raw.get("cart") or {}).get("cart_data") or {}).get("store_carts") or [{}]
     held = ((store_carts[0].get("fulfillment") or {}).get("delivery") or {}).get("time_slot") or {}
+    if not held.get("start_time"):
+        # A 200 can carry only errors (e.g. the slot filled meanwhile).
+        return {"error": "not_booked", "message": "The checkout service didn't hold the slot.", "warnings": _checkout_warnings(raw)}
     return {
         "booked": {"date": date, "start": start_time, "end": slot["endTime"], "fee": slot.get("charge"), "hold_expires_at": held.get("expiry_time")},
         "previous": _simplify_cart(cart)["slot"],
@@ -1968,8 +1993,8 @@ def place_order(confirm: bool = False) -> dict:
 
     Before presenting `checkout_url`, show a full visual receipt: every
     item's `photo_markdown` from `cart_summary.items`, quantity and price,
-    and the `checkout` total. If no slot is held, book one first with
-    book_delivery_slot.
+    and the `checkout` total. If `cart_summary.slot` is missing or its
+    `hold_active` is false, book one first with book_delivery_slot.
     """
     if not confirm:
         return {
@@ -2006,21 +2031,23 @@ def place_order(confirm: bool = False) -> dict:
 
 def _simplify_checkout(raw: dict) -> dict:
     """The checkout page's summary, in dollars (the service uses cents).
-    Personal details it carries (address, phone, email, card) are dropped."""
+    Personal details it carries (address, phone, email, card) are dropped,
+    and so is its slot: it's in UTC, while cart_summary.slot has the same
+    slot in store-local time."""
     data = (raw.get("checkout") or {}).get("checkout_data") or {}
     charges = data.get("charges") or {}
-    fees = {f.get("fee_component_type"): f.get("calculated_amount_in_cents") for f in charges.get("fulfillment_fee_components") or []}
-    slot = (data.get("fulfillment") or {}).get("time_slot") or {}
 
     def dollars(cents: Any) -> Optional[float]:
         return round(cents / 100, 2) if isinstance(cents, (int, float)) else None
 
+    fees: dict[str, float] = {}
+    for f in charges.get("fulfillment_fee_components") or []:
+        key = (f.get("fee_component_type") or "OTHER_FEE").lower()
+        fees[key] = round(fees.get(key, 0) + (dollars(f.get("calculated_amount_in_cents")) or 0), 2)
     return {
         "fulfillment_type": (data.get("fulfillment") or {}).get("fulfillment_type"),
-        "slot": {"start": slot.get("start_time"), "end": slot.get("end_time"), "hold_expires_at": slot.get("expiry_time")} if slot.get("start_time") else None,
         "subtotal": dollars(charges.get("subtotal")),
-        "delivery_fee": dollars(fees.get("DELIVERY_FEE")),
-        "service_fee": dollars(fees.get("SERVICE_FEE")),
+        "fees": fees,
         "tip": dollars(charges.get("tip")),
         "tax": dollars(charges.get("total_tax")),
         "discount": dollars(charges.get("total_discount")),

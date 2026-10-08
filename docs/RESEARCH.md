@@ -135,7 +135,8 @@ time-slots` on the banner's site, borrowed from an archived project) never
 returned real data here: every call got a "Site Under Maintenance" page.
 The working calls came from a user-supplied capture of a real web checkout
 session, replayed from this server before being wired in. They live on
-`one-checkout.<banner domain>` (every banner has one):
+`one-checkout.<banner domain>` (answering for superstore, loblaws,
+nofrills, zehrs and independent; T&T has no such host):
 
 - `POST /api/timeslots?locationIds=<fulfillmentLocationId>&banner=<banner>&postalCode=<postal>`
   with body `{"cartId": ...}` (required) lists ~2 weeks of slots in store

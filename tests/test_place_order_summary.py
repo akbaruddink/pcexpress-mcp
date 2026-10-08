@@ -62,3 +62,21 @@ def test_place_order_still_rejects_empty_cart(monkeypatch):
     monkeypatch.setattr(server, "_get_cart_healing", lambda api, s: {"orders": []})
     result = server.place_order(confirm=True)
     assert result["error"] == "empty_cart"
+
+
+def test_place_order_still_hands_off_when_the_checkout_service_fails(monkeypatch):
+    from pc_express_mcp.api_client import PcxApiError
+
+    class _DownApi(_FakeApi):
+        def get_checkout(self, cart_id):
+            raise PcxApiError("GET ... -> ConnectError")
+
+    session = session_state.SessionState(store_id="1024", cart_id="cart-1")
+    monkeypatch.setattr(server, "_load_session", lambda: session)
+    monkeypatch.setattr(server, "_get_api", lambda banner: _DownApi())
+    cart = {"orders": [{"entries": [{"quantity": 1, "offer": {"id": "AAA_EA", "product": {"name": "Bread"}}, "prices": {"totalSalePrice": 3.0}}]}]}
+    monkeypatch.setattr(server, "_get_cart_healing", lambda api, s: cart)
+    result = server.place_order(confirm=True)
+    assert result["checkout_url"]
+    assert result["cart_summary"]["item_count"] == 1
+    assert result["checkout"]["error"] == "checkout_summary_unavailable"

@@ -15,7 +15,7 @@
         {
           "categoryType": "clp",
           "code": "27985",
-          "count": 139,
+          "count": 140,
           "disabled": null,
           "name": "Food",
           "selected": false,
@@ -25,12 +25,22 @@
         {
           "categoryType": "clp",
           "code": "27986",
-          "count": 1,
+          "count": 2,
           "disabled": null,
           "name": "Home & Kitchen",
           "selected": false,
           "subCategories": null,
           "url": "/home-kitchen/c/27986"
+        },
+        {
+          "categoryType": "clp",
+          "code": "27987",
+          "count": 1,
+          "disabled": null,
+          "name": "Baby",
+          "selected": false,
+          "subCategories": null,
+          "url": "/baby/c/27987"
         },
         {
           "categoryType": "clp",
@@ -53,7 +63,7 @@
         {
           "categoryType": "clp",
           "code": "BDIA",
-          "count": 5,
+          "count": 8,
           "disabled": null,
           "name": "Blue Diamond",
           "selected": false,
@@ -63,7 +73,7 @@
         {
           "categoryType": "clp",
           "code": "CADB",
-          "count": 4,
+          "count": 2,
           "disabled": null,
           "name": "Cadbury",
           "selected": false,
@@ -82,6 +92,16 @@
         },
         {
           "categoryType": "clp",
+          "code": "COPO",
+          "count": 4,
+          "disabled": null,
+          "name": "Core Power",
+          "selected": false,
+          "subCategories": null,
+          "url": null
+        },
+        {
+          "categoryType": "clp",
           "code": "EAGB",
           "count": 1,
           "disabled": null,
@@ -93,19 +113,9 @@
         {
           "categoryType": "clp",
           "code": "EARO",
-          "count": 4,
+          "count": 3,
           "disabled": null,
           "name": "Earth's Own",
-          "selected": false,
-          "subCategories": null,
-          "url": null
-        },
-        {
-          "categoryType": "clp",
-          "code": "EMHR",
-          "count": 1,
-          "disabled": null,
-          "name": "Elmhurst",
           "selected": false,
           "subCategories": null,
           "url": null
@@ -132,6 +142,16 @@
         },
         {
           "categoryType": "clp",
+          "code": "KRIG",
+          "count": 1,
+          "disabled": null,
+          "name": "Keurig",
+          "selected": false,
+          "subCategories": null,
+          "url": null
+        },
+        {
+          "categoryType": "clp",
           "code": "LCTN",
           "count": 7,
           "disabled": null,
@@ -143,7 +163,7 @@
         {
           "categoryType": "clp",
           "code": "LBRT",
-          "count": 4,
+          "count": 1,
           "disabled": null,
           "name": "Liberte",
           "selected": false,
@@ -173,7 +193,7 @@
         {
           "categoryType": "clp",
           "code": "NTRL",
-          "count": 6,
+          "count": 7,
           "disabled": null,
           "name": "Natrel",
           "selected": false,
@@ -183,9 +203,19 @@
         {
           "categoryType": "clp",
           "code": "NLSN",
-          "count": 57,
+          "count": 55,
           "disabled": null,
           "name": "Neilson",
+          "selected": false,
+          "subCategories": null,
+          "url": null
+        },
+        {
+          "categoryType": "clp",
+          "code": "NSTL",
+          "count": 2,
+          "disabled": null,
+          "name": "Nestlé",
           "selected": false,
           "subCategories": null,
           "url": null
@@ -203,7 +233,7 @@
         {
           "categoryType": "clp",
           "code": "ORME",
-          "count": 1,
+          "count": 2,
           "disabled": null,
           "name": "Organic Meadow",
           "selected": false,
@@ -213,7 +243,7 @@
         {
           "categoryType": "clp",
           "code": "PO",
-          "count": 7,
+          "count": 8,
           "disabled": null,
           "name": "PC Organics",
           "selected": false,
@@ -223,7 +253,7 @@
         {
           "categoryType": "clp",
           "code": "P",
-          "count": 2,
+          "count": 1,
           "disabled": null,
           "name": "President's Choice",
           "selected": false,
@@ -242,16 +272,6 @@
         },
         {
           "categoryType": "clp",
-          "code": "ROO",
-          "count": 2,
-          "disabled": null,
-          "name": "Rooster",
-          "selected": false,
-          "subCategories": null,
-          "url": null
-        },
-        {
-          "categoryType": "clp",
           "code": "SILK",
           "count": 13,
           "disabled": null,
@@ -262,10 +282,10 @@
         },
         {
           "categoryType": "clp",
-          "code": "SONI",
-          "count": 1,
+          "code": "STBU",
+          "count": 3,
           "disabled": null,
-          "name": "So Nice",
+          "name": "Starbucks",
           "selected": false,
           "subCategories": null,
           "url": null
@@ -280,18 +300,8 @@
       "values": [
         {
           "categoryType": "clp",
-          "code": "Price Reduction",
-          "count": 22,
-          "disabled": null,
-          "name": "Price Reduction",
-          "selected": false,
-          "subCategories": null,
-          "url": null
-        },
-        {
-          "categoryType": "clp",
           "code": "Multi-Buy",
-          "count": 15,
+          "count": 19,
           "disabled": null,
           "name": "Multi-Buy",
           "selected": false,
@@ -300,10 +310,30 @@
         },
         {
           "categoryType": "clp",
+          "code": "Price Reduction",
+          "count": 19,
+          "disabled": null,
+          "name": "Price Reduction",
+          "selected": false,
+          "subCategories": null,
+          "url": null
+        },
+        {
+          "categoryType": "clp",
           "code": "$1,$2,$3,$4,$5",
-          "count": 12,
+          "count": 13,
           "disabled": null,
           "name": "$1,$2,$3,$4,$5",
+          "selected": false,
+          "subCategories": null,
+          "url": null
+        },
+        {
+          "categoryType": "clp",
+          "code": "PC Points",
+          "count": 4,
+          "disabled": null,
+          "name": "PC Optimum Points",
           "selected": false,
           "subCategories": null,
           "url": null
@@ -319,7 +349,7 @@
         {
           "categoryType": "clp",
           "code": "$2 and under",
-          "count": 3,
+          "count": 5,
           "disabled": null,
           "name": "$2 and under",
           "selected": false,
@@ -339,7 +369,7 @@
         {
           "categoryType": "clp",
           "code": "$4 and under",
-          "count": 41,
+          "count": 37,
           "disabled": null,
           "name": "$4 and under",
           "selected": false,
@@ -349,7 +379,7 @@
         {
           "categoryType": "clp",
           "code": "$5 and under",
-          "count": 64,
+          "count": 56,
           "disabled": null,
           "name": "$5 and under",
           "selected": false,
@@ -359,7 +389,7 @@
         {
           "categoryType": "clp",
           "code": "$5-$10",
-          "count": 64,
+          "count": 72,
           "disabled": null,
           "name": "$5-$10",
           "selected": false,
@@ -369,7 +399,7 @@
         {
           "categoryType": "clp",
           "code": "$10-$15",
-          "count": 11,
+          "count": 13,
           "disabled": null,
           "name": "$10-$15",
           "selected": false,
@@ -379,9 +409,19 @@
         {
           "categoryType": "clp",
           "code": "$15-$20",
-          "count": 2,
+          "count": 1,
           "disabled": null,
           "name": "$15-$20",
+          "selected": false,
+          "subCategories": null,
+          "url": null
+        },
+        {
+          "categoryType": "clp",
+          "code": "$20-$30",
+          "count": 1,
+          "disabled": null,
+          "name": "$20-$30",
           "selected": false,
           "subCategories": null,
           "url": null
@@ -392,6 +432,16 @@
           "count": 1,
           "disabled": null,
           "name": "$30-$50",
+          "selected": false,
+          "subCategories": null,
+          "url": null
+        },
+        {
+          "categoryType": "clp",
+          "code": "$50-$100",
+          "count": 1,
+          "disabled": null,
+          "name": "$50-$100",
           "selected": false,
           "subCategories": null,
           "url": null
@@ -414,7 +464,7 @@
         {
           "categoryType": "clp",
           "code": "prepared_in_canada",
-          "count": 102,
+          "count": 97,
           "disabled": null,
           "name": "Prepared in Canada",
           "selected": false,
@@ -428,18 +478,7 @@
       "isDynamic": false,
       "multiSelect": true,
       "name": "Flyers",
-      "values": [
-        {
-          "categoryType": "clp",
-          "code": "FLYER_ITEM",
-          "count": 9,
-          "disabled": null,
-          "name": "Flyer Item",
-          "selected": false,
-          "subCategories": null,
-          "url": null
-        }
-      ]
+      "values": []
     },
     {
       "code": "dietaryCallouts",
@@ -489,20 +528,20 @@
         },
         {
           "categoryType": "clp",
-          "code": "peanut_free",
+          "code": "nut_free",
           "count": 1,
           "disabled": null,
-          "name": "Peanut Free Facility",
+          "name": "Nut Free",
           "selected": false,
           "subCategories": null,
           "url": null
         },
         {
           "categoryType": "clp",
-          "code": "nut_free",
+          "code": "vegan",
           "count": 1,
           "disabled": null,
-          "name": "Nut Free",
+          "name": "Vegan",
           "selected": false,
           "subCategories": null,
           "url": null
@@ -579,6 +618,16 @@
         },
         {
           "categoryType": "clp",
+          "code": "vegetarian",
+          "count": 1,
+          "disabled": null,
+          "name": "Vegetarian",
+          "selected": false,
+          "subCategories": null,
+          "url": null
+        },
+        {
+          "categoryType": "clp",
           "code": "source_of_calcium",
           "count": 1,
           "disabled": null,
@@ -621,14 +670,14 @@
     }
   ],
   "ml_corrected_term": "",
-  "modelVersion": "cim-retriever-loblawspcx-v20260721",
+  "modelVersion": "cim-retriever-loblawspcx-v20260925",
   "offerTypes": {
-    "OG": 142
+    "OG": 145
   },
   "pagination": {
     "pageNumber": 0,
     "pageSize": 5,
-    "totalResults": 136
+    "totalResults": 143
   },
   "qu_corrected_term": "",
   "query": "milk",
@@ -658,96 +707,88 @@
   "results": [
     {
       "aisle": null,
-      "articleNumber": "21670711",
+      "articleNumber": "20148677",
       "badges": {
         "dealBadge": {
-          "expiryDate": "2026-08-12T00:00:00Z",
+          "expiryDate": "2026-10-14T00:00:00Z",
           "mopDealText": null,
-          "name": "MULTI",
+          "name": "SALE",
           "points": null,
-          "promoType": "ZRP3",
-          "text": "$3.50 MIN 2",
-          "type": "MULTI"
+          "promoType": null,
+          "text": "SAVE $0.68",
+          "type": "SALE"
         },
         "hotmBadge": null,
-        "loyaltyBadge": {
-          "expiryDate": "2026-08-12T23:59:59Z",
-          "mopDealText": null,
-          "name": "LOYALTY",
-          "points": 10000,
-          "promoType": "0004",
-          "text": "PC Optimum Offer",
-          "type": "LOYALTY"
-        },
+        "loyaltyBadge": null,
         "madeInCanadaBadge": null,
         "mustTryBadge": null,
         "newItemBadge": null,
-        "preparedInCanadaBadge": null,
+        "preparedInCanadaBadge": {
+          "expiryDate": null,
+          "mopDealText": null,
+          "name": "PREPARED_IN_CANADA",
+          "points": null,
+          "promoType": null,
+          "text": "Prepared in Canada",
+          "type": "PREPARED_IN_CANADA"
+        },
         "preparedInQuebecBadge": null,
         "productOfCanadaBadge": null,
         "promotionalBadge": null,
         "recyclingFeeBadge": null,
-        "subscribeEarnBadge": {
-          "expiryDate": null,
-          "mopDealText": null,
-          "name": "SUBSCRIBE_EARN",
-          "points": null,
-          "promoType": null,
-          "text": null,
-          "type": "SUBSCRIBE_EARN"
-        },
+        "subscribeEarnBadge": null,
         "tariffAppliedBadge": null,
         "textBadge": null
       },
-      "brand": "Nestlé",
-      "code": "21670711_EA",
-      "dealPrice": 3.5,
-      "description": "Introducing NESTLÉ CERELAC Biscuits — a delicious snack specially crafted for toddlers aged 1 year and up. With their light, buttery flavour and easy-to-chew texture, these fun-shaped biscuits are designed to satisfy little taste buds while supporting self-feeding and soothing teething discomfort. Thoughtfully designed for tiny hands and mouths, CERELAC Biscuits encourage independent eating, helping toddlers develop important motor skills and making snack time both fun and beneficial. At CERELAC, we know how important wholesome nutrition is for growing toddlers. That’s why CERELAC Biscuits are baked with quality grains and contain no artificial colours, flavours, or sweeteners. You can feel confident knowing you're giving your child a snack that’s not only tasty but also made with ingredients you can trust. Busy parents will also love the on-the-go convenience of CERELAC Biscuits. Whether you're heading to the park, running errands, or taking a road trip, these snacks are easy to pop into a diaper bag, purse, or stroller pocket. For safety purposes, this product should only be fed to seated, supervised children who are accustomed to solid foods. For best storage results, keep unopened or tightly reclosed packs in a cool, dry place. Once opened, be sure to use the product within 14 days or by the best before date — whichever comes first.  With CERELAC Fingers, snack time is fun — wherever life takes you and your little one.",
+      "brand": "Neilson",
+      "code": "20148677_EA",
+      "dealPrice": null,
+      "description": "<p>Fresh, wholesome milk… naturally from Neilson. Since 1893, Neilson has stood for high quality dairy products. Neilson has always been committed to using the best ingredients, people and processes to produce great tasting quality milk you can depend on. Always fresh, always delicious and always an excellent source of calcium, protein and vitamin D.</p>",
       "fees": null,
       "hasMultipleOffers": false,
       "imageAssets": [
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/1/21670711_enfr_front_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/1/20148677_en_1_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/1/21670711_enfr_front_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/1/20148677_en_1_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/1/21670711_enfr_front_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/1/20148677_en_1_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/1/21670711_enfr_front_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/1/21670711_enfr_front_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/1/20148677_en_1_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/1/20148677_en_1_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/2/21670711_enfr_angle_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/2/20148677_en_2_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/2/21670711_enfr_angle_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/2/20148677_en_2_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/2/21670711_enfr_angle_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/2/20148677_en_2_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/2/21670711_enfr_angle_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/2/21670711_enfr_angle_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/2/20148677_en_2_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/2/20148677_en_2_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/3/21670711_enfr_side_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/3/20148677_en_3_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/3/21670711_enfr_side_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/3/20148677_en_3_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/3/21670711_enfr_side_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/3/20148677_en_3_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/3/21670711_enfr_side_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21670711_EA/en/3/21670711_enfr_side_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/3/20148677_en_3_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/3/20148677_en_3_120.png"
         }
       ],
       "ingredients": null,
       "isVariant": false,
-      "link": "/cerelac-biscuits-light-buttery-flavour-age-1-year/p/21670711_EA",
+      "link": "/2-microfiltered-milk/p/20148677_EA",
       "memberOnlyPromotions": null,
       "mopDealPrice": null,
-      "name": "Cerelac Biscuits, Light Buttery Flavour, Age 1 Year & Up",
+      "name": "2% Microfiltered Milk",
       "offerType": "OG",
-      "packageSize": "150 g",
+      "packageSize": "4 l",
       "prices": {
         "comparisonPrices": [
           {
@@ -755,8 +796,8 @@
             "quantity": 100,
             "reasonCode": null,
             "type": "REGULAR",
-            "unit": "g",
-            "value": 3.33
+            "unit": "ml",
+            "value": 0.16
           }
         ],
         "deposit": null,
@@ -765,73 +806,51 @@
         "memberOnlyComparisonPrices": [],
         "memberOnlyPrice": null,
         "price": {
-          "expiryDate": "2026-08-12T00:00",
+          "expiryDate": "2026-10-14T00:00",
           "quantity": 1,
-          "reasonCode": 1,
+          "reasonCode": 2,
           "type": "SPECIAL",
           "unit": "ea",
-          "value": 4.99
+          "value": 6.5
         },
         "taxInfo": "",
-        "wasPrice": null
+        "wasPrice": {
+          "expiryDate": null,
+          "quantity": 1,
+          "reasonCode": null,
+          "type": "WAS",
+          "unit": "ea",
+          "value": 7.18
+        }
       },
       "pricingUnits": {
         "interval": 1,
-        "maxOrderQuantity": 25,
+        "maxOrderQuantity": 24,
         "minOrderQuantity": 1,
         "type": "SOLD_BY_EACH",
         "unit": "ea",
         "weighted": false
       },
-      "promotions": [
-        {
-          "callToAction": null,
-          "expiryDate": "2026-08-12T23:59:59Z",
-          "pricingMethod": null,
-          "promoCode": "121062223",
-          "promoType": "0004",
-          "quantity": null,
-          "reward": "10000PC Optimum Points",
-          "savings": 10000,
-          "text": "Spend $50 in Baby",
-          "title": "PC Optimum Offer",
-          "type": "LOYALTY",
-          "value": null
-        },
-        {
-          "callToAction": null,
-          "expiryDate": "2026-08-12T00:00:00Z",
-          "pricingMethod": "3",
-          "promoCode": "700015088338",
-          "promoType": null,
-          "quantity": null,
-          "reward": "$_FIXED",
-          "savings": null,
-          "text": "PC Optimum Points",
-          "title": null,
-          "type": "DEAL",
-          "value": null
-        }
-      ],
+      "promotions": [],
       "ratings": null,
       "sellerId": null,
       "sellerName": null,
       "shoppable": true,
       "sponsored": true,
       "sponsoredCreative": {
-        "adGroupId": "3769109a-d30f-43cb-89af-8dc0044107b8",
+        "adGroupId": "bd105651-b346-44be-92e1-04cac023aa05",
         "adPlacement": {
           "adPlacementId": "6beb5e7e-c505-4fff-873e-2b57c3c71278",
           "adPlacementType": null
         },
-        "adServingId": "a5f79617-eaa0-4b05-9c2f-4bebe20d4652",
+        "adServingId": "e2d2187a-483d-4286-b1f0-bce3c6fcc8be",
         "creativeBrandId": null,
-        "creativeCampaignId": "09875d90-a800-474b-bb78-009ffac9e56f",
+        "creativeCampaignId": "802db96c-c128-4d99-8047-9bc66f6821e8",
         "creativeCost": {
           "costModel": "CPC",
-          "rate": "0au96W33CmctcNLN+htYNSlV+d2JMqoLa9GD0a8aL8s="
+          "rate": "vtUvWVMRInZZEfw+OXBD/EtdzYWCKvXdgUjKcwhOGuM="
         },
-        "creativeId": "a76b8dc9-93d6-46d9-a14e-7b95e88d5b49",
+        "creativeId": "ae3f5a53-aabd-4499-84ab-26411bf0f54b",
         "matchType": "EXACT_MATCH",
         "searchType": "SEARCH",
         "target": "milk",
@@ -843,7 +862,7 @@
       "taxes": null,
       "uom": "EA",
       "upcs": [
-        "05500021426"
+        "06680000404"
       ],
       "variantTheme": null
     },
@@ -959,7 +978,13 @@
         "weighted": false
       },
       "promotions": [],
-      "ratings": null,
+      "ratings": {
+        "answered_questions": 0,
+        "average_rating": 0.0,
+        "display_rating": null,
+        "rating_count": 0,
+        "review_count": 0
+      },
       "sellerId": null,
       "sellerName": null,
       "shoppable": true,
@@ -975,96 +1000,80 @@
     },
     {
       "aisle": null,
-      "articleNumber": "21670794",
+      "articleNumber": "20130270",
       "badges": {
-        "dealBadge": {
-          "expiryDate": "2026-08-12T00:00:00Z",
-          "mopDealText": null,
-          "name": "LIMIT",
-          "points": null,
-          "promoType": null,
-          "text": "Limit 4, after limit $9.99",
-          "type": "LIMIT"
-        },
+        "dealBadge": null,
         "hotmBadge": null,
-        "loyaltyBadge": {
-          "expiryDate": "2026-08-12T23:59:59Z",
-          "mopDealText": null,
-          "name": "LOYALTY",
-          "points": 10000,
-          "promoType": "0004",
-          "text": "PC Optimum Offer",
-          "type": "LOYALTY"
-        },
+        "loyaltyBadge": null,
         "madeInCanadaBadge": null,
         "mustTryBadge": null,
         "newItemBadge": null,
-        "preparedInCanadaBadge": null,
+        "preparedInCanadaBadge": {
+          "expiryDate": null,
+          "mopDealText": null,
+          "name": "PREPARED_IN_CANADA",
+          "points": null,
+          "promoType": null,
+          "text": "Prepared in Canada",
+          "type": "PREPARED_IN_CANADA"
+        },
         "preparedInQuebecBadge": null,
         "productOfCanadaBadge": null,
         "promotionalBadge": null,
         "recyclingFeeBadge": null,
-        "subscribeEarnBadge": {
-          "expiryDate": null,
-          "mopDealText": null,
-          "name": "SUBSCRIBE_EARN",
-          "points": null,
-          "promoType": null,
-          "text": null,
-          "type": "SUBSCRIBE_EARN"
-        },
+        "subscribeEarnBadge": null,
         "tariffAppliedBadge": null,
         "textBadge": null
       },
-      "brand": "Nestlé",
-      "code": "21670794_EA",
-      "dealPrice": 8.5,
-      "description": "NESTLÉ CERELAC Wheat Apple baby cereal is a nutritious and delicious first food, specially crafted for babies 6 months and up. It comes in resealable and recyclable canisters, making it easy to keep your baby’s meals fresh while caring for the environment.CERELAC Wheat Apple baby cereal is made with the wholesome goodness of real apples and quality grains, perfect for little ones starting their journey with solid foods. Designed to support your baby's healthy growth and development, this cereal is an excellent source of iron to help promote normal cognitive development. It also contains essential nutrients like calcium and vitamins B1 and B3, giving your baby a strong start with every spoonful.Parents can trust CERELAC for its simple, wholesome ingredients. It contains no added sugar, flavours, or preservatives and is Halal, giving you peace of mind about what you're feeding your little one. Preparing CERELAC Wheat Apple cereal is quick and easy. Just add warm water or milk and stir for a smooth and creamy texture your baby will love.NESTLÉ CERELAC Wheat Apple baby cereal -- big nutrition for small tummies.",
+      "brand": "Neilson",
+      "code": "20130270_EA",
+      "dealPrice": null,
+      "description": "<p>Fresh, wholesome milk… naturally from Neilson. Since 1893, Neilson has stood for high quality dairy products. Neilson has always been committed to using the best ingredients, people and processes to produce great tasting quality milk you can depend on. Always fresh, always delicious and always an excellent source of calcium, protein and vitamin D.</p>",
       "fees": null,
       "hasMultipleOffers": false,
       "imageAssets": [
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/1/21670794_enfr_front_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/1/20130270_en_1_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/1/21670794_enfr_front_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/1/20130270_en_1_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/1/21670794_enfr_front_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/1/20130270_en_1_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/1/21670794_enfr_front_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/1/21670794_enfr_front_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/1/20130270_en_1_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/1/20130270_en_1_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/2/21670794_enfr_angle_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/2/20130270_en_2_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/2/21670794_enfr_angle_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/2/20130270_en_2_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/2/21670794_enfr_angle_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/2/20130270_en_2_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/2/21670794_enfr_angle_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/2/21670794_enfr_angle_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/2/20130270_en_2_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/2/20130270_en_2_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/3/21670794_enfr_side_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/3/20130270_en_3_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/3/21670794_enfr_side_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/3/20130270_en_3_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/3/21670794_enfr_side_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/3/20130270_en_3_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/3/21670794_enfr_side_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21670794_EA/en/3/21670794_enfr_side_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/3/20130270_en_3_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/3/20130270_en_3_120.png"
         }
       ],
       "ingredients": null,
       "isVariant": false,
-      "link": "/cerelac-wheat-apple-baby-cereal-6-months-up/p/21670794_EA",
+      "link": "/2-microfiltered-milk/p/20130270_EA",
       "memberOnlyPromotions": null,
       "mopDealPrice": null,
-      "name": "Cerelac Wheat Apple Baby Cereal, 6 Months & Up",
+      "name": "2% Microfiltered Milk",
       "offerType": "OG",
-      "packageSize": "400 g",
+      "packageSize": "2 l",
       "prices": {
         "comparisonPrices": [
           {
@@ -1072,8 +1081,8 @@
             "quantity": 100,
             "reasonCode": null,
             "type": "REGULAR",
-            "unit": "g",
-            "value": 2.5
+            "unit": "ml",
+            "value": 0.29
           }
         ],
         "deposit": null,
@@ -1082,73 +1091,44 @@
         "memberOnlyComparisonPrices": [],
         "memberOnlyPrice": null,
         "price": {
-          "expiryDate": "2026-08-12T00:00",
+          "expiryDate": "9999-12-31T00:00",
           "quantity": 1,
-          "reasonCode": 2,
-          "type": "SPECIAL",
+          "reasonCode": 4,
+          "type": "REGULAR",
           "unit": "ea",
-          "value": 8.5
+          "value": 5.78
         },
         "taxInfo": "",
         "wasPrice": null
       },
       "pricingUnits": {
         "interval": 1,
-        "maxOrderQuantity": 25,
+        "maxOrderQuantity": 24,
         "minOrderQuantity": 1,
         "type": "SOLD_BY_EACH",
         "unit": "ea",
         "weighted": false
       },
-      "promotions": [
-        {
-          "callToAction": null,
-          "expiryDate": "2026-08-12T23:59:59Z",
-          "pricingMethod": null,
-          "promoCode": "121062223",
-          "promoType": "0004",
-          "quantity": null,
-          "reward": "10000PC Optimum Points",
-          "savings": 10000,
-          "text": "Spend $50 in Baby",
-          "title": "PC Optimum Offer",
-          "type": "LOYALTY",
-          "value": null
-        },
-        {
-          "callToAction": null,
-          "expiryDate": "2026-08-12T00:00:00Z",
-          "pricingMethod": "4",
-          "promoCode": "700015102036",
-          "promoType": null,
-          "quantity": null,
-          "reward": "$_FIXED",
-          "savings": null,
-          "text": "PC Optimum Points",
-          "title": null,
-          "type": "DEAL",
-          "value": null
-        }
-      ],
+      "promotions": [],
       "ratings": null,
       "sellerId": null,
       "sellerName": null,
       "shoppable": true,
       "sponsored": true,
       "sponsoredCreative": {
-        "adGroupId": "3769109a-d30f-43cb-89af-8dc0044107b8",
+        "adGroupId": "bd105651-b346-44be-92e1-04cac023aa05",
         "adPlacement": {
           "adPlacementId": "6beb5e7e-c505-4fff-873e-2b57c3c71278",
           "adPlacementType": null
         },
-        "adServingId": "a5f79617-eaa0-4b05-9c2f-4bebe20d4652",
+        "adServingId": "e2d2187a-483d-4286-b1f0-bce3c6fcc8be",
         "creativeBrandId": null,
-        "creativeCampaignId": "09875d90-a800-474b-bb78-009ffac9e56f",
+        "creativeCampaignId": "802db96c-c128-4d99-8047-9bc66f6821e8",
         "creativeCost": {
           "costModel": "CPC",
-          "rate": "kAn9GHXrqgYP1xcFC+DUDukrvhZGFM/GkmLTLZURGOA="
+          "rate": "C/dMGjpq3hNwvpybNTY13Q3Pt9MwrOPkL7jA4NfXyFY="
         },
-        "creativeId": "661f1fa2-d901-4a1c-b9a3-59ca2211bdf2",
+        "creativeId": "e75279a5-febc-4871-afb8-0956392935fa",
         "matchType": "EXACT_MATCH",
         "searchType": "SEARCH",
         "target": "milk",
@@ -1160,102 +1140,86 @@
       "taxes": null,
       "uom": "EA",
       "upcs": [
-        "05500021422"
+        "06680000405"
       ],
       "variantTheme": null
     },
     {
       "aisle": null,
-      "articleNumber": "21670835",
+      "articleNumber": "20126276",
       "badges": {
-        "dealBadge": {
-          "expiryDate": "2026-08-12T00:00:00Z",
-          "mopDealText": null,
-          "name": "LIMIT",
-          "points": null,
-          "promoType": null,
-          "text": "Limit 4, after limit $9.99",
-          "type": "LIMIT"
-        },
+        "dealBadge": null,
         "hotmBadge": null,
-        "loyaltyBadge": {
-          "expiryDate": "2026-08-12T23:59:59Z",
-          "mopDealText": null,
-          "name": "LOYALTY",
-          "points": 10000,
-          "promoType": "0004",
-          "text": "PC Optimum Offer",
-          "type": "LOYALTY"
-        },
+        "loyaltyBadge": null,
         "madeInCanadaBadge": null,
         "mustTryBadge": null,
         "newItemBadge": null,
-        "preparedInCanadaBadge": null,
+        "preparedInCanadaBadge": {
+          "expiryDate": null,
+          "mopDealText": null,
+          "name": "PREPARED_IN_CANADA",
+          "points": null,
+          "promoType": null,
+          "text": "Prepared in Canada",
+          "type": "PREPARED_IN_CANADA"
+        },
         "preparedInQuebecBadge": null,
         "productOfCanadaBadge": null,
         "promotionalBadge": null,
         "recyclingFeeBadge": null,
-        "subscribeEarnBadge": {
-          "expiryDate": null,
-          "mopDealText": null,
-          "name": "SUBSCRIBE_EARN",
-          "points": null,
-          "promoType": null,
-          "text": null,
-          "type": "SUBSCRIBE_EARN"
-        },
+        "subscribeEarnBadge": null,
         "tariffAppliedBadge": null,
         "textBadge": null
       },
-      "brand": "Nestlé",
-      "code": "21670835_EA",
-      "dealPrice": 8.5,
-      "description": "NESTLÉ CERELAC Mixed Fruits baby cereal is a nutritious and delicious first food, specially crafted for babies 6 months and up. It comes in resealable and recyclable canisters, making it easy to keep your baby’s meals fresh while caring for the environment.CERELAC Mixed Fruits baby cereal is made with the wholesome goodness of real fruit, perfect for little ones starting their journey with solid foods. Designed to support your baby's healthy growth and development, this cereal is an excellent source of iron to help promote normal cognitive development. It also contains essential nutrients like calcium and vitamins B1 and B3, giving your baby a strong start with every spoonful.Parents can trust CERELAC for its simple, wholesome ingredients. It contains no added sugar, flavours, or preservatives and is Halal, giving you peace of mind about what you're feeding your little one. Preparing CERELAC Mixed Fruits cereal is quick and easy. Just add warm water or milk and stir for a smooth and creamy texture your baby will love.NESTLÉ CERELAC Mixed Fruits baby cereal -- big nutrition for small tummies.",
+      "brand": "Neilson",
+      "code": "20126276_EA",
+      "dealPrice": null,
+      "description": "<p>Fresh, wholesome milk… naturally from Neilson. Since 1893, Neilson has stood for high quality dairy products. Neilson has always been committed to using the best ingredients, people and processes to produce great tasting quality milk you can depend on. Always fresh, always delicious and always an excellent source of calcium, protein and vitamin D.</p>",
       "fees": null,
       "hasMultipleOffers": false,
       "imageAssets": [
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/1/21670835_enfr_front_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/1/20126276_en_1_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/1/21670835_enfr_front_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/1/20126276_en_1_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/1/21670835_enfr_front_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/1/20126276_en_1_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/1/21670835_enfr_front_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/1/21670835_enfr_front_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/1/20126276_en_1_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/1/20126276_en_1_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/2/21670835_enfr_angle_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/2/20126276_en_2_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/2/21670835_enfr_angle_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/2/20126276_en_2_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/2/21670835_enfr_angle_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/2/20126276_en_2_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/2/21670835_enfr_angle_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/2/21670835_enfr_angle_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/2/20126276_en_2_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/2/20126276_en_2_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/3/21670835_enfr_side_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/3/20126276_en_3_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/3/21670835_enfr_side_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/3/20126276_en_3_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/3/21670835_enfr_side_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/3/20126276_en_3_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/3/21670835_enfr_side_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21670835_EA/en/3/21670835_enfr_side_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/3/20126276_en_3_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20126276_EA/en/3/20126276_en_3_120.png"
         }
       ],
       "ingredients": null,
       "isVariant": false,
-      "link": "/cerelac-mixed-fruits-baby-cereal-6-months-up/p/21670835_EA",
+      "link": "/1-microfiltered-milk/p/20126276_EA",
       "memberOnlyPromotions": null,
       "mopDealPrice": null,
-      "name": "Cerelac Mixed Fruits Baby Cereal, 6 Months & Up",
+      "name": "1% Microfiltered Milk",
       "offerType": "OG",
-      "packageSize": "400 g",
+      "packageSize": "2 l",
       "prices": {
         "comparisonPrices": [
           {
@@ -1263,8 +1227,8 @@
             "quantity": 100,
             "reasonCode": null,
             "type": "REGULAR",
-            "unit": "g",
-            "value": 2.5
+            "unit": "ml",
+            "value": 0.29
           }
         ],
         "deposit": null,
@@ -1273,73 +1237,44 @@
         "memberOnlyComparisonPrices": [],
         "memberOnlyPrice": null,
         "price": {
-          "expiryDate": "2026-08-12T00:00",
+          "expiryDate": "9999-12-31T00:00",
           "quantity": 1,
-          "reasonCode": 2,
-          "type": "SPECIAL",
+          "reasonCode": 4,
+          "type": "REGULAR",
           "unit": "ea",
-          "value": 8.5
+          "value": 5.78
         },
         "taxInfo": "",
         "wasPrice": null
       },
       "pricingUnits": {
         "interval": 1,
-        "maxOrderQuantity": 25,
+        "maxOrderQuantity": 24,
         "minOrderQuantity": 1,
         "type": "SOLD_BY_EACH",
         "unit": "ea",
         "weighted": false
       },
-      "promotions": [
-        {
-          "callToAction": null,
-          "expiryDate": "2026-08-12T23:59:59Z",
-          "pricingMethod": null,
-          "promoCode": "121062223",
-          "promoType": "0004",
-          "quantity": null,
-          "reward": "10000PC Optimum Points",
-          "savings": 10000,
-          "text": "Spend $50 in Baby",
-          "title": "PC Optimum Offer",
-          "type": "LOYALTY",
-          "value": null
-        },
-        {
-          "callToAction": null,
-          "expiryDate": "2026-08-12T00:00:00Z",
-          "pricingMethod": "4",
-          "promoCode": "700015102036",
-          "promoType": null,
-          "quantity": null,
-          "reward": "$_FIXED",
-          "savings": null,
-          "text": "PC Optimum Points",
-          "title": null,
-          "type": "DEAL",
-          "value": null
-        }
-      ],
+      "promotions": [],
       "ratings": null,
       "sellerId": null,
       "sellerName": null,
       "shoppable": true,
       "sponsored": true,
       "sponsoredCreative": {
-        "adGroupId": "3769109a-d30f-43cb-89af-8dc0044107b8",
+        "adGroupId": "bd105651-b346-44be-92e1-04cac023aa05",
         "adPlacement": {
           "adPlacementId": "6beb5e7e-c505-4fff-873e-2b57c3c71278",
           "adPlacementType": null
         },
-        "adServingId": "a5f79617-eaa0-4b05-9c2f-4bebe20d4652",
+        "adServingId": "e2d2187a-483d-4286-b1f0-bce3c6fcc8be",
         "creativeBrandId": null,
-        "creativeCampaignId": "09875d90-a800-474b-bb78-009ffac9e56f",
+        "creativeCampaignId": "802db96c-c128-4d99-8047-9bc66f6821e8",
         "creativeCost": {
           "costModel": "CPC",
-          "rate": "gOX55o1YLRXUWAz+zpDLk0GCDmvxYWHTKf7px6kY9ug="
+          "rate": "HPicT9X6R3Skr7358/lVRqGqXMFiyhnARNNco6cF19s="
         },
-        "creativeId": "3361dee6-c444-486c-b998-fc30732d4aff",
+        "creativeId": "ccbe995d-13aa-4c0c-b1d0-76221ce96d25",
         "matchType": "EXACT_MATCH",
         "searchType": "SEARCH",
         "target": "milk",
@@ -1351,7 +1286,7 @@
       "taxes": null,
       "uom": "EA",
       "upcs": [
-        "05500021424"
+        "06680000413"
       ],
       "variantTheme": null
     },
@@ -1483,96 +1418,88 @@
     },
     {
       "aisle": null,
-      "articleNumber": "21671033",
+      "articleNumber": "20136554",
       "badges": {
         "dealBadge": {
-          "expiryDate": "2026-10-07T00:00:00Z",
+          "expiryDate": "2026-10-14T00:00:00Z",
           "mopDealText": null,
-          "name": "MULTI",
+          "name": "SALE",
           "points": null,
-          "promoType": "ZRP3",
-          "text": "$5.00 MIN 2",
-          "type": "MULTI"
+          "promoType": null,
+          "text": "SAVE $0.68",
+          "type": "SALE"
         },
         "hotmBadge": null,
-        "loyaltyBadge": {
-          "expiryDate": "2026-08-12T23:59:59Z",
-          "mopDealText": null,
-          "name": "LOYALTY",
-          "points": 10000,
-          "promoType": "0004",
-          "text": "PC Optimum Offer",
-          "type": "LOYALTY"
-        },
+        "loyaltyBadge": null,
         "madeInCanadaBadge": null,
         "mustTryBadge": null,
         "newItemBadge": null,
-        "preparedInCanadaBadge": null,
+        "preparedInCanadaBadge": {
+          "expiryDate": null,
+          "mopDealText": null,
+          "name": "PREPARED_IN_CANADA",
+          "points": null,
+          "promoType": null,
+          "text": "Prepared in Canada",
+          "type": "PREPARED_IN_CANADA"
+        },
         "preparedInQuebecBadge": null,
         "productOfCanadaBadge": null,
         "promotionalBadge": null,
         "recyclingFeeBadge": null,
-        "subscribeEarnBadge": {
-          "expiryDate": null,
-          "mopDealText": null,
-          "name": "SUBSCRIBE_EARN",
-          "points": null,
-          "promoType": null,
-          "text": null,
-          "type": "SUBSCRIBE_EARN"
-        },
+        "subscribeEarnBadge": null,
         "tariffAppliedBadge": null,
         "textBadge": null
       },
-      "brand": "Nestlé",
-      "code": "21671033_EA",
-      "dealPrice": 5.0,
-      "description": "Announcing NESTLÉ CERELAC Rice & Veggies Savoury baby cereal, specially crafted for babies aged 8 months and up. Made with real vegetables like tomatoes, carrots, and onions, this easy-to-digest cereal provides a wholesome, delicious, and savoury start to your growing baby's day.More than just a tasty option, CERELAC Rice & Veggies Savoury is an excellent source of iron, supporting your baby’s normal cognitive development. It’s also fortified with essential vitamins and minerals including vitamin B to aid in energy production and zinc to help maintain the normal function of the immune system.Parents can have peace of mind knowing this baby cereal is Halal Certified and simple to prepare. Just mix 3 levelled teaspoons of cereal with boiling water, stir well, and let it sit for 3 minutes before feeding — creating a warm, comforting meal in moments.Give your baby the nourishment they need and the flavour they’ll love with NESTLÉ CERELAC Rice & Veggies Savoury baby cereal — a thoughtful step in their journey to healthy growth and development.",
+      "brand": "Neilson",
+      "code": "20136554_EA",
+      "dealPrice": null,
+      "description": "<p>Fresh, wholesome milk… naturally from Neilson. Since 1893, Neilson has stood for high quality dairy products. Neilson has always been committed to using the best ingredients, people and processes to produce great tasting quality milk you can depend on. Always fresh, always delicious and always an excellent source of calcium, protein and vitamin D.</p>",
       "fees": null,
       "hasMultipleOffers": false,
       "imageAssets": [
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/1/21671033_enfr_front_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/1/20136554_en_1_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/1/21671033_enfr_front_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/1/20136554_en_1_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/1/21671033_enfr_front_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/1/20136554_en_1_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/1/21671033_enfr_front_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/1/21671033_enfr_front_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/1/20136554_en_1_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/1/20136554_en_1_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/2/21671033_enfr_angle_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/2/20136554_en_2_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/2/21671033_enfr_angle_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/2/20136554_en_2_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/2/21671033_enfr_angle_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/2/20136554_en_2_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/2/21671033_enfr_angle_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/2/21671033_enfr_angle_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/2/20136554_en_2_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/2/20136554_en_2_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/3/21671033_enfr_side_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/3/20136554_en_3_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/3/21671033_enfr_side_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/3/20136554_en_3_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/3/21671033_enfr_side_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/3/20136554_en_3_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/3/21671033_enfr_side_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21671033_EA/en/3/21671033_enfr_side_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/3/20136554_en_3_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20136554_EA/en/3/20136554_en_3_120.png"
         }
       ],
       "ingredients": null,
       "isVariant": false,
-      "link": "/cerelac-rice-veggies-savoury-baby-cereal-8-months/p/21671033_EA",
+      "link": "/1-microfiltered-milk/p/20136554_EA",
       "memberOnlyPromotions": null,
       "mopDealPrice": null,
-      "name": "Cerelac Rice & Veggies Savoury Baby Cereal, 8 Months & Up",
+      "name": "1% Microfiltered Milk",
       "offerType": "OG",
-      "packageSize": "200 g",
+      "packageSize": "4 l",
       "prices": {
         "comparisonPrices": [
           {
@@ -1580,8 +1507,8 @@
             "quantity": 100,
             "reasonCode": null,
             "type": "REGULAR",
-            "unit": "g",
-            "value": 3.0
+            "unit": "ml",
+            "value": 0.16
           }
         ],
         "deposit": null,
@@ -1590,73 +1517,51 @@
         "memberOnlyComparisonPrices": [],
         "memberOnlyPrice": null,
         "price": {
-          "expiryDate": "2026-10-07T00:00",
+          "expiryDate": "2026-10-14T00:00",
           "quantity": 1,
           "reasonCode": 2,
           "type": "SPECIAL",
           "unit": "ea",
-          "value": 5.99
+          "value": 6.5
         },
         "taxInfo": "",
-        "wasPrice": null
+        "wasPrice": {
+          "expiryDate": null,
+          "quantity": 1,
+          "reasonCode": null,
+          "type": "WAS",
+          "unit": "ea",
+          "value": 7.18
+        }
       },
       "pricingUnits": {
         "interval": 1,
-        "maxOrderQuantity": 25,
+        "maxOrderQuantity": 24,
         "minOrderQuantity": 1,
         "type": "SOLD_BY_EACH",
         "unit": "ea",
         "weighted": false
       },
-      "promotions": [
-        {
-          "callToAction": null,
-          "expiryDate": "2026-08-12T23:59:59Z",
-          "pricingMethod": null,
-          "promoCode": "121062223",
-          "promoType": "0004",
-          "quantity": null,
-          "reward": "10000PC Optimum Points",
-          "savings": 10000,
-          "text": "Spend $50 in Baby",
-          "title": "PC Optimum Offer",
-          "type": "LOYALTY",
-          "value": null
-        },
-        {
-          "callToAction": null,
-          "expiryDate": "2026-10-07T00:00:00Z",
-          "pricingMethod": "3",
-          "promoCode": "700015087151",
-          "promoType": null,
-          "quantity": null,
-          "reward": "$_FIXED",
-          "savings": null,
-          "text": "PC Optimum Points",
-          "title": null,
-          "type": "DEAL",
-          "value": null
-        }
-      ],
+      "promotions": [],
       "ratings": null,
       "sellerId": null,
       "sellerName": null,
       "shoppable": true,
       "sponsored": true,
       "sponsoredCreative": {
-        "adGroupId": "3769109a-d30f-43cb-89af-8dc0044107b8",
+        "adGroupId": "bd105651-b346-44be-92e1-04cac023aa05",
         "adPlacement": {
           "adPlacementId": "6beb5e7e-c505-4fff-873e-2b57c3c71278",
           "adPlacementType": null
         },
-        "adServingId": "a5f79617-eaa0-4b05-9c2f-4bebe20d4652",
+        "adServingId": "e2d2187a-483d-4286-b1f0-bce3c6fcc8be",
         "creativeBrandId": null,
-        "creativeCampaignId": "09875d90-a800-474b-bb78-009ffac9e56f",
+        "creativeCampaignId": "802db96c-c128-4d99-8047-9bc66f6821e8",
         "creativeCost": {
           "costModel": "CPC",
-          "rate": "ZgmxUGoeavFoUKnOOM8EHU8ZFE+cxkKcHisykgmA4dQ="
+          "rate": "INHL4M1OpeI/nFyuW9bWeGptRQD2V3g2sdhO4UY+8ug="
         },
-        "creativeId": "f29175ac-92bd-405f-8348-c0c394f644bf",
+        "creativeId": "dca0778a-a2ff-44bd-8bca-f3be8b8a0de0",
         "matchType": "EXACT_MATCH",
         "searchType": "SEARCH",
         "target": "milk",
@@ -1668,13 +1573,13 @@
       "taxes": null,
       "uom": "EA",
       "upcs": [
-        "05500021381"
+        "06680000412"
       ],
       "variantTheme": null
     },
     {
       "aisle": null,
-      "articleNumber": "20149754",
+      "articleNumber": "20047439",
       "badges": {
         "dealBadge": null,
         "hotmBadge": null,
@@ -1700,54 +1605,54 @@
         "textBadge": null
       },
       "brand": "Neilson",
-      "code": "20149754_EA",
+      "code": "20047439_EA",
       "dealPrice": null,
       "description": "Fresh, wholesome milk… naturally from Neilson.Since 1893, Neilson has stood for high quality dairy products. Neilson has always been committed to using the best ingredients, people and processes to produce great tasting quality milk you can depend on. Always fresh, always delicious and always an excellent source of calcium, protein and vitamin D.",
       "fees": null,
       "hasMultipleOffers": false,
       "imageAssets": [
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/1/20149754_en_front_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/1/20047439_en_front_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/1/20149754_en_front_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/1/20047439_en_front_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/1/20149754_en_front_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/1/20047439_en_front_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/1/20149754_en_front_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/1/20149754_en_front_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/1/20047439_en_front_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/1/20047439_en_front_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/3/20149754_en_side_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/3/20047439_enfr_side_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/3/20149754_en_side_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/3/20047439_enfr_side_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/3/20149754_en_side_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/3/20047439_enfr_side_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/3/20149754_en_side_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/3/20149754_en_side_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/3/20047439_enfr_side_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/3/20047439_enfr_side_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/8/20149754_enfr_beauty_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/8/20047439_enfr_beauty_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/8/20149754_enfr_beauty_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/8/20047439_enfr_beauty_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/8/20149754_enfr_beauty_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/8/20047439_enfr_beauty_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/8/20149754_enfr_beauty_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20149754_EA/en/8/20149754_enfr_beauty_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/8/20047439_enfr_beauty_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20047439_EA/en/8/20047439_enfr_beauty_120.png"
         }
       ],
       "ingredients": null,
       "isVariant": false,
-      "link": "/2-milk/p/20149754_EA",
+      "link": "/1-milk/p/20047439_EA",
       "memberOnlyPromotions": null,
       "mopDealPrice": null,
-      "name": "2% Milk",
+      "name": "1% Milk",
       "offerType": "OG",
-      "packageSize": "1 l",
+      "packageSize": "4 l",
       "prices": {
         "comparisonPrices": [
           {
@@ -1756,7 +1661,7 @@
             "reasonCode": null,
             "type": "REGULAR",
             "unit": "ml",
-            "value": 0.36
+            "value": 0.16
           }
         ],
         "deposit": null,
@@ -1770,7 +1675,7 @@
           "reasonCode": 4,
           "type": "REGULAR",
           "unit": "ea",
-          "value": 3.64
+          "value": 6.44
         },
         "taxInfo": "",
         "wasPrice": null
@@ -1794,23 +1699,15 @@
       "taxes": null,
       "uom": "EA",
       "upcs": [
-        "06680000021"
+        "06680000057"
       ],
       "variantTheme": null
     },
     {
       "aisle": null,
-      "articleNumber": "20148677",
+      "articleNumber": "20091686",
       "badges": {
-        "dealBadge": {
-          "expiryDate": "2026-08-12T00:00:00Z",
-          "mopDealText": null,
-          "name": "SALE",
-          "points": null,
-          "promoType": null,
-          "text": "SAVE $2.20",
-          "type": "SALE"
-        },
+        "dealBadge": null,
         "hotmBadge": null,
         "loyaltyBadge": null,
         "madeInCanadaBadge": null,
@@ -1834,52 +1731,52 @@
         "textBadge": null
       },
       "brand": "Neilson",
-      "code": "20148677_EA",
+      "code": "20091686_EA",
       "dealPrice": null,
       "description": "<p>Fresh, wholesome milk… naturally from Neilson. Since 1893, Neilson has stood for high quality dairy products. Neilson has always been committed to using the best ingredients, people and processes to produce great tasting quality milk you can depend on. Always fresh, always delicious and always an excellent source of calcium, protein and vitamin D.</p>",
       "fees": null,
       "hasMultipleOffers": false,
       "imageAssets": [
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/1/20148677_en_1_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/1/20091686_en_1_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/1/20148677_en_1_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/1/20091686_en_1_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/1/20148677_en_1_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/1/20091686_en_1_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/1/20148677_en_1_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/1/20148677_en_1_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/1/20091686_en_1_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/1/20091686_en_1_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/2/20148677_en_2_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/2/20091686_en_2_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/2/20148677_en_2_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/2/20091686_en_2_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/2/20148677_en_2_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/2/20091686_en_2_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/2/20148677_en_2_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/2/20148677_en_2_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/2/20091686_en_2_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/2/20091686_en_2_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/3/20148677_en_3_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/3/20091686_en_3_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/3/20148677_en_3_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/3/20091686_en_3_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/3/20148677_en_3_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/3/20091686_en_3_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/3/20148677_en_3_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20148677_EA/en/3/20148677_en_3_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/3/20091686_en_3_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20091686_EA/en/3/20091686_en_3_120.png"
         }
       ],
       "ingredients": null,
       "isVariant": false,
-      "link": "/2-microfiltered-milk/p/20148677_EA",
+      "link": "/3-25-microfiltered-milk/p/20091686_EA",
       "memberOnlyPromotions": null,
       "mopDealPrice": null,
-      "name": "2% Microfiltered Milk",
+      "name": "3.25% Microfiltered Milk",
       "offerType": "OG",
       "packageSize": "4 l",
       "prices": {
@@ -1890,7 +1787,7 @@
             "reasonCode": null,
             "type": "REGULAR",
             "unit": "ml",
-            "value": 0.12
+            "value": 0.19
           }
         ],
         "deposit": null,
@@ -1899,22 +1796,15 @@
         "memberOnlyComparisonPrices": [],
         "memberOnlyPrice": null,
         "price": {
-          "expiryDate": "2026-08-12T00:00",
+          "expiryDate": "2026-10-14T00:00",
           "quantity": 1,
-          "reasonCode": 1,
+          "reasonCode": 2,
           "type": "SPECIAL",
           "unit": "ea",
-          "value": 4.98
+          "value": 7.75
         },
         "taxInfo": "",
-        "wasPrice": {
-          "expiryDate": null,
-          "quantity": 1,
-          "reasonCode": null,
-          "type": "WAS",
-          "unit": "ea",
-          "value": 7.18
-        }
+        "wasPrice": null
       },
       "pricingUnits": {
         "interval": 1,
@@ -1929,29 +1819,41 @@
       "sellerId": null,
       "sellerName": null,
       "shoppable": true,
-      "sponsored": false,
-      "sponsoredCreative": null,
+      "sponsored": true,
+      "sponsoredCreative": {
+        "adGroupId": "bd105651-b346-44be-92e1-04cac023aa05",
+        "adPlacement": {
+          "adPlacementId": "6beb5e7e-c505-4fff-873e-2b57c3c71278",
+          "adPlacementType": null
+        },
+        "adServingId": "e2d2187a-483d-4286-b1f0-bce3c6fcc8be",
+        "creativeBrandId": null,
+        "creativeCampaignId": "802db96c-c128-4d99-8047-9bc66f6821e8",
+        "creativeCost": {
+          "costModel": "CPC",
+          "rate": "ppbEuOenvOga/KnGNF17+ebUaEk4juWGNCdvDaP5OFs="
+        },
+        "creativeId": "911e1692-b63f-4613-b1c6-9f0fc696d336",
+        "matchType": "EXACT_MATCH",
+        "searchType": "SEARCH",
+        "target": "milk",
+        "targetAdType": "CATEGORY_ENDEMIC",
+        "targetPageType": null,
+        "targetedKeyword": "milk"
+      },
       "stockStatus": "OK",
       "taxes": null,
       "uom": "EA",
       "upcs": [
-        "06680000404"
+        "06680000401"
       ],
       "variantTheme": null
     },
     {
       "aisle": null,
-      "articleNumber": "20130270",
+      "articleNumber": "20131121",
       "badges": {
-        "dealBadge": {
-          "expiryDate": "2026-08-19T00:00:00Z",
-          "mopDealText": null,
-          "name": "SALE",
-          "points": null,
-          "promoType": null,
-          "text": "SAVE $0.28",
-          "type": "SALE"
-        },
+        "dealBadge": null,
         "hotmBadge": null,
         "loyaltyBadge": null,
         "madeInCanadaBadge": null,
@@ -1975,52 +1877,52 @@
         "textBadge": null
       },
       "brand": "Neilson",
-      "code": "20130270_EA",
+      "code": "20131121_EA",
       "dealPrice": null,
       "description": "<p>Fresh, wholesome milk… naturally from Neilson. Since 1893, Neilson has stood for high quality dairy products. Neilson has always been committed to using the best ingredients, people and processes to produce great tasting quality milk you can depend on. Always fresh, always delicious and always an excellent source of calcium, protein and vitamin D.</p>",
       "fees": null,
       "hasMultipleOffers": false,
       "imageAssets": [
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/1/20130270_en_1_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/1/20131121_en_1_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/1/20130270_en_1_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/1/20131121_en_1_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/1/20130270_en_1_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/1/20131121_en_1_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/1/20130270_en_1_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/1/20130270_en_1_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/1/20131121_en_1_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/1/20131121_en_1_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/2/20130270_en_2_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/2/20131121_en_2_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/2/20130270_en_2_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/2/20131121_en_2_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/2/20130270_en_2_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/2/20131121_en_2_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/2/20130270_en_2_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/2/20130270_en_2_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/2/20131121_en_2_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/2/20131121_en_2_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/3/20130270_en_3_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/3/20131121_en_3_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/3/20130270_en_3_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/3/20131121_en_3_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/3/20130270_en_3_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/3/20131121_en_3_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/3/20130270_en_3_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20130270_EA/en/3/20130270_en_3_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/3/20131121_en_3_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/20131121_EA/en/3/20131121_en_3_120.png"
         }
       ],
       "ingredients": null,
       "isVariant": false,
-      "link": "/2-microfiltered-milk/p/20130270_EA",
+      "link": "/3-25-microfiltered-milk/p/20131121_EA",
       "memberOnlyPromotions": null,
       "mopDealPrice": null,
-      "name": "2% Microfiltered Milk",
+      "name": "3.25% Microfiltered Milk",
       "offerType": "OG",
       "packageSize": "2 l",
       "prices": {
@@ -2031,7 +1933,7 @@
             "reasonCode": null,
             "type": "REGULAR",
             "unit": "ml",
-            "value": 0.28
+            "value": 0.32
           }
         ],
         "deposit": null,
@@ -2040,22 +1942,15 @@
         "memberOnlyComparisonPrices": [],
         "memberOnlyPrice": null,
         "price": {
-          "expiryDate": "2026-08-19T00:00",
+          "expiryDate": "9999-12-31T00:00",
           "quantity": 1,
-          "reasonCode": 2,
-          "type": "SPECIAL",
+          "reasonCode": 4,
+          "type": "REGULAR",
           "unit": "ea",
-          "value": 5.5
+          "value": 6.48
         },
         "taxInfo": "",
-        "wasPrice": {
-          "expiryDate": null,
-          "quantity": 1,
-          "reasonCode": null,
-          "type": "WAS",
-          "unit": "ea",
-          "value": 5.78
-        }
+        "wasPrice": null
       },
       "pricingUnits": {
         "interval": 1,
@@ -2070,13 +1965,33 @@
       "sellerId": null,
       "sellerName": null,
       "shoppable": true,
-      "sponsored": false,
-      "sponsoredCreative": null,
+      "sponsored": true,
+      "sponsoredCreative": {
+        "adGroupId": "bd105651-b346-44be-92e1-04cac023aa05",
+        "adPlacement": {
+          "adPlacementId": "6beb5e7e-c505-4fff-873e-2b57c3c71278",
+          "adPlacementType": null
+        },
+        "adServingId": "e2d2187a-483d-4286-b1f0-bce3c6fcc8be",
+        "creativeBrandId": null,
+        "creativeCampaignId": "802db96c-c128-4d99-8047-9bc66f6821e8",
+        "creativeCost": {
+          "costModel": "CPC",
+          "rate": "h9EjXuouuaUbiwe2QIbzLXDpJmnH1SFc1bQXS6KXrLw="
+        },
+        "creativeId": "bd21a8cc-77a2-436a-af0e-134a9324322a",
+        "matchType": "EXACT_MATCH",
+        "searchType": "SEARCH",
+        "target": "milk",
+        "targetAdType": "CATEGORY_ENDEMIC",
+        "targetPageType": null,
+        "targetedKeyword": "milk"
+      },
       "stockStatus": "OK",
       "taxes": null,
       "uom": "EA",
       "upcs": [
-        "06680000405"
+        "06680000402"
       ],
       "variantTheme": null
     },
@@ -2090,7 +2005,7 @@
           "name": "MULTI",
           "points": null,
           "promoType": "ZRP3",
-          "text": "$4.00 MIN 2",
+          "text": "$5.00 MIN 2",
           "type": "MULTI"
         },
         "hotmBadge": null,
@@ -2109,7 +2024,7 @@
       },
       "brand": "Lindt",
       "code": "20375989_EA",
-      "dealPrice": 4.0,
+      "dealPrice": 5.0,
       "description": "<p>The Lindt SWISS CLASSIC Almond Milk Chocolate Bar is crafted by Lindt Maître Chocolatiers and features whole roasted almonds enveloped in Lindt’s creamy Swiss milk chocolate. This gourmet Swiss chocolate bar makes a great gift for a friend or treat for yourself. Lindt chocolate is best stored in a cool, dry place to ensure highest quality and freshness.</p>",
       "fees": null,
       "hasMultipleOffers": false,
@@ -2186,7 +2101,7 @@
             "reasonCode": null,
             "type": "REGULAR",
             "unit": "g",
-            "value": 4.99
+            "value": 5.49
           }
         ],
         "deposit": null,
@@ -2200,7 +2115,7 @@
           "reasonCode": 4,
           "type": "REGULAR",
           "unit": "ea",
-          "value": 4.99
+          "value": 5.49
         },
         "taxInfo": "Plus tax",
         "wasPrice": null
@@ -2216,9 +2131,9 @@
       "promotions": [
         {
           "callToAction": null,
-          "expiryDate": "2026-09-02T00:00:00Z",
+          "expiryDate": "2026-11-04T00:00:00Z",
           "pricingMethod": "3",
-          "promoCode": "000002881777",
+          "promoCode": "000002895216",
           "promoType": null,
           "quantity": null,
           "reward": "$_FIXED",
@@ -2240,12 +2155,12 @@
           "adPlacementId": "6beb5e7e-c505-4fff-873e-2b57c3c71278",
           "adPlacementType": null
         },
-        "adServingId": "a5f79617-eaa0-4b05-9c2f-4bebe20d4652",
+        "adServingId": "e2d2187a-483d-4286-b1f0-bce3c6fcc8be",
         "creativeBrandId": null,
         "creativeCampaignId": "f9996052-29c0-446e-baa2-e327f4985fc0",
         "creativeCost": {
           "costModel": "CPC",
-          "rate": "QvEnXEozOxrATzPwKBHt5OGliPYYYEy6mIQ3ckaE+RM="
+          "rate": "n0d9nHd6oBreOgrBAkmkTUnScbvg9+rRiXaaG7v/wR4="
         },
         "creativeId": "c1e95489-b660-4ed8-9fcb-d7fbe443f1dc",
         "matchType": "EXACT_MATCH",
@@ -2265,23 +2180,23 @@
     },
     {
       "aisle": null,
-      "articleNumber": "21708198",
+      "articleNumber": "21436915",
       "badges": {
-        "dealBadge": {
-          "expiryDate": null,
-          "mopDealText": null,
-          "name": "MULTI",
-          "points": null,
-          "promoType": "ZRP3",
-          "text": "$3.00 MIN 2",
-          "type": "MULTI"
-        },
+        "dealBadge": null,
         "hotmBadge": null,
         "loyaltyBadge": null,
         "madeInCanadaBadge": null,
         "mustTryBadge": null,
         "newItemBadge": null,
-        "preparedInCanadaBadge": null,
+        "preparedInCanadaBadge": {
+          "expiryDate": null,
+          "mopDealText": null,
+          "name": "PREPARED_IN_CANADA",
+          "points": null,
+          "promoType": null,
+          "text": "Prepared in Canada",
+          "type": "PREPARED_IN_CANADA"
+        },
         "preparedInQuebecBadge": null,
         "productOfCanadaBadge": null,
         "promotionalBadge": null,
@@ -2290,121 +2205,132 @@
         "tariffAppliedBadge": null,
         "textBadge": null
       },
-      "brand": "Cadbury",
-      "code": "21708198_EA",
-      "dealPrice": 3.0,
-      "description": "<p>Discover the delectable Cadbury Dairy Milk Almond Creme bar, a full-sized milk chocolate bar that brings together the classic, smooth Cadbury taste with an irresistible chocolatey creme and crunchy chopped almonds. This indulgent treat is perfect for sharing moments of joy with someone special.</p><ul><li>Introducing Cadbury Dairy Milk  Almond Creme Full Size Milk chocolate bar with chocolatey creme and chopped almonds</li><li>Enjoy the classic, creamy taste of Cadbury Dairy Milk</li><li>CADBURY DAIRY MILK Almond Creme is a tasty choice for a chocolatey afternoon escape or for unwinding after dinner with loved ones while watching your favourite show. Try it in your recipes for the great taste you love</li><li>Try it in your recipes for the great taste you love</li><li>Cadbury making chocolate and spreading goodness since 1824</li></ul>",
+      "brand": "Starbucks",
+      "code": "21436915_EA",
+      "dealPrice": null,
+      "description": "<p>Now you can enjoy your favourite STARBUCKS café flavour in the comfort of your own home with STARBUCKS Almond & Oat Non Dairy Hazelnut Latte Coffee Enhancer (828 ml). Inspired by STARBUCKS Hazelnut Latte, we crafted a delicious smooth blend of almond and oat along with flavours of rich hazelnuts, so you can always look forward to enjoying your morning, afternoon or evening treat. Add this STARBUCKS enhancer to hot or iced coffee drinks as a non dairy alternative to creamer or half and half. Simply shake well before use to elevate your cup of coffee!</p><ul><li>Flavoured coffee enhancer with a smooth blend of almond and oat and added flavours of rich hazelnuts</li><li>STARBUCKS Almond & Oat Non Dairy Caramel Macchiato Coffee Enhancer (828 ml) is a delightful non dairy alternative to milk, creamer or half-and-half</li><li>Delicious in hot and cold coffee drinks with a perfectly smooth and balanced taste that pairs well with your favourite STARBUCKS roast</li><li>Only 30 calories per tablespoon (15 ml)</li><li>Proudly prepared in Canada with no artificial colours & flavours</li></ul>",
       "fees": null,
       "hasMultipleOffers": false,
       "imageAssets": [
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/1/21708198_en_front_v2_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/1/21436915_en_1_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/1/21708198_en_front_v2_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/1/21436915_en_1_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/1/21708198_en_front_v2_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/1/21436915_en_1_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/1/21708198_en_front_v2_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/1/21708198_en_front_v2_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/1/21436915_en_1_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/1/21436915_en_1_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/2/21708198_en_angle_v2_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/2/21436915_en_2_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/2/21708198_en_angle_v2_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/2/21436915_en_2_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/2/21708198_en_angle_v2_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/2/21436915_en_2_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/2/21708198_en_angle_v2_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/2/21708198_en_angle_v2_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/2/21436915_en_2_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/2/21436915_en_2_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/3/21708198_en_side_v2_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/3/21436915_en_3_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/3/21708198_en_side_v2_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/3/21436915_en_3_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/3/21708198_en_side_v2_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/3/21436915_en_3_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/3/21708198_en_side_v2_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/3/21708198_en_side_v2_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/3/21436915_en_3_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/3/21436915_en_3_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/4/21708198_en_back_v2_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/4/21436915_en_4_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/4/21708198_en_back_v2_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/4/21436915_en_4_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/4/21708198_en_back_v2_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/4/21436915_en_4_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/4/21708198_en_back_v2_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/4/21708198_en_back_v2_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/4/21436915_en_4_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/4/21436915_en_4_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/5/21708198_en_top_v2_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/5/21436915_en_5_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/5/21708198_en_top_v2_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/5/21436915_en_5_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/5/21708198_en_top_v2_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/5/21436915_en_5_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/5/21708198_en_top_v2_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/5/21708198_en_top_v2_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/5/21436915_en_5_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/5/21436915_en_5_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/6/21708198_en_open_v1_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/6/21436915_en_6_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/6/21708198_en_open_v1_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/6/21436915_en_6_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/6/21708198_en_open_v1_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/6/21436915_en_6_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/6/21708198_en_open_v1_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/6/21708198_en_open_v1_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/6/21436915_en_6_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/6/21436915_en_6_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/7/21708198_en_closed_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/7/21436915_en_7_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/7/21708198_en_closed_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/7/21436915_en_7_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/7/21708198_en_closed_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/7/21436915_en_7_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/7/21708198_en_closed_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/7/21708198_en_closed_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/7/21436915_en_7_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/7/21436915_en_7_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/8/21708198_en_beauty_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/8/21436915_en_8_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/8/21708198_en_beauty_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/8/21436915_en_8_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/8/21708198_en_beauty_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/8/21436915_en_8_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/8/21708198_en_beauty_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/8/21708198_en_beauty_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/8/21436915_en_8_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/8/21436915_en_8_120.png"
         },
         {
-          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/9/21708198_en_banner_1200.png",
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/9/21436915_en_9_1200.png",
           "imageUrl": null,
           "largeRetinaUrl": null,
-          "largeUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/9/21708198_en_banner_800.png",
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/9/21436915_en_9_800.png",
           "mediumRetinaUrl": null,
-          "mediumUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/9/21708198_en_banner_400.png",
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/9/21436915_en_9_400.png",
           "smallRetinaUrl": null,
-          "smallUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/9/21708198_en_banner_250.png",
-          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21708198_EA/en/9/21708198_en_banner_120.png"
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/9/21436915_en_9_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/9/21436915_en_9_120.png"
+        },
+        {
+          "extraLargeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/10/21436915_en_10_1200.png",
+          "imageUrl": null,
+          "largeRetinaUrl": null,
+          "largeUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/10/21436915_en_10_800.png",
+          "mediumRetinaUrl": null,
+          "mediumUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/10/21436915_en_10_400.png",
+          "smallRetinaUrl": null,
+          "smallUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/10/21436915_en_10_250.png",
+          "thumbnailUrl": "https://digital.loblaws.ca/PCX/21436915_EA/en/10/21436915_en_10_120.png"
         }
       ],
       "ingredients": null,
       "isVariant": false,
-      "link": "/dairy-milk-almond-creme/p/21708198_EA",
+      "link": "/almond-and-oat-non-dairy-hazelnut-latte-coffee-enh/p/21436915_EA",
       "memberOnlyPromotions": null,
       "mopDealPrice": null,
-      "name": "Dairy Milk Almond Creme",
+      "name": "Almond And Oat Non Dairy Hazelnut Latte Coffee Enhancer",
       "offerType": "OG",
-      "packageSize": "105 g",
+      "packageSize": "828 ml",
       "prices": {
         "comparisonPrices": [
           {
@@ -2412,8 +2338,8 @@
             "quantity": 100,
             "reasonCode": null,
             "type": "REGULAR",
-            "unit": "g",
-            "value": 3.32
+            "unit": "ml",
+            "value": 0.91
           }
         ],
         "deposit": null,
@@ -2422,59 +2348,44 @@
         "memberOnlyComparisonPrices": [],
         "memberOnlyPrice": null,
         "price": {
-          "expiryDate": "9999-12-31T00:00",
+          "expiryDate": "2026-11-04T00:00",
           "quantity": 1,
-          "reasonCode": 4,
-          "type": "REGULAR",
+          "reasonCode": 2,
+          "type": "SPECIAL",
           "unit": "ea",
-          "value": 3.49
+          "value": 7.5
         },
-        "taxInfo": "Plus tax",
+        "taxInfo": "",
         "wasPrice": null
       },
       "pricingUnits": {
         "interval": 1,
-        "maxOrderQuantity": 25,
+        "maxOrderQuantity": 24,
         "minOrderQuantity": 1,
         "type": "SOLD_BY_EACH",
         "unit": "ea",
         "weighted": false
       },
-      "promotions": [
-        {
-          "callToAction": null,
-          "expiryDate": "9999-12-31T00:00:00Z",
-          "pricingMethod": "3",
-          "promoCode": "000002893092",
-          "promoType": null,
-          "quantity": null,
-          "reward": "$_FIXED",
-          "savings": null,
-          "text": "PC Optimum Points",
-          "title": null,
-          "type": "DEAL",
-          "value": null
-        }
-      ],
+      "promotions": [],
       "ratings": null,
       "sellerId": null,
       "sellerName": null,
       "shoppable": true,
       "sponsored": true,
       "sponsoredCreative": {
-        "adGroupId": "b602d6a2-1afe-48c3-a35c-5e2c29f46070",
+        "adGroupId": "42e91c6e-c679-4bb0-a0db-9a7e13708bd2",
         "adPlacement": {
           "adPlacementId": "6beb5e7e-c505-4fff-873e-2b57c3c71278",
           "adPlacementType": null
         },
-        "adServingId": "a5f79617-eaa0-4b05-9c2f-4bebe20d4652",
+        "adServingId": "e2d2187a-483d-4286-b1f0-bce3c6fcc8be",
         "creativeBrandId": null,
-        "creativeCampaignId": "48382a22-8232-42ac-a644-293355a02c56",
+        "creativeCampaignId": "8a875295-d2ec-483e-af31-b6e32623c5d6",
         "creativeCost": {
           "costModel": "CPC",
-          "rate": "jLw8WwZvJGXp8uGe2c1Mk1xKzLAsSpAqvPBAb8xkW4s="
+          "rate": "Av4OmQObqzzaUTh0lw99dxHEDG0MSWDdohCf8bfceLE="
         },
-        "creativeId": "1f267712-db0c-49ab-bf30-154f42bfa92c",
+        "creativeId": "fb9418ee-2a87-4a5a-8aa3-cb7cd3ad43ea",
         "matchType": "EXACT_MATCH",
         "searchType": "SEARCH",
         "target": "milk",
@@ -2486,12 +2397,12 @@
       "taxes": null,
       "uom": "EA",
       "upcs": [
-        "06120001964"
+        "05500020116"
       ],
       "variantTheme": null
     }
   ],
-  "searchVariation": "PCX_SEARCH_CIMULATE:SEARCH_CIMULATE_ENABLED|PCX_SEARCH_PERSONALIZATION:P13N_DISABLED",
+  "searchVariation": "PCX_SEARCH_CIMULATE:SEARCH_CIMULATE_ENABLED|PCX_CIMULATE_RETRIEVAL_MODEL:CIMULATE_RETRIEVAL_MODEL_LATEST|PCX_SEARCH_PERSONALIZATION:P13N_DISABLED",
   "selectedCategory": null,
   "sorts": [
     {

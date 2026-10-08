@@ -89,16 +89,20 @@ PCX_APIKEY = os.environ.get("PCEXPRESS_APIKEY", "C1xujSegT5j3ap3yexJjqhOfELwGKYv
 # *headers* sent on every pcx-bff request are the raw banner key itself
 # (e.g. "loblaws", not "loblaw") -- confirmed against the working source,
 # not just docs. See api_client.py.
-# `checkout_lob` is the `lob` cookie the checkout service requires to book a
-# slot -- confirmed only for superstore; other banners can list slots
-# (their one-checkout hosts answer the same way) but not book until their
-# value is captured.
+# `checkout_host` is the website's checkout service (slots, booking,
+# checkout summary): confirmed answering for these five banners; T&T has
+# none (no DNS record). `checkout_lob` is the `lob` cookie booking needs --
+# captured only for superstore so far.
 BANNERS: dict[str, dict[str, str]] = {
-    "superstore": {"domain": "www.realcanadiansuperstore.ca", "checkout_lob": "PCXSUPER"},
-    "loblaws": {"domain": "www.loblaws.ca"},
-    "nofrills": {"domain": "www.nofrills.ca"},
-    "zehrs": {"domain": "www.zehrs.ca"},
-    "independent": {"domain": "www.yourindependentgrocer.ca"},
+    "superstore": {
+        "domain": "www.realcanadiansuperstore.ca",
+        "checkout_host": "one-checkout.realcanadiansuperstore.ca",
+        "checkout_lob": "PCXSUPER",
+    },
+    "loblaws": {"domain": "www.loblaws.ca", "checkout_host": "one-checkout.loblaws.ca"},
+    "nofrills": {"domain": "www.nofrills.ca", "checkout_host": "one-checkout.nofrills.ca"},
+    "zehrs": {"domain": "www.zehrs.ca", "checkout_host": "one-checkout.zehrs.ca"},
+    "independent": {"domain": "www.yourindependentgrocer.ca", "checkout_host": "one-checkout.yourindependentgrocer.ca"},
     "tandt": {"domain": "www.tntsupermarket.com"},
 }
 

@@ -1,0 +1,734 @@
+{
+  "checkout": {
+    "checkout_data": {
+      "allowed_payment_types": [
+        "pcf-master-card",
+        "payment-card",
+        "apple-pay",
+        "google-pay",
+        "pco-points",
+        "gift-card"
+      ],
+      "applied_promotions": [],
+      "applied_vouchers": [],
+      "banner_id": "superstore",
+      "base_points": 0,
+      "bonus_points": 0,
+      "bopis_indicator": false,
+      "cart_id": "REDACTED",
+      "cart_props": {
+        "postal_code": "REDACTED"
+      },
+      "charges": {
+        "basket_level_fees_total": 0,
+        "fulfillment_before_tax": 0,
+        "fulfillment_fee_components": [
+          {
+            "amount": 0,
+            "calculated_amount_in_cents": 0,
+            "fee_component_type": "SERVICE_FEE",
+            "fee_type": "ABSOLUTE"
+          },
+          {
+            "amount": 0,
+            "calculated_amount_in_cents": 0,
+            "fee_component_type": "DELIVERY_FEE",
+            "fee_type": "ABSOLUTE"
+          }
+        ],
+        "fulfillment_saving": 0,
+        "fulfillment_tax": 0,
+        "fulfillment_total": 0,
+        "max_redeemable_points": 60000,
+        "points_increment_and_cents_value": {
+          "10000": 1000,
+          "20000": 2000,
+          "30000": 3000,
+          "40000": 4000,
+          "50000": 5000,
+          "60000": 6000
+        },
+        "product_level_subtotal": 6075,
+        "savings_breakdown": {
+          "basket_level": {
+            "deals": 0,
+            "employee_price_reductions": 0,
+            "loyalty": 0,
+            "vouchers": 0
+          },
+          "product_level": {
+            "deals": 0,
+            "loyalty": 0,
+            "price_reductions": 0,
+            "vouchers": 0
+          }
+        },
+        "subtotal": 6075,
+        "tax_breakdown": [
+          {
+            "amount": 175,
+            "rate": 0,
+            "tax": 0,
+            "type": "HST"
+          },
+          {
+            "amount": 5900,
+            "rate": 13,
+            "tax": 767,
+            "type": "HST"
+          }
+        ],
+        "tip": 0,
+        "total": 6842,
+        "total_before_redemption": 6842,
+        "total_discount": 0,
+        "total_tax": 767
+      },
+      "colleague": false,
+      "colleague_discount_active": false,
+      "contains_alcohol": false,
+      "created_at": "2026-10-07T20:31:34.162Z",
+      "created_timestamp": 1791405094162,
+      "currency": "CAD",
+      "customer_email": "REDACTED",
+      "customer_id": "REDACTED",
+      "employee_discount": 0,
+      "fulfillment": {
+        "delivery_details": {
+          "shipping_info": {
+            "address_data": "REDACTED",
+            "shipping_address_id": "REDACTED",
+            "version": "REDACTED"
+          }
+        },
+        "fulfillment_type": "DELIVERY",
+        "props": {},
+        "time_slot": {
+          "account_id": "REDACTED",
+          "booking_id": "REDACTED",
+          "end_time": "2026-10-08T13:30:00Z",
+          "expiry_time": "2026-10-07T21:38:57.382Z",
+          "location_id": "1024PCXD",
+          "slot_type": "NEXT_DAY",
+          "start_time": "2026-10-08T12:30:00Z",
+          "store_name": "Real Canadian Superstore Oak Park Drive",
+          "store_time_zone": "America/Toronto"
+        }
+      },
+      "ineligible_vouchers": [],
+      "locale": "en-CA",
+      "order_id": "REDACTED",
+      "order_items": [
+        {
+          "applied_promotions": [],
+          "base_total": 175,
+          "base_unit_price": 175,
+          "brand_name_en": "Un-Branded",
+          "brand_name_fr": "Un-Branded (sans marque)",
+          "cart_props": {},
+          "description_en": "Bananas are a versatile addition to your kitchen. Slice them over your morning cereal for a nutritious start to the day or blend them into a smoothie for a quick, refreshing beverage. These bananas come in a convenient bunch, making it easy to keep your fruit bowl stocked. Their natural sweetness and soft texture make them a favourite for snacks and baking. Enjoy the convenience of having fresh bananas on hand for various uses throughout the week.",
+          "description_fr": "Les bananes constituent un ingrédient aux multiples usages dans votre cuisine. Tranchez-les sur vos céréales du matin pour commencer la journée avec un déjeuner nourrissant ou mélangez-les dans un smoothie pour savourer une boisson rafraîchissante rapide à préparer. Ces bananes se présentent sous forme de grappe pratique permettant de garder votre coupe de fruits bien remplie. Leur saveur sucrée naturelle et leur texture moelleuse en font un ingrédient favori pour les collations et la pâtisserie. Profitez de la commodité d’avoir des bananes fraîches à portée de main pour différentes utilisations tout au long de la semaine.",
+          "discount": 0,
+          "fees": {
+            "activation_fee": 0,
+            "ehf_total": 0
+          },
+          "final_unit_price": 175,
+          "item_type": "REGULAR",
+          "liam": "20175355001_KG",
+          "net_content": 1,
+          "net_content_uom": "KG",
+          "original_quantity": 1,
+          "original_unit_price": 175,
+          "points_earned": 0,
+          "points_earned_breakdown": {
+            "base_points": 0,
+            "bonus_points": 0
+          },
+          "product_code": "4011",
+          "product_data": {
+            "badges": [
+              {
+                "description": {
+                  "label_pdp_primary": {
+                    "text_format": "Previously Purchased",
+                    "values": []
+                  },
+                  "label_plp_primary": {
+                    "text_format": "Previously Purchased",
+                    "values": []
+                  }
+                },
+                "priority": 11,
+                "priority_group": "1",
+                "type": "PreviouslyPurchased",
+                "uid": "REDACTED"
+              }
+            ],
+            "inventory_details": {
+              "stock_status": "OK"
+            },
+            "liam": "20175355001_KG",
+            "nav_categories": [
+              [
+                {
+                  "category_code": "27985",
+                  "name": "Food",
+                  "url": "/food/c/27985"
+                },
+                {
+                  "category_code": "28000",
+                  "name": "Fruits & Vegetables",
+                  "url": "/fruits-vegetables/c/28000"
+                },
+                {
+                  "category_code": "28194",
+                  "name": "Fresh Fruits",
+                  "url": "/fresh-fruits/c/28194"
+                },
+                {
+                  "category_code": "29724",
+                  "name": "Bananas",
+                  "url": "/bananas/c/29724"
+                }
+              ]
+            ],
+            "offer_type": "OG",
+            "prices": {
+              "additional_comparison_prices": [
+                {
+                  "quantity": 1,
+                  "unit": "LB",
+                  "value": 69
+                }
+              ],
+              "comparison_prices": [
+                {
+                  "quantity": 1,
+                  "unit": "KG",
+                  "value": 152
+                }
+              ],
+              "regular_price": {
+                "expiry_date": "9999-12-31T00:00:00Z",
+                "quantity": 1,
+                "reason_code": 4,
+                "unit": "EA",
+                "value": 175
+              },
+              "tax_breakdown": [],
+              "was_price": {
+                "quantity": 1,
+                "unit": "EA",
+                "value": 175
+              }
+            },
+            "pricing_units": {
+              "interval": 1,
+              "max_order_quantity": 24,
+              "min_order_quantity": 1,
+              "type": "SOLD_BY_EACH_PRICED_BY_WEIGHT",
+              "unit": "EA",
+              "weighted": false
+            },
+            "product_details": {
+              "aisle": "Fruits & Vegetables",
+              "article_number": "20175355001",
+              "average_weight": "1.15",
+              "brand": {
+                "brand_displayable": false,
+                "code": "UNBR",
+                "control_brand": false,
+                "name": "Un-Branded",
+                "sub_brand": {}
+              },
+              "description": "Bananas are a versatile addition to your kitchen. Slice them over your morning cereal for a nutritious start to the day or blend them into a smoothie for a quick, refreshing beverage. These bananas come in a convenient bunch, making it easy to keep your fruit bowl stocked. Their natural sweetness and soft texture make them a favourite for snacks and baking. Enjoy the convenience of having fresh bananas on hand for various uses throughout the week.",
+              "dietary_callouts": {},
+              "image_assets": [
+                {
+                  "file_extension": "png",
+                  "file_name": "20175355001_enfr_front_v1",
+                  "host_lob": "PCX",
+                  "is_primary": true,
+                  "language": "en",
+                  "presentation_order": 1,
+                  "presentation_type": "regular",
+                  "sizes": [
+                    32,
+                    120,
+                    250,
+                    400,
+                    800,
+                    1200
+                  ]
+                }
+              ],
+              "image_dimension_url_template": "https://digital.loblaws.ca/{host_lob}/{liam}/{language}/{presentation_order}/{file_name}_{width}_{height}.{file_extension}",
+              "image_url_template": "https://digital.loblaws.ca/{host_lob}/{liam}/{language}/{presentation_order}/{file_name}_{size}.{file_extension}",
+              "is_variant": false,
+              "link": {
+                "en": "/bananas-bunch/p/20175355001_KG",
+                "fr": "/bananes-grappe/p/20175355001_KG"
+              },
+              "mch_code": "M02270102",
+              "name": "Bananas, Bunch",
+              "package_size": "",
+              "restricted_pickup_types": [],
+              "secondary_attributes": {},
+              "size": "1.0",
+              "size_uom": "EA",
+              "tags": [],
+              "type": "regular",
+              "uom": "KG",
+              "upc": "4011"
+            },
+            "promotions": [],
+            "ratings": {
+              "answered_questions": 0,
+              "average_rating": 3.67,
+              "rating_count": 3,
+              "review_count": 3
+            },
+            "relative_delivery_quantity": 1,
+            "shoppable": true,
+            "specifications": {}
+          },
+          "product_level_subtotal": 175,
+          "product_name": "Bananas, Bunch",
+          "promotions": [],
+          "quantity": 1,
+          "recycling_fee": 0,
+          "savings_breakdown": {
+            "basket_level": {
+              "deals": 0,
+              "employee_price_reductions": 0,
+              "loyalty": 0,
+              "vouchers": 0
+            },
+            "product_level": {
+              "deals": 0,
+              "loyalty": 0,
+              "price_reductions": 0,
+              "vouchers": 0
+            }
+          },
+          "selling_type": "SOLD_BY_EACH_PRICED_BY_WEIGHT",
+          "size": "",
+          "sku": "20175355001",
+          "sold_by_unit": 1,
+          "sold_by_uom": "EA",
+          "store_id": "1024",
+          "substitution": {
+            "allowed": false
+          },
+          "subtotal": 175,
+          "tax_breakdown": [
+            {
+              "amount": 175,
+              "rate": 0,
+              "tax": 0,
+              "type": "HST"
+            }
+          ],
+          "tax_exemptions": {
+            "gst": "false",
+            "gst_exempt_tax_flag": "",
+            "hst": "false",
+            "ppft": "false",
+            "prepared_food_tax_type": "N",
+            "pst": "false",
+            "spft": "false"
+          },
+          "total": 175,
+          "unit_of_measurement": "KG",
+          "upc": "4011",
+          "weight_tolerance_percent": 75
+        },
+        {
+          "applied_promotions": [],
+          "base_total": 5900,
+          "base_unit_price": 5900,
+          "brand_name_en": "Joe Fresh",
+          "brand_name_fr": "Joe Fresh",
+          "cart_props": {},
+          "color_en": "Dark Brown",
+          "color_fr": "Brun Foncé",
+          "description_en": "These men's Chelsea boots are perfect for cooler days. The pull-on design makes them easy to slip on and go. A chunky lug sole adds rugged style to every step.",
+          "description_fr": "Ces bottines cambrées pour hommes sont parfaites par temps froid. Sans attache, elles sont faciles à enfiler avant de sortir. L’épaisse semelle crantée ajoute un style robuste à chacun de vos pas.",
+          "discount": 0,
+          "fees": {
+            "activation_fee": 0,
+            "ehf_total": 0
+          },
+          "final_unit_price": 5900,
+          "item_type": "REGULAR",
+          "liam": "F6MR074735001_EA",
+          "net_content": 1,
+          "net_content_uom": "EA",
+          "original_quantity": 1,
+          "original_unit_price": 5900,
+          "points_earned": 0,
+          "points_earned_breakdown": {
+            "base_points": 0,
+            "bonus_points": 0
+          },
+          "product_code": "88858239708",
+          "product_data": {
+            "badges": [
+              {
+                "description": {
+                  "label_pdp_primary": {
+                    "text_format": "New",
+                    "values": []
+                  },
+                  "label_plp_primary": {
+                    "text_format": "New",
+                    "values": []
+                  }
+                },
+                "priority": 12,
+                "priority_group": "1",
+                "type": "New",
+                "uid": "REDACTED"
+              },
+              {
+                "description": {
+                  "label_pdp_primary": {
+                    "text_format": "LOW STOCK",
+                    "values": []
+                  },
+                  "label_plp_primary": {
+                    "text_format": "LOW STOCK",
+                    "values": []
+                  }
+                },
+                "priority": 2,
+                "priority_group": "3",
+                "type": "INVENTORY",
+                "uid": "REDACTED"
+              }
+            ],
+            "inventory_details": {
+              "stock_status": "LOW"
+            },
+            "liam": "F6MR074735001_EA",
+            "nav_categories": [
+              [
+                {
+                  "category_code": "56017",
+                  "name": "Joe Fresh",
+                  "url": "/joe-fresh/c/56017"
+                },
+                {
+                  "category_code": "56216",
+                  "name": "Men",
+                  "url": "/men/c/56216"
+                },
+                {
+                  "category_code": "56253",
+                  "name": "Men's Shoes",
+                  "url": "/men-s-shoes/c/56253"
+                },
+                {
+                  "category_code": "56254",
+                  "name": "Boots",
+                  "url": "/boots/c/56254"
+                }
+              ]
+            ],
+            "offer_type": "JF",
+            "prices": {
+              "comparison_prices": [
+                {
+                  "quantity": 1,
+                  "unit": "EA",
+                  "value": 5900
+                }
+              ],
+              "regular_price": {
+                "expiry_date": "9999-12-31T00:00:00Z",
+                "quantity": 1,
+                "reason_code": 4,
+                "unit": "EA",
+                "value": 5900
+              },
+              "tax_breakdown": []
+            },
+            "pricing_units": {
+              "interval": 1,
+              "max_order_quantity": 25,
+              "min_order_quantity": 1,
+              "type": "SOLD_BY_EACH",
+              "unit": "EA",
+              "weighted": false
+            },
+            "product_details": {
+              "aisle": "Joe Fresh",
+              "article_number": "F6MR074735001",
+              "brand": {
+                "brand_displayable": true,
+                "code": "JOE",
+                "control_brand": true,
+                "name": "Joe Fresh",
+                "sub_brand": {}
+              },
+              "description": "These men's Chelsea boots are perfect for cooler days. The pull-on design makes them easy to slip on and go. A chunky lug sole adds rugged style to every step.",
+              "dietary_callouts": {},
+              "image_assets": [
+                {
+                  "angle": "forward-facing",
+                  "file_extension": "jpeg",
+                  "file_name": "f6mr074735_dark_brown_lay_down_forward-facing",
+                  "host_lob": "JF",
+                  "is_primary": true,
+                  "language": "en",
+                  "presentation_order": 17,
+                  "presentation_type": "layDown",
+                  "sizes": [
+                    32,
+                    120,
+                    250,
+                    400,
+                    800,
+                    1200,
+                    2000
+                  ]
+                },
+                {
+                  "angle": "left-facing",
+                  "file_extension": "jpeg",
+                  "file_name": "f6mr074735_dark_brown_lay_down_left-facing",
+                  "host_lob": "JF",
+                  "is_primary": false,
+                  "language": "en",
+                  "presentation_order": 18,
+                  "presentation_type": "layDown",
+                  "sizes": [
+                    32,
+                    120,
+                    250,
+                    400,
+                    800,
+                    1200,
+                    2000
+                  ]
+                },
+                {
+                  "angle": "rear-facing",
+                  "file_extension": "jpeg",
+                  "file_name": "f6mr074735_dark_brown_lay_down_rear-facing",
+                  "host_lob": "JF",
+                  "is_primary": false,
+                  "language": "en",
+                  "presentation_order": 20,
+                  "presentation_type": "layDown",
+                  "sizes": [
+                    32,
+                    120,
+                    250,
+                    400,
+                    800,
+                    1200,
+                    2000
+                  ]
+                },
+                {
+                  "angle": "forward-facing",
+                  "file_extension": "jpeg",
+                  "file_name": "f6mr074735_dark_brown_swatch_forward-facing",
+                  "host_lob": "JF",
+                  "is_primary": false,
+                  "language": "en",
+                  "presentation_order": 99,
+                  "presentation_type": "swatch",
+                  "sizes": [
+                    32,
+                    120,
+                    250,
+                    400,
+                    800,
+                    1200,
+                    2000
+                  ]
+                }
+              ],
+              "image_dimension_url_template": "https://digital.loblaws.ca/{host_lob}/{liam}/{language}/{presentation_order}/{file_name}_{width}_{height}.{file_extension}",
+              "image_url_template": "https://digital.loblaws.ca/{host_lob}/{liam}/{language}/{presentation_order}/{file_name}_{size}.{file_extension}",
+              "is_variant": true,
+              "link": {
+                "en": "/men-s-chelsea-boots/p/F6MR074735001_EA",
+                "fr": "/bottines-cambr-es-pour-hommes/p/F6MR074735001_EA"
+              },
+              "mch_code": "M08431101",
+              "name": "Men's Chelsea Boots",
+              "package_size": "1 ea",
+              "primary_variant": true,
+              "secondary_attributes": {},
+              "size": "1.0",
+              "size_uom": "EA",
+              "tags": [
+                "men-new-arrivals",
+                "m-new-nouveau",
+                "adults-footwear-promo"
+              ],
+              "type": "regular",
+              "uom": "EA",
+              "upc": "88858239708",
+              "variant_group": "F6MR074735_EA",
+              "variant_template": [
+                "color",
+                "size"
+              ],
+              "variant_theme": {
+                "color": {
+                  "actual": "Dark Brown",
+                  "standard": "Brown",
+                  "url": "https://digital.loblaws.ca/JF/F6MR074735001_EA/en/99/f6mr074735_dark_brown_swatch_forward-facing_32.jpeg"
+                },
+                "denomination": {},
+                "size": {
+                  "actual": "10",
+                  "sort_rank": 50,
+                  "standard": ""
+                }
+              }
+            },
+            "promotions": [
+              {
+                "code": "121530278",
+                "details": {
+                  "broad_reward_type": "POINTS",
+                  "offer_id": "150035153876",
+                  "offer_type": "3",
+                  "priority": 50,
+                  "product_text": "on apparel. In-store and online at www.joefresh.com ",
+                  "promo_restrictions": {
+                    "spend": {
+                      "max": 12000,
+                      "min": 12000
+                    },
+                    "stackability": {
+                      "limit": 1
+                    }
+                  },
+                  "qualification_text_part_1": "When you spend",
+                  "qualification_text_part_2": "or more",
+                  "qualification_threshold": 12000,
+                  "qualification_threshold_units": "DOLLARS",
+                  "reward_type": "POINTS",
+                  "rewards": [
+                    {
+                      "restrictions": {},
+                      "value": "30000"
+                    }
+                  ]
+                },
+                "id": "LOYALTY-116001077",
+                "type": "LOYALTY",
+                "valid_from": "2026-10-08T00:00:00Z",
+                "valid_to": "2026-10-14T23:59:59Z"
+              }
+            ],
+            "relative_delivery_quantity": 1,
+            "shoppable": true,
+            "specifications": {
+              "en": {
+                "closure_type": "Slip-on",
+                "delivery": "Fall 2",
+                "detail_and_care": [],
+                "fiber_content": "90% Synthetic Material 10% Polyester",
+                "lining_type": "Textile",
+                "lp_sustainable_main_material": false,
+                "main_material_l2": "Polyurethane",
+                "product_sub_class": "Short",
+                "sole_type": "Cemented",
+                "style_code": "F6MR074735"
+              },
+              "fr": {
+                "detail_and_care": [],
+                "fiber_content": "100 % matière synthétique",
+                "lining_type": "Textile",
+                "lp_sustainable_main_material": false,
+                "main_material_l2": "Polyuréthane",
+                "product_sub_class": "Short",
+                "style_code": "F6MR074735"
+              }
+            }
+          },
+          "product_level_subtotal": 5900,
+          "product_name": "Men's Chelsea Boots",
+          "promotions": [],
+          "quantity": 1,
+          "recycling_fee": 0,
+          "savings_breakdown": {
+            "basket_level": {
+              "deals": 0,
+              "employee_price_reductions": 0,
+              "loyalty": 0,
+              "vouchers": 0
+            },
+            "product_level": {
+              "deals": 0,
+              "loyalty": 0,
+              "price_reductions": 0,
+              "vouchers": 0
+            }
+          },
+          "selling_type": "SOLD_BY_EACH",
+          "size": "10",
+          "sku": "F6MR074735001",
+          "sold_by_unit": 1,
+          "sold_by_uom": "EA",
+          "store_id": "1024",
+          "style_number": "F6MR074735",
+          "substitution": {
+            "allowed": true
+          },
+          "subtotal": 5900,
+          "tax_breakdown": [
+            {
+              "amount": 5900,
+              "rate": 13,
+              "tax": 767,
+              "type": "HST"
+            }
+          ],
+          "tax_exemptions": {
+            "gst": "false",
+            "gst_exempt_tax_flag": "",
+            "hst": "true",
+            "ppft": "false",
+            "prepared_food_tax_type": "N",
+            "pst": "false",
+            "spft": "false"
+          },
+          "total": 5900,
+          "unit_of_measurement": "EA",
+          "upc": "88858239708"
+        }
+      ],
+      "payment_methods": [
+        {
+          "amount_to_be_charged": "REDACTED",
+          "last_4_digits": "REDACTED",
+          "payment_method_id": "REDACTED",
+          "payment_type": "REDACTED"
+        }
+      ],
+      "points_earned": 0,
+      "points_redeemed": 0,
+      "points_redeemed_dollar_value": 0,
+      "pre_fulfillment_state": {},
+      "sdm_store_number": 0,
+      "seller_id": "1024",
+      "state": "ORDER_PREPARING",
+      "store_pickup": false,
+      "tenant_id": "ONLINE_GROCERIES",
+      "total_amount_due_on_credit_card": 6842,
+      "total_amount_redeemed_on_gift_card": 0,
+      "updated_at": "2026-10-07T20:38:59.127Z",
+      "updated_timestamp": 1791405539127
+    }
+  },
+  "errors": []
+}

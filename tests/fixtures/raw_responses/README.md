@@ -3,7 +3,10 @@
 Real (anonymized) captures of this project's own account's API responses,
 one file per endpoint (`get_cart`, `get_profile`, `get_customer_promotions`,
 `search_products`, `get_pickup_location`, `get_historical_orders`,
-`get_historical_order`, `openfoodfacts_product`). Regenerate with
+`get_historical_order`, `get_delivery_slots`, `get_checkout`,
+`openfoodfacts_product`, `book_delivery_slot`). `book_delivery_slot` is the
+exception to "captured by the script": booking changes the real cart, so
+it's hand-trimmed from a user-supplied web checkout capture instead. Regenerate with
 `python scripts/capture_snapshots.py` against your own logged-in account --
 **read that script's docstring and manually review every file before
 committing a refresh**; a first pass at automated redaction here genuinely

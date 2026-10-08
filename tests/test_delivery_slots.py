@@ -180,6 +180,135 @@ def test_checkout_summary_is_in_dollars_without_personal_details():
         }
     }
     result = server._simplify_checkout(raw)
-    assert (result["subtotal"], result["tax"], result["delivery_fee"], result["total"]) == (60.75, 7.67, 5.99, 68.42)
-    assert result["slot"]["start"] == "2026-10-08T12:30:00Z"
+    assert (result["subtotal"], result["tax"], result["total"]) == (60.75, 7.67, 68.42)
+    assert result["fees"] == {"service_fee": 0.0, "delivery_fee": 5.99}
+    assert "slot" not in result  # UTC there; cart_summary.slot has it in store time
     assert "Example" not in str(result) and "@" not in str(result)
+
+
+# --- cases reproduced in review, and real-fixture checks ------------------
+
+import json  # noqa: E402
+
+import pytest  # noqa: E402
+
+from pc_express_mcp.api_client import PcxApiError  # noqa: E402
+
+FIXTURES = Path(__file__).resolve().parent / "fixtures" / "raw_responses"
+
+
+def _load(name):
+    return json.loads((FIXTURES / f"{name}.json").read_text())
+
+
+def test_real_cart_yields_its_delivery_target():
+    assert server._cart_delivery_target(_load("get_cart")) == ("1024PCXD", "REDACTED")
+
+
+def test_pickup_cart_with_a_stale_courier_block_is_not_a_delivery_target():
+    cart = _load("get_cart")
+    cart["orders"][0]["fulfillment"]["type"] = "pickupBooking"
+    assert server._cart_delivery_target(cart) == (None, None)
+
+
+def test_real_slot_list_parses(monkeypatch):
+    api = _FakeApi()
+    api.get_delivery_slots = lambda *a: _load("get_delivery_slots")
+    _patch(monkeypatch, api)
+    monkeypatch.setattr(server, "_get_cart_healing", lambda a, s: _load("get_cart"))
+    result = server.get_available_slots(days=1)
+    assert result["location_id"] == "1024PCXD"
+    first_date = result["dates_available"][0]
+    assert {"start", "end", "fee", "type"} <= set(result["slots"][first_date][0])
+
+
+def test_expired_hold_is_flagged_on_the_real_cart():
+    """The real cart still lists yesterday's hold after it expired."""
+    slot = server._simplify_cart(_load("get_cart"))["slot"]
+    assert slot["start"] and slot["hold_active"] is False
+
+
+def test_real_booking_response_parses(monkeypatch):
+    api = _FakeApi()
+    api.book_delivery_slot = lambda *a: _load("book_delivery_slot")
+    _patch(monkeypatch, api)
+    result = server.book_delivery_slot("2026-10-08", "08:30")
+    assert result["booked"]["hold_expires_at"] == "2026-10-07T21:32:38.047Z"
+    assert result["warnings"][0]["code"] == "LOW_STOCK"
+
+
+def test_booking_with_no_hold_in_the_response_is_not_reported_as_booked(monkeypatch):
+    api = _FakeApi()
+    api.book_delivery_slot = lambda *a: {"errors": [{"code": "UPSTREAM_ERROR", "error_detail": {"code": "SLOT_FULL"}}]}
+    _patch(monkeypatch, api)
+    result = server.book_delivery_slot("2026-10-08", "08:30")
+    assert result["error"] == "not_booked"
+    assert result["warnings"][0]["code"] == "SLOT_FULL"
+
+
+def test_an_unavailable_slot_does_not_shadow_an_available_one_at_the_same_time(monkeypatch):
+    api = _FakeApi()
+    api.get_delivery_slots = lambda *a: {
+        "1024PCXD": {"timeslots": [_slot("2026-10-09", "08:30", "09:00", False, 3, "DELIVERY_IMMEDIATE"), _slot("2026-10-09", "08:30", "09:30", True)]}
+    }
+    _patch(monkeypatch, api)
+    assert "booked" in server.book_delivery_slot("2026-10-09", "08:30")
+    assert api.booked == [("2026-10-09", "08:30", "09:30")]
+
+
+def test_days_below_one_still_returns_one_day(monkeypatch):
+    _patch(monkeypatch, _FakeApi())
+    assert len(server.get_available_slots(days=-1)["slots"]) == 1
+
+
+def test_real_checkout_summary_parses_without_personal_data():
+    raw = _load("get_checkout")
+    result = server._simplify_checkout(raw)
+    charges = raw["checkout"]["checkout_data"]["charges"]
+    assert result["total"] == charges["total"] / 100
+    assert result["fulfillment_type"] == "DELIVERY"
+    assert round(result["subtotal"] + sum(result["fees"].values()) + result["tip"] + result["tax"] - result["discount"], 2) == result["total"]
+
+
+def test_checkout_service_non_json_and_network_errors_become_api_errors(monkeypatch):
+    import httpx
+
+    api = PCExpressAPI(token_manager=type("T", (), {"get_access_token": lambda self, c: "tok"})(), banner="superstore")
+    html = httpx.Response(200, text="<!DOCTYPE html><title>Site Under Maintenance</title>")
+    monkeypatch.setattr(api._client, "request", lambda *a, **kw: html)
+    with pytest.raises(PcxApiError, match="non-JSON"):
+        api.book_delivery_slot("cart-1", "2026-10-08", "08:30", "09:30", "1024PCXD", "L6H 0A0")
+
+    def boom(*a, **kw):
+        raise httpx.ConnectError("no route")
+
+    monkeypatch.setattr(api._client, "request", boom)
+    with pytest.raises(PcxApiError, match="ConnectError"):
+        api.get_checkout("cart-1")
+
+
+def test_checkout_service_401_does_not_burn_the_refresh_token(monkeypatch):
+    import httpx
+
+    class _Tokens:
+        refreshed = 0
+
+        def get_access_token(self, client):
+            return "tok"
+
+        def force_refresh(self, client):
+            self.refreshed += 1
+
+    tokens = _Tokens()
+    api = PCExpressAPI(token_manager=tokens, banner="nofrills")
+    monkeypatch.setattr(api._client, "request", lambda *a, **kw: httpx.Response(401, json={}))
+    with pytest.raises(PcxApiError):
+        api.get_checkout("cart-1")
+    assert tokens.refreshed == 0
+
+
+def test_banner_without_a_checkout_service_degrades_cleanly():
+    api = PCExpressAPI(token_manager=None, banner="tandt")
+    assert api.checkout_page_url() == "https://www.tntsupermarket.com/"
+    with pytest.raises(PcxApiError, match="No checkout service"):
+        api.get_checkout("cart-1")

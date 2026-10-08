@@ -1,0 +1,135 @@
+{
+  "1024PCXD": {
+    "locationDetails": {
+      "storeOpenHours": {
+        "canonicalZoneId": "America/Toronto",
+        "endDateTime": "2026-10-07T23:00:00",
+        "openNow": false,
+        "startDateTime": "2026-10-07T07:00:00",
+        "storeDate": "2026-10-07"
+      }
+    },
+    "timeslots": [
+      {
+        "available": true,
+        "capacities": {
+          "GENERAL": 9,
+          "HEALTHCARE": 0,
+          "IMMEDIACY_GENERAL": 0,
+          "PCI": 0,
+          "SENIOR": 0
+        },
+        "charge": 0,
+        "date": "2026-10-08",
+        "endTime": "09:30",
+        "fulfillmentMode": "INTERNAL",
+        "fulfillmentType": "DELIVERY",
+        "immediacy": false,
+        "pickupLocationId": "1024PCXD",
+        "slotType": "DELIVERY_SAME_DAY",
+        "startTime": "08:30",
+        "totalCapacity": 9
+      },
+      {
+        "available": false,
+        "capacities": {
+          "GENERAL": 7,
+          "HEALTHCARE": 0,
+          "IMMEDIACY_GENERAL": 0,
+          "PCI": 0,
+          "SENIOR": 0
+        },
+        "charge": 0,
+        "date": "2026-10-08",
+        "endTime": "10:00",
+        "fulfillmentMode": "INTERNAL",
+        "fulfillmentType": "DELIVERY",
+        "immediacy": false,
+        "pickupLocationId": "1024PCXD",
+        "slotType": "DELIVERY_SAME_DAY",
+        "startTime": "09:00",
+        "totalCapacity": 7
+      },
+      {
+        "available": true,
+        "capacities": {
+          "GENERAL": 7,
+          "HEALTHCARE": 0,
+          "IMMEDIACY_GENERAL": 0,
+          "PCI": 0,
+          "SENIOR": 0
+        },
+        "charge": 0,
+        "date": "2026-10-08",
+        "endTime": "10:30",
+        "fulfillmentMode": "INTERNAL",
+        "fulfillmentType": "DELIVERY",
+        "immediacy": false,
+        "pickupLocationId": "1024PCXD",
+        "slotType": "DELIVERY_SAME_DAY",
+        "startTime": "09:30",
+        "totalCapacity": 7
+      },
+      {
+        "available": true,
+        "capacities": {
+          "GENERAL": 9,
+          "HEALTHCARE": 0,
+          "IMMEDIACY_GENERAL": 0,
+          "PCI": 0,
+          "SENIOR": 0
+        },
+        "charge": 0,
+        "date": "2026-10-08",
+        "endTime": "09:30",
+        "fulfillmentMode": "INTERNAL",
+        "fulfillmentType": "DELIVERY",
+        "immediacy": false,
+        "pickupLocationId": "1024PCXD",
+        "slotType": "DELIVERY_SAME_DAY",
+        "startTime": "08:30",
+        "totalCapacity": 9
+      },
+      {
+        "available": true,
+        "capacities": {
+          "GENERAL": 7,
+          "HEALTHCARE": 0,
+          "IMMEDIACY_GENERAL": 0,
+          "PCI": 0,
+          "SENIOR": 0
+        },
+        "charge": 0,
+        "date": "2026-10-08",
+        "endTime": "10:30",
+        "fulfillmentMode": "INTERNAL",
+        "fulfillmentType": "DELIVERY",
+        "immediacy": false,
+        "pickupLocationId": "1024PCXD",
+        "slotType": "DELIVERY_SAME_DAY",
+        "startTime": "09:30",
+        "totalCapacity": 7
+      },
+      {
+        "available": true,
+        "capacities": {
+          "GENERAL": 7,
+          "HEALTHCARE": 0,
+          "IMMEDIACY_GENERAL": 0,
+          "PCI": 0,
+          "SENIOR": 0
+        },
+        "charge": 0,
+        "date": "2026-10-08",
+        "endTime": "11:00",
+        "fulfillmentMode": "INTERNAL",
+        "fulfillmentType": "DELIVERY",
+        "immediacy": false,
+        "pickupLocationId": "1024PCXD",
+        "slotType": "DELIVERY_SAME_DAY",
+        "startTime": "10:00",
+        "totalCapacity": 7
+      }
+    ]
+  }
+}

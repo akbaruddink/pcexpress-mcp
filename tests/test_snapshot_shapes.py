@@ -128,6 +128,13 @@ def test_simplify_order_detail_against_real_snapshot():
     assert result["item_count"] > 0
     for item in result["items"]:
         assert item["name"] is not None
+        # Suffixed: the bare articleNumber is silently ignored by cart writes.
+        assert "_" in item["code"]
+    # This real order has a driver tip and stamp lines; they're not products.
+    assert {a["kind"] for a in result["adjustments"]} == {"tip", "stamps"}
+    assert any(i.get("weight_kg") for i in result["items"])
+    total = result["products_total"] + result["tip"] + result["tax"] - result["points_value"]
+    assert round(total, 2) == result["total_price"]
 
 
 def test_simplify_order_summary_against_real_snapshot():

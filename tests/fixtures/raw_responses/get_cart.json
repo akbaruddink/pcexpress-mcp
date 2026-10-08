@@ -9,34 +9,47 @@
   "id": "REDACTED",
   "minCartValue": 30.0,
   "minPCXPassCartValue": 30.0,
-  "modifiedTime": "2026-08-09T13:23:39.109Z",
+  "modifiedTime": "2026-10-07T20:38:58.478Z",
   "orderAggregations": {
     "live": null,
     "open": {
-      "taxBreakdown": [],
+      "taxBreakdown": [
+        {
+          "rate": 0.0,
+          "tax": 0,
+          "taxType": "HST",
+          "totalProductPrice": 175
+        },
+        {
+          "rate": 13.0,
+          "tax": 767,
+          "taxType": "HST",
+          "totalProductPrice": 5900
+        }
+      ],
       "totals": {
         "additionalFees": 0.0,
-        "estimatedTotal": 27.21,
-        "subTotal": 27.21,
+        "estimatedTotal": 60.75,
+        "subTotal": 60.75,
         "totalCourierFee": 0.0,
         "totalDeliveryFee": 0.0,
         "totalDeliveryTip": null,
         "totalDeposit": null,
         "totalDiscounts": 0.0,
         "totalEnvironmentalHandlingFee": null,
-        "totalGiftCardAmount": 0,
+        "totalGiftCardAmount": null,
         "totalLoyaltyDiscount": 0.0,
         "totalLoyaltyPoints": null,
         "totalMemberOnlySavings": 0.0,
         "totalPickupFee": null,
-        "totalPointsToRedeem": null,
+        "totalPointsToRedeem": 0,
         "totalPreauth": null,
-        "totalPrice": 28.06,
+        "totalPrice": 68.42,
         "totalProductDiscounts": 0.0,
-        "totalRedeemablePrice": 0,
-        "totalServiceFee": null,
+        "totalRedeemablePrice": 60,
+        "totalServiceFee": 0.0,
         "totalShippingFee": null,
-        "totalTax": 0.85,
+        "totalTax": 7.67,
         "totalVoucherDiscounts": 0.0
       }
     }
@@ -59,8 +72,8 @@
       },
       "entries": [
         {
-          "creationTime": "2026-08-09T13:23:39.109Z",
-          "modifiedTime": "2026-08-09T13:23:39.109Z",
+          "creationTime": "2026-10-07T20:38:58.478Z",
+          "modifiedTime": "2026-10-07T20:38:58.478Z",
           "numberOfItems": 1.0,
           "offer": {
             "availabilityStatus": "OK",
@@ -82,98 +95,77 @@
             "fulfillmentMethods": [
               "pickup"
             ],
-            "id": "REDACTED",
+            "id": "20175355001_KG",
             "itemType": "REGULAR",
-            "liam": "20539203_EA",
+            "liam": "20175355001_KG",
             "maxOrderQuantity": 24.0,
             "minOrderQuantity": 1.0,
             "product": {
-              "aisleCategoryCode": "28011",
-              "aisleName": "Household Supplies",
+              "aisleCategoryCode": "27985",
+              "aisleName": "Food",
               "baseUnit": "each",
-              "brand": "No Name",
-              "description": null,
-              "id": "REDACTED",
+              "brand": "Un-Branded",
+              "description": "Bananas are a versatile addition to your kitchen. Slice them over your morning cereal for a nutritious start to the day or blend them into a smoothie for a quick, refreshing beverage. These bananas come in a convenient bunch, making it easy to keep your fruit bowl stocked. Their natural sweetness and soft texture make them a favourite for snacks and baking. Enjoy the convenience of having fresh bananas on hand for various uses throughout the week.",
+              "id": "20175355001_KG",
               "isVariant": false,
               "memberOnlyPrice": null,
               "mop": false,
-              "name": "Lemon Scent Dishwasher Detergent ",
+              "name": "Bananas, Bunch",
               "offerType": "OG",
-              "price": 6.5,
-              "primaryImage": "https://digital.loblaws.ca/PCX/20539203_EA/en/1/6038309883_en_front_centre_marketing_GS1_Ecommerce_120.png",
-              "sizeLabel": "KG",
+              "price": 1.75,
+              "primaryImage": "https://digital.loblaws.ca/PCX/20175355001_KG/en/1/20175355001_enfr_front_v1_120.png",
+              "sizeLabel": "EA",
               "subBrand": null,
               "variantGroupId": null,
               "variantTheme": null,
               "weighted": false
             },
-            "promotionLabel": "Subscribe & Earn",
+            "promotionLabel": null,
             "promotions": [],
-            "regularPrice": 6.5,
+            "regularPrice": 1.75,
             "sellingIncrement": 1,
-            "sellingType": "SOLD_BY_EACH",
+            "sellingType": "SOLD_BY_EACH_PRICED_BY_WEIGHT",
             "sellingUnit": "EA",
             "status": "Active",
             "vendor": {
-              "id": "REDACTED"
+              "id": "1024"
             },
-            "wasPrice": 6.5,
-            "webLink": "/lemon-scent-dishwasher-detergent/p/20539203_EA"
+            "wasPrice": 1.75,
+            "webLink": "/bananas-bunch/p/20175355001_KG"
           },
           "prices": {
             "comparisonPrices": [
               {
-                "price": 0.36,
-                "quantity": 100,
-                "unit": "g"
+                "price": 1.52,
+                "quantity": 1,
+                "unit": "kg"
               }
             ],
             "deposit": null,
             "ehfTotal": null,
             "environmentalHandlingFee": null,
             "memberOnlyPrice": 0.0,
-            "salePrice": 6.5,
+            "salePrice": 1.75,
             "taxInfo": "",
-            "totalRegularPrice": 6.5,
-            "totalSalePrice": 6.5
+            "totalRegularPrice": 1.75,
+            "totalSalePrice": 1.75
           },
           "quantity": 1.0,
           "selectedSubstitution": null,
           "selectedSubstitutionDetails": null,
           "shippingTracking": null,
-          "subscriptionAvailableCadences": [
-            {
-              "text": "Weeks",
-              "type": "WEEKS",
-              "value": 2
-            },
-            {
-              "text": "Weeks",
-              "type": "WEEKS",
-              "value": 3
-            },
-            {
-              "text": "Weeks",
-              "type": "WEEKS",
-              "value": 4
-            },
-            {
-              "text": "Weeks",
-              "type": "WEEKS",
-              "value": 8
-            }
-          ],
+          "subscriptionAvailableCadences": [],
           "subscriptionCadence": null,
           "subscriptionCadenceInterval": null,
           "subscriptionQuantity": null,
           "substitutionPreference": {
             "comment": "REDACTED",
-            "substitutionAllowed": true
+            "substitutionAllowed": false
           }
         },
         {
-          "creationTime": "2026-08-09T13:23:39.109Z",
-          "modifiedTime": "2026-08-09T13:23:39.109Z",
+          "creationTime": "2026-10-07T20:38:58.478Z",
+          "modifiedTime": "2026-10-07T20:38:58.478Z",
           "numberOfItems": 1.0,
           "offer": {
             "availabilityStatus": "LOW_STOCK",
@@ -195,161 +187,48 @@
             "fulfillmentMethods": [
               "pickup"
             ],
-            "id": "REDACTED",
+            "id": "F6MR074735001_EA",
             "itemType": "REGULAR",
-            "liam": "20054844_EA",
-            "maxOrderQuantity": 24.0,
-            "minOrderQuantity": 1.0,
-            "product": {
-              "aisleCategoryCode": "27985",
-              "aisleName": "Food",
-              "baseUnit": "each",
-              "brand": "PC Organics",
-              "description": "Homgenized Milk has undergone a 'homogenization' process that breaks up and mixes the fat particles in milk, suspending them within the milk so that the cream no longer floats to the top as it does in unprocessed milk. Homogenized milk has more consistent, creamier taste and texture.",
-              "id": "REDACTED",
-              "isVariant": false,
-              "memberOnlyPrice": null,
-              "mop": false,
-              "name": "Organic Homogenized Milk 3.25% M.F.",
-              "offerType": "OG",
-              "price": 11.19,
-              "primaryImage": "https://digital.loblaws.ca/PCX/20054844_EA/en/1/20054844_en_front_120.png",
-              "sizeLabel": "L",
-              "subBrand": null,
-              "variantGroupId": null,
-              "variantTheme": null,
-              "weighted": false
-            },
-            "promotionLabel": "LOW STOCK",
-            "promotions": [],
-            "regularPrice": 11.19,
-            "sellingIncrement": 1,
-            "sellingType": "SOLD_BY_EACH",
-            "sellingUnit": "EA",
-            "status": "Active",
-            "vendor": {
-              "id": "REDACTED"
-            },
-            "wasPrice": 11.19,
-            "webLink": "/organic-homogenized-milk-3-25-m-f/p/20054844_EA"
-          },
-          "prices": {
-            "comparisonPrices": [
-              {
-                "price": 0.28,
-                "quantity": 100,
-                "unit": "ml"
-              }
-            ],
-            "deposit": null,
-            "ehfTotal": null,
-            "environmentalHandlingFee": null,
-            "memberOnlyPrice": 0.0,
-            "salePrice": 11.19,
-            "taxInfo": "",
-            "totalRegularPrice": 11.19,
-            "totalSalePrice": 11.19
-          },
-          "quantity": 1.0,
-          "selectedSubstitution": null,
-          "selectedSubstitutionDetails": null,
-          "shippingTracking": null,
-          "subscriptionAvailableCadences": [
-            {
-              "text": "Weeks",
-              "type": "WEEKS",
-              "value": 2
-            },
-            {
-              "text": "Weeks",
-              "type": "WEEKS",
-              "value": 3
-            },
-            {
-              "text": "Weeks",
-              "type": "WEEKS",
-              "value": 4
-            },
-            {
-              "text": "Weeks",
-              "type": "WEEKS",
-              "value": 8
-            }
-          ],
-          "subscriptionCadence": null,
-          "subscriptionCadenceInterval": null,
-          "subscriptionQuantity": null,
-          "substitutionPreference": {
-            "comment": "REDACTED",
-            "substitutionAllowed": false
-          }
-        },
-        {
-          "creationTime": "2026-08-09T13:23:39.109Z",
-          "modifiedTime": "2026-08-09T13:23:39.109Z",
-          "numberOfItems": 1.0,
-          "offer": {
-            "availabilityStatus": "OK",
-            "badges": {
-              "dealBadge": null,
-              "hotmBadge": null,
-              "loyaltyBadge": null,
-              "madeInCanadaBadge": null,
-              "mustTryBadge": null,
-              "newItemBadge": null,
-              "preparedInCanadaBadge": null,
-              "preparedInQuebecBadge": null,
-              "productOfCanadaBadge": null,
-              "promotionalBadge": null,
-              "recyclingFeeBadge": null,
-              "tariffAppliedBadge": null,
-              "textBadge": null
-            },
-            "fulfillmentMethods": [
-              "pickup"
-            ],
-            "id": "REDACTED",
-            "itemType": "REGULAR",
-            "liam": "21685186001_EA",
+            "liam": "F6MR074735001_EA",
             "maxOrderQuantity": 25.0,
             "minOrderQuantity": 1.0,
             "product": {
-              "aisleCategoryCode": "27985",
-              "aisleName": "Food",
+              "aisleCategoryCode": "56017",
+              "aisleName": "Joe Fresh",
               "baseUnit": "each",
-              "brand": "No Name",
-              "description": "<p>Medium Size Eggs 30 Pack keeps your fridge stocked for the week. Whether you’re scrambling, baking, or meal-prepping, this pack comes in handy. This 30 pack is also great for when you're hosting family or friends for the week or weekend.</p>",
-              "id": "REDACTED",
-              "isVariant": false,
+              "brand": "Joe Fresh",
+              "description": "These men's Chelsea boots are perfect for cooler days. The pull-on design makes them easy to slip on and go. A chunky lug sole adds rugged style to every step.",
+              "id": "F6MR074735001_EA",
+              "isVariant": true,
               "memberOnlyPrice": null,
               "mop": false,
-              "name": "Eggs, Medium",
-              "offerType": "OG",
-              "price": 9.52,
-              "primaryImage": "https://digital.loblaws.ca/PCX/21685186001_EA/en/1/21685186001_en_front_v1_120.png",
+              "name": "Men's Chelsea Boots",
+              "offerType": "JF",
+              "price": 59.0,
+              "primaryImage": "https://digital.loblaws.ca/JF/F6MR074735001_EA/en/17/f6mr074735_dark_brown_lay_down_forward-facing_120.jpeg",
               "sizeLabel": "EA",
               "subBrand": null,
-              "variantGroupId": null,
+              "variantGroupId": "F6MR074735_EA",
               "variantTheme": null,
               "weighted": false
             },
-            "promotionLabel": null,
+            "promotionLabel": "New",
             "promotions": [],
-            "regularPrice": 9.52,
+            "regularPrice": 59.0,
             "sellingIncrement": 1,
             "sellingType": "SOLD_BY_EACH",
             "sellingUnit": "EA",
             "status": "Active",
             "vendor": {
-              "id": "REDACTED"
+              "id": "1024"
             },
-            "wasPrice": 9.52,
-            "webLink": "/eggs-medium/p/21685186001_EA"
+            "wasPrice": 0.0,
+            "webLink": "/men-s-chelsea-boots/p/F6MR074735001_EA"
           },
           "prices": {
             "comparisonPrices": [
               {
-                "price": 0.32,
+                "price": 59.0,
                 "quantity": 1,
                 "unit": "ea"
               }
@@ -358,10 +237,10 @@
             "ehfTotal": null,
             "environmentalHandlingFee": null,
             "memberOnlyPrice": 0.0,
-            "salePrice": 9.52,
-            "taxInfo": "",
-            "totalRegularPrice": 9.52,
-            "totalSalePrice": 9.52
+            "salePrice": 59.0,
+            "taxInfo": "Plus tax",
+            "totalRegularPrice": 59.0,
+            "totalSalePrice": 59.0
           },
           "quantity": 1.0,
           "selectedSubstitution": null,
@@ -373,7 +252,7 @@
           "subscriptionQuantity": null,
           "substitutionPreference": {
             "comment": "REDACTED",
-            "substitutionAllowed": false
+            "substitutionAllowed": true
           }
         }
       ],
@@ -403,10 +282,10 @@
           "storeId": "1024",
           "timeWindow": {
             "bufferTimeInHours": 4,
-            "cutOffDate": "2026-08-08T23:59:59",
-            "endTime": "2026-08-09T14:30:00",
-            "slotExpiryDateTime": "2026-08-09T10:22:11-04:00",
-            "startTime": "2026-08-09T13:30:00",
+            "cutOffDate": "2026-10-07T23:59:59",
+            "endTime": "2026-10-08T09:30:00",
+            "slotExpiryDateTime": "2026-10-07T17:38:57-04:00",
+            "startTime": "2026-10-08T08:30:00",
             "timeZone": "EST5EDT"
           }
         },
@@ -415,38 +294,78 @@
         "pickupInstructions": null,
         "type": "courier"
       },
-      "giftCardPayment": null,
+      "giftCardPayment": [],
       "internalOrderId": "REDACTED",
       "maxAllowedGiftCard": 2,
       "modifiedTime": null,
       "orderId": "REDACTED",
-      "payment": null,
-      "redeemableOptions": [],
+      "payment": {
+        "paymentToken": "REDACTED-848beef3-3326-4c8f-9cda-bdeb96cb3041"
+      },
+      "redeemableOptions": [
+        {
+          "dollarValue": 10,
+          "points": 10000
+        },
+        {
+          "dollarValue": 20,
+          "points": 20000
+        },
+        {
+          "dollarValue": 30,
+          "points": 30000
+        },
+        {
+          "dollarValue": 40,
+          "points": 40000
+        },
+        {
+          "dollarValue": 50,
+          "points": 50000
+        },
+        {
+          "dollarValue": 60,
+          "points": 60000
+        }
+      ],
       "status": "OPEN",
-      "taxEntries": [],
+      "taxEntries": [
+        {
+          "rate": 0.0,
+          "tax": 0,
+          "taxType": "HST",
+          "totalProductPrice": 175
+        },
+        {
+          "rate": 13.0,
+          "tax": 767,
+          "taxType": "HST",
+          "totalProductPrice": 5900
+        }
+      ],
       "totals": {
         "additionalFees": 0.0,
-        "estimatedTotal": 27.21,
-        "subTotal": 27.21,
+        "estimatedTotal": 60.75,
+        "subTotal": 60.75,
         "totalCourierFee": 0.0,
         "totalDeliveryFee": 0.0,
         "totalDeliveryTip": null,
         "totalDeposit": null,
         "totalDiscounts": 0.0,
         "totalEnvironmentalHandlingFee": null,
-        "totalGiftCardAmount": 0,
+        "totalGiftCardAmount": null,
         "totalLoyaltyDiscount": 0.0,
         "totalLoyaltyPoints": null,
         "totalMemberOnlySavings": 0.0,
         "totalPickupFee": null,
-        "totalPointsToRedeem": null,
+        "totalPointsToRedeem": 0,
         "totalPreauth": null,
-        "totalPrice": 28.06,
+        "totalPrice": 68.42,
         "totalProductDiscounts": 0.0,
-        "totalRedeemablePrice": 0,
-        "totalServiceFee": null,
+        "totalRedeemablePrice": 60,
+        "totalServiceFee": 0.0,
         "totalShippingFee": null,
-        "totalTax": 0.85,
+        "totalTax": 7.67,
         "totalVoucherDiscounts": 0.0
       },
       "vendorId": "superstore",

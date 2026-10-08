@@ -214,7 +214,7 @@ def test_simplify_cart_flattens_orders_and_entries():
     assert result["units"] == 3.0
     assert result["store_id"] == "1024"
     assert result["fulfillment_method"] == "delivery"
-    assert result["slot"] == {"start": "2026-08-09T13:30:00", "end": "2026-08-09T14:30:00", "hold_expires_at": None}
+    assert result["slot"] == {"start": "2026-08-09T13:30:00", "end": "2026-08-09T14:30:00", "hold_expires_at": None, "hold_active": None}
     assert result["modified_time"] == "2026-08-09T13:23:39.109Z"
     assert result["totals"] == {
         "subtotal": 17.69,

@@ -1,0 +1,105 @@
+{
+  "cart": {
+    "cart_data": {
+      "banner_id": "superstore",
+      "calculated": true,
+      "customer_id": "REDACTED",
+      "id": "REDACTED",
+      "min_cart_total_for_checkout": 3000,
+      "properties": {
+        "postal_code": "REDACTED"
+      },
+      "status": "OPEN",
+      "store_carts": [
+        {
+          "fulfillment": {
+            "delivery": {
+              "location_id": "1024PCXD",
+              "method": "STANDARD",
+              "postal_code": "REDACTED",
+              "province_code": "ON",
+              "slot_type": "NEXT_DAY",
+              "time_slot": {
+                "booking_id": "REDACTED",
+                "end_time": "2026-10-08T13:30:00Z",
+                "expiry_time": "2026-10-07T21:32:38.047Z",
+                "start_time": "2026-10-08T12:30:00Z"
+              }
+            },
+            "fee_components": [
+              {
+                "amount": 0,
+                "calculated_amount_in_cents": 0,
+                "fee_component_type": "DELIVERY_FEE",
+                "fee_type": "ABSOLUTE"
+              },
+              {
+                "amount": 0,
+                "calculated_amount_in_cents": 0,
+                "fee_component_type": "SERVICE_FEE",
+                "fee_type": "ABSOLUTE"
+              }
+            ]
+          },
+          "items": [
+            {
+              "item_type": "REGULAR",
+              "liam": "20175355001_KG",
+              "prices": {
+                "discount": 0,
+                "loyalty_discount": 0,
+                "sale_price": 175,
+                "total_regular_price": 175,
+                "total_sale_price": 175
+              },
+              "quantity": 1,
+              "selling_unit": "KG",
+              "store_id": "1024"
+            }
+          ],
+          "store_cart_id": "REDACTED",
+          "store_id": "1024",
+          "totals": {
+            "additional_fees": 0,
+            "cart_total": 6842,
+            "cart_total_before_taxes": 6075,
+            "discounts": 0,
+            "fulfillment_fee": 0,
+            "subtotal": 6075,
+            "tax": 767
+          }
+        }
+      ],
+      "type": "regular",
+      "updated_at": "2026-10-07T20:32:37.899482Z"
+    }
+  },
+  "errors": [
+    {
+      "code": "UPSTREAM_ERROR",
+      "details": {
+        "details": {
+          "available_quantity": 1,
+          "liam": "F6MR074735001_EA",
+          "requested_quantity": 1,
+          "seller_id": "1024"
+        },
+        "error_code": "LOW_STOCK",
+        "message": "Product in cart is low stock."
+      },
+      "error_detail": {
+        "code": "LOW_STOCK",
+        "details": {
+          "available_quantity": 1,
+          "liam": "F6MR074735001_EA",
+          "requested_quantity": 1,
+          "seller_id": "1024"
+        },
+        "message": "Product in cart is low stock."
+      },
+      "message": "Upstream responded with error",
+      "service_id": "CRT",
+      "severity": "Error"
+    }
+  ]
+}

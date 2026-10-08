@@ -7,8 +7,9 @@ refresh the baseline these snapshots represent:
 
     python scripts/capture_snapshots.py
 
-Requires an active session (run scripts/login.py first) and an active
-store (set PCEXPRESS_STORE_ID or have already called set_active_store).
+Requires an active session (run scripts/login.py first, or pass
+`--auth-state PATH`) and PCEXPRESS_STORE_ID. Everything captured is
+read-only: booking a slot is never captured automatically.
 
 Why this exists: every `_simplify_*` function in server.py was built
 against an *assumption* about response shape at least once, and at least
@@ -64,12 +65,18 @@ PLACEHOLDER = "REDACTED"
 # appears, regardless of which endpoint it's found in. Path segments are
 # matched by exact key name at any depth -- e.g. "customer" matches
 # cart.customer AND orderDetails.customer.
+# Keys are compared lowercased with underscores removed, so the checkout
+# service's snake_case (phone_number, address_line_1, last_4_digits) is
+# caught by the same entries as pcx-bff's camelCase (phoneNumber).
 WHOLESALE_REDACT_KEYS = {
     "customer",
     "user",
     "shippingaddress",
     "deliveryaddress",
     "billingaddress",
+    "addressdata",
+    "shippinginfo",
+    "paymentmethods",
 }
 
 # Layer 2: individual keys safe to blanket-substring-match anywhere,
@@ -77,10 +84,8 @@ WHOLESALE_REDACT_KEYS = {
 # product/store/order structural fields (unlike bare "id" or "name").
 SENSITIVE_KEY_SUBSTRINGS = (
     "email",
-    "phonenumber",
-    "phoneextension",
+    "phone",
     "postalcode",
-    "postal_code",
     "firstname",
     "lastname",
     "customerid",
@@ -88,7 +93,6 @@ SENSITIVE_KEY_SUBSTRINGS = (
     "cartid",
     "orderid",
     "ordernumber",
-    "internalorderid",
     "accountid",
     "loyaltyid",
     "pcoptimumid",
@@ -106,28 +110,26 @@ SENSITIVE_KEY_SUBSTRINGS = (
     "deliveryinstructions",
     "comment",
     "streetaddress",
+    "addressline",
+    "addressid",
+    "paymentmethodid",
+    "last4",
+    "cardholder",
 )
 
-# Endpoint-specific single-field overrides for keys too generic to
-# blanket-match (e.g. bare "id"/"uid" mean wildly different things
-# depending on which object they're on) -- (dotted path prefix, exact key)
-# pairs; redacts that key wherever a dict's own key path ends with it.
-EXACT_KEY_OVERRIDES = {
-    "id",  # get_profile's top-level "id" IS the login email; a cart's own
-    # top-level "id" IS its cart_id -- neither is safe to leave in a
-    # snapshot even though "id" is otherwise a completely benign
-    # structural field (product.id, offer.id, order-entry id, etc.).
-    # Handled by exact full-path match below instead of a blanket rule.
-    "uid",
-}
-# (top-level dict, key) pairs that get explicitly redacted post-hoc,
-# because "redact every top-level id" would also nuke non-personal fields
-# some endpoints legitimately have at the top level.
+# Bare "id"/"uid" mean wildly different things depending on which object
+# they're on (a cart's top-level "id" IS its cart_id; product.id is benign),
+# so they're redacted only at the top level -- see TOP_LEVEL_ID_LIKE_KEYS.
+EXACT_KEY_OVERRIDES = {"uid"}
 TOP_LEVEL_ID_LIKE_KEYS = {"id", "cartid"}
 
 
+def _norm(key: str) -> str:
+    return key.lower().replace("_", "")
+
+
 def _redact_value_by_key(value: Any, key: str) -> Any:
-    key_lower = key.lower()
+    key_lower = _norm(key)
     if key_lower in WHOLESALE_REDACT_KEYS and isinstance(value, dict):
         return {k: PLACEHOLDER for k in value}
     if isinstance(value, dict):
@@ -154,7 +156,7 @@ def _redact(data: Any, known_values: list[str]) -> Any:
     redacted = _redact_value_by_key(data, "")
     if isinstance(redacted, dict):
         for key in list(redacted.keys()):
-            if key.lower() in TOP_LEVEL_ID_LIKE_KEYS:
+            if _norm(key) in TOP_LEVEL_ID_LIKE_KEYS:
                 redacted[key] = PLACEHOLDER
     return _scrub_known_values(redacted, known_values)
 
@@ -175,7 +177,8 @@ def main() -> int:
         print("PCEXPRESS_STORE_ID is not set -- needed to call search/cart/pickup-location.", file=sys.stderr)
         return 1
 
-    tm = TokenManager()
+    auth_state = sys.argv[sys.argv.index("--auth-state") + 1] if "--auth-state" in sys.argv else None
+    tm = TokenManager(auth_state)
     api = PCExpressAPI(tm, banner)
 
     try:
@@ -207,12 +210,28 @@ def main() -> int:
     promotions = api.get_customer_promotions()
     _save("get_customer_promotions", promotions, known_values)
 
-    cart_id = profile.get("cartId")
+    # list_carts, not profile.cartId: the latter is banner-invariant.
+    carts = api.list_carts(profile.get("id") or profile.get("customerId")).get("carts") or []
+    cart_id = carts[0].get("id") if carts else None
+    known_values += [v for v in (cart_id, profile.get("customerId")) if v]
     if cart_id:
         cart = api.get_cart(cart_id)
         _save("get_cart", cart, known_values)
+        courier = ((cart.get("orders") or [{}])[0].get("fulfillment") or {}).get("courier") or {}
+        location_id, postal = courier.get("fulfillmentLocationId"), (courier.get("deliveryAddress") or {}).get("postalCode")
+        if location_id and postal:
+            known_values.append(postal)
+            slots = api.get_delivery_slots(cart_id, location_id, postal)
+            # ~300 slots; a few per date is enough to pin the shape.
+            for loc in slots.values():
+                if isinstance(loc, dict) and isinstance(loc.get("timeslots"), list):
+                    loc["timeslots"] = loc["timeslots"][:3] + [t for t in loc["timeslots"] if t.get("available")][:3]
+            _save("get_delivery_slots", slots, known_values)
+            _save("get_checkout", api.get_checkout(cart_id), known_values)
+        else:
+            print("Cart has no delivery location/address -- skipping slot and checkout captures.", file=sys.stderr)
     else:
-        print("No cartId on profile -- add an item via the app once to capture get_cart.", file=sys.stderr)
+        print("No cart on this banner -- add an item via the app once to capture get_cart.", file=sys.stderr)
 
     search = api.search_products("milk", store_id, cart_id=cart_id, size=5)
     _save("search_products", search, known_values)
@@ -243,6 +262,7 @@ def main() -> int:
     orders = api.get_historical_orders()
     order_history = orders.get("orderHistory") or []
     detail_target_id = order_history[0]["id"] if order_history else None
+    known_values += [o["id"] for o in order_history[:3] if o.get("id")]
     if len(order_history) > 3:
         order_history = order_history[:3]
     # Each order's own "id" is a real per-order reference number tied to
